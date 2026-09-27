@@ -87,8 +87,16 @@ export default function MyTicketsPage() {
               type: 'Installation',
               subject: installation.type,
               description: installation.type,
-              status: installation.status === 'Scheduled' ? 'Installation_Confirmed' : installation.status,
-              displayStatus: installation.status === 'Scheduled' ? 'Installation Confirmed' : installation.status.replace(/_/g, ' '),
+              status: installation.status === 'Scheduled'
+                ? 'Installation Confirmed'
+                : ['Cancelled', 'Canceled'].includes(installation.status)
+                  ? 'Installation Rescheduled'
+                  : installation.status,
+              displayStatus: installation.status === 'Scheduled'
+                ? 'Installation Confirmed'
+                : ['Cancelled', 'Canceled'].includes(installation.status)
+                  ? 'Installation Rescheduled'
+                  : installation.status.replace(/_/g, ' '),
               createdAt: installation.date,
               technicianName: installation.technician?.name || null,
               subscriberName: installation.subscriber?.name || null,
@@ -133,7 +141,7 @@ export default function MyTicketsPage() {
   }
 
   const visibleTickets = tickets.filter((ticket) =>
-    tab === 'active' ? !['Resolved', 'Closed', 'Installation_Closed'].includes(ticket.status) : ['Resolved', 'Closed', 'Installation_Closed'].includes(ticket.status),
+    tab === 'active' ? !['Resolved', 'Installation_Closed'].includes(ticket.status) : ['Resolved', 'Installation_Closed'].includes(ticket.status),
   );
 
   const selectedVisitDateTime = selectedTicket ? formatSelectedVisitDateTime(selectedTicket) : '';
@@ -167,7 +175,7 @@ export default function MyTicketsPage() {
             >
               In Progress
               <span className="rounded-full bg-blue-100 px-2 py-1 text-xs text-[#2166f3]">
-                {tickets.filter((ticket) => !['Resolved', 'Closed', 'Installation_Closed'].includes(ticket.status)).length}
+                {tickets.filter((ticket) => !['Resolved', 'Installation_Closed'].includes(ticket.status)).length}
               </span>
             </button>
 
