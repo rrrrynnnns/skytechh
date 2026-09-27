@@ -209,7 +209,7 @@ export default function MyTicketsPage() {
                       <p className="mt-1 text-sm text-slate-600">{formatVisitDateTime(ticket)}</p>
                     </div>
                   </div>
-                  <Badge value={formatTicketStatus(ticket.status)} />
+                  <Badge value={formatTicketStatus(ticket.status)} compact={ticket.type === 'Installation'} />
                 </button>
               ))}
             </div>

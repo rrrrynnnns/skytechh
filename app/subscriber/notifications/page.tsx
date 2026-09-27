@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Bell, Check, FileText, Wrench } from 'lucide-react';
+import { ArrowLeft, Check, Clock3, CreditCard, FileText, Wrench } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PortalShell } from '@/app/components/PortalShell';
 
@@ -10,21 +10,32 @@ type Filter = 'All' | 'Advisories' | 'Transaction' | 'Reminders';
 
 const filters: { label: Filter; type?: string }[] = [
   { label: 'All' },
-  { label: 'Advisories', type: 'advisory' },
-  { label: 'Transaction', type: 'transaction' },
   { label: 'Reminders', type: 'reminder' },
+  { label: 'Transaction', type: 'transaction' },
+  { label: 'Advisories', type: 'advisory' },
 ];
 
 function notificationIcon(type: string) {
-  if (type === 'advisory') return <Wrench size={16} />;
-  if (type === 'reminder') return <Bell size={16} />;
+  if (type === 'advisory') return <Clock3 size={16} />;
+  if (type === 'reminder') return <Wrench size={16} />;
+  if (type === 'transaction') return <CreditCard size={16} />;
+  if (type === 'system') return <Clock3 size={16} />;
+  if (type === 'installation' || type === 'booking') return <Wrench size={16} />;
   return <FileText size={16} />;
 }
 
 function notificationTone(type: string) {
-  if (type === 'advisory') return 'bg-emerald-50 text-emerald-500';
-  if (type === 'reminder') return 'bg-blue-50 text-blue-500';
+  if (type === 'advisory' || type === 'system') return 'bg-violet-50 text-violet-500';
+  if (type === 'reminder' || type === 'installation' || type === 'booking') return 'bg-emerald-50 text-emerald-500';
+  if (type === 'transaction' || type === 'billing') return 'bg-amber-50 text-amber-500';
   return 'bg-orange-50 text-orange-500';
+}
+
+function normalizeNotificationType(type: string) {
+  if (['reminder', 'installation', 'booking', 'assignment', 'task'].includes(type)) return 'reminder';
+  if (['transaction', 'billing'].includes(type)) return 'transaction';
+  if (['advisory', 'system', 'update'].includes(type)) return 'advisory';
+  return type;
 }
 
 export default function SubscriberNotificationsPage() {
@@ -33,7 +44,7 @@ export default function SubscriberNotificationsPage() {
   const [isMarkingRead, setIsMarkingRead] = useState(false);
 
   useEffect(() => {
-    fetch('/api/notifications').then(async (response) => { if (!response.ok) return; const result = await response.json(); if (Array.isArray(result.data)) setNotifications(result.data); }).catch(() => undefined);
+    fetch('/api/notifications').then(async (response) => { if (!response.ok) return; const result = await response.json(); if (Array.isArray(result.data)) setNotifications(result.data.map((item: NotificationItem) => ({ ...item, type: normalizeNotificationType(item.type) }))); }).catch(() => undefined);
   }, []);
 
   async function markAllRead() {
