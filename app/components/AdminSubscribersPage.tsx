@@ -30,6 +30,10 @@ type LocationOption = {
 
 const PSGC_API = "https://psgc.gitlab.io/api";
 
+function formatPlanName(plan: string) {
+  return plan.replace(/_/g, " ").replace(/\s+Mbps$/i, "Mbps");
+}
+
 function sortLocations(options: LocationOption[]) {
   return [...options].sort((first, second) =>
     first.name.localeCompare(second.name, "en", { sensitivity: "base" }),
@@ -96,7 +100,7 @@ export function AdminSubscribersPage() {
                 item.id,
                 item.name,
                 item.email,
-                item.plan.replace("_", " "),
+                formatPlanName(item.plan),
                 item.status.replace("_", " "),
                 item.connectionDate.slice(0, 10),
                 "",
@@ -121,10 +125,10 @@ export function AdminSubscribersPage() {
         if (Array.isArray(result.data?.plans))
           setPlans(
             result.data.plans
-              .map((plan: { name?: string }) => plan.name)
-              .filter((name: string | undefined): name is string =>
-                Boolean(name),
-              ),
+              .map((plan: { name?: string } | string) =>
+                formatPlanName(typeof plan === "string" ? plan : plan.name || ""),
+              )
+              .filter(Boolean),
           );
       })
       .catch(() => undefined);
@@ -136,7 +140,7 @@ export function AdminSubscribersPage() {
       'form select[name="plan"]',
     );
     if (!select) return;
-    const selectedPlan = editingSubscriber?.[3] || plans[0];
+    const selectedPlan = formatPlanName(editingSubscriber?.[3] || plans[0]);
     select.replaceChildren(...plans.map((plan) => new Option(plan, plan)));
     select.value = plans.includes(selectedPlan) ? selectedPlan : plans[0];
   }, [isAdding, plans, editingSubscriber]);
@@ -192,7 +196,6 @@ export function AdminSubscribersPage() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const firstName = String(form.get("firstName") || "Juan");
-    const middleName = String(form.get("middleName") || "");
     const lastName = String(form.get("lastName") || "Santos");
     const email = String(form.get("email") || "email@skytech.net");
     const contact = String(form.get("contact") || "09XXXXXXXXX");
@@ -203,7 +206,7 @@ export function AdminSubscribersPage() {
     const barangay = String(form.get("barangay") || "");
     const street = String(form.get("street") || "");
     const zipCode = String(form.get("zipCode") || "");
-    const fullName = `${firstName}${middleName ? " " + middleName : ""} ${lastName}`;
+    const fullName = `${firstName} ${lastName}`;
 
     if (editingSubscriber) {
       const address =
@@ -245,7 +248,7 @@ export function AdminSubscribersPage() {
                 plan,
                 status,
                 connectionDate,
-                middleName,
+                "",
                 contact,
                 province,
                 city,
@@ -297,7 +300,7 @@ export function AdminSubscribersPage() {
         created.plan.replace("_", " "),
         created.status.replace("_", " "),
         created.connectionDate.slice(0, 10),
-        middleName,
+        "",
         created.contact,
         created.province || "",
         created.city || "",
@@ -390,18 +393,15 @@ export function AdminSubscribersPage() {
     if (submitButton) submitButton.textContent = "Save changes";
     const [firstName, ...middleAndLast] = editingSubscriber[1].split(" ");
     const lastName = middleAndLast.pop() || "";
-    const middleName = middleAndLast.join(" ");
     (form.elements.namedItem("firstName") as HTMLInputElement).value =
       firstName;
-    (form.elements.namedItem("middleName") as HTMLInputElement).value =
-      editingSubscriber[6] || middleName;
     (form.elements.namedItem("lastName") as HTMLInputElement).value = lastName;
     (form.elements.namedItem("email") as HTMLInputElement).value =
       editingSubscriber[2];
     (form.elements.namedItem("contact") as HTMLInputElement).value =
       editingSubscriber[7];
     (form.elements.namedItem("plan") as HTMLSelectElement).value =
-      editingSubscriber[3];
+      formatPlanName(editingSubscriber[3]);
     (form.elements.namedItem("connectionDate") as HTMLInputElement).value =
       editingSubscriber[5];
     setProvince(editingSubscriber[8]);
@@ -650,13 +650,6 @@ export function AdminSubscribersPage() {
                   className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]"
                 />
               </Field>
-              <Field label="Middle name (optional)">
-                <input
-                  name="middleName"
-                  placeholder="Santos"
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]"
-                />
-              </Field>
               <Field label="Last name *">
                 <input
                   name="lastName"
@@ -695,6 +688,8 @@ export function AdminSubscribersPage() {
                     <option>Fiber 25Mbps</option>
                     <option>Fiber 50Mbps</option>
                     <option>Fiber 100Mbps</option>
+                    <option>Fiber 200Mbps</option>
+                    <option>Fiber 300Mbps</option>
                   </select>
                   <ChevronDown
                     className="pointer-events-none absolute right-3 top-3.5 text-slate-400"
