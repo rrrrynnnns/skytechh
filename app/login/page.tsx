@@ -2,9 +2,8 @@
 
 import { FormEvent, useState } from 'react';
 import { signIn } from 'next-auth/react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LockKeyhole, Zap } from 'lucide-react';
+import { Router } from 'lucide-react';
 import { Spinner } from '@/app/components/Spinner';
 
 export default function LoginPage() {
@@ -31,25 +30,32 @@ export default function LoginPage() {
     await loginAs(String(values.email), String(values.password));
   }
 
-  return <main className="grid min-h-screen bg-[#f8fafc] lg:grid-cols-2">
-    <div className="hidden bg-[#0f172a] p-12 text-white lg:flex lg:flex-col lg:justify-between">
-      <Link href="/" className="flex items-center gap-3 font-bold"><span className="grid h-9 w-9 place-items-center rounded-xl bg-[#3b4fd8]"><Zap size={18} fill="currentColor" /></span>Sky-Tech ISP</Link>
-      <div><p className="max-w-md text-5xl font-bold leading-tight">Your connection, under your control.</p><p className="mt-5 max-w-md leading-7 text-slate-400">Track service, bills, support, and installations from one calm workspace.</p></div>
-      <p className="text-sm text-slate-500">Reliable by design.</p>
-    </div>
-    <div className="flex items-center justify-center p-6"><div className="w-full max-w-md">
-      <h1 className="text-3xl font-bold tracking-tight">Welcome back.</h1><p className="mt-2 text-slate-500">Sign in to your Sky-Tech workspace.</p>
-      <div className="mt-8 grid grid-cols-3 gap-2">
-        {[['admin@skytech.net', 'admin123', 'Admin demo'], ['tech@skytech.net', 'tech123', 'Technician demo'], ['user1@skytech.net', 'user123', 'Subscriber demo']].map(([email, password, label]) => <button key={email} type="button" disabled={isSigningIn} onClick={() => loginAs(email, password)} className="rounded-xl bg-blue-50 px-2 py-3 text-xs font-bold text-[#3b4fd8]">{label}</button>)}
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-6 py-12">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white px-6 py-8 shadow-sm sm:px-9 sm:py-10">
+        <div className="flex flex-col items-center text-center">
+          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-[#2447b6] text-white"><Router size={26} /></span>
+          <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900">Welcome back</h1>
+          <p className="mt-2 text-sm text-slate-500">Sign in to your account.</p>
+        </div>
+        <form onSubmit={submit} className="mt-8 space-y-5">
+          <label className="block text-sm font-semibold text-slate-700">
+            Email address
+            <input name="email" type="email" required autoComplete="email" placeholder="you@skytech.net" className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 font-normal text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#2447b6] focus:ring-2 focus:ring-blue-100" />
+          </label>
+          <label className="block text-sm font-semibold text-slate-700">
+            Password
+            <input name="password" type="password" required autoComplete="current-password" placeholder="Enter your password" className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 font-normal text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-[#2447b6] focus:ring-2 focus:ring-blue-100" />
+          </label>
+          <div className="-mt-2 flex justify-end">
+            <a href="mailto:support@skytech.net?subject=Password%20reset%20request" className="text-sm font-medium text-slate-900 hover:underline">Forgot password?</a>
+          </div>
+          {error && <p role="alert" className="text-sm font-semibold text-red-600">{error}</p>}
+          <button disabled={isSigningIn} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2447b6] px-5 py-3 font-semibold text-white transition-colors hover:bg-[#1d3b99] disabled:opacity-60">
+            {isSigningIn ? <><Spinner />Signing in...</> : 'Sign in'}
+          </button>
+        </form>
       </div>
-      <div className="my-7 flex items-center gap-3 text-xs text-slate-400"><span className="h-px flex-1 bg-slate-200" />or sign in manually<span className="h-px flex-1 bg-slate-200" /></div>
-      <form onSubmit={submit} className="space-y-5">
-        <label className="block text-sm font-semibold">Email<input name="email" type="email" required placeholder="you@skytech.net" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none" /></label>
-        <label className="block text-sm font-semibold">Password<input name="password" type="password" required placeholder="Password" className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none" /></label>
-        {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
-        <button disabled={isSigningIn} className="flex w-full items-center justify-center gap-2 rounded-full bg-[#3b4fd8] px-5 py-3.5 font-bold text-white"><LockKeyhole size={17} />{isSigningIn ? <><Spinner />Signing in...</> : 'Sign in'}</button>
-      </form>
-      <p className="mt-6 text-center text-xs text-slate-400">Demo accounts: admin123, tech123, user123</p>
-    </div></div>
-  </main>;
+    </main>
+  );
 }
