@@ -31,7 +31,7 @@ export function PortalShell({ role, children }: { role: Role; children: React.Re
     document.documentElement.classList.toggle('dark-mode', isDarkMode);
   }, [isDarkMode]);
   const links: NavLink[] = role === 'admin'
-    ? [['/admin/dashboard', 'Dashboard', LayoutDashboard], ['/admin/subscribers', 'Subscribers', Users], ['/admin/billing', 'Billing', FileText], ['/admin/installations', 'Installations', CalendarDays], ['/admin/technicians', 'Technicians', Wrench], ['/admin/bookings', 'Bookings', CalendarDays], ['/admin/tickets', 'Support', Ticket], ['/admin/reports', 'Reports', Activity], ['/admin/settings', 'Settings', Settings]]
+    ? [['/admin/dashboard', 'Dashboard', LayoutDashboard], ['/admin/subscribers', 'Subscribers', Users], ['/admin/billing', 'Billing', FileText], ['/admin/installations', 'Installations', CalendarDays], ['/admin/technicians', 'Technicians', Wrench], ['/admin/tickets', 'Support', Ticket], ['/admin/reports', 'Reports', Activity], ['/admin/settings', 'Settings', Settings]]
     : role === 'technician'
       ? [['/technician/my-tasks', 'Home', LayoutDashboard], ['/technician/tasks', 'My Tasks', Ticket], ['/technician/profile', 'Profile', Users]]
       : [['/subscriber/my-account', 'Home', LayoutDashboard], ['/subscriber/my-tickets', 'My Requests', Ticket], ['/subscriber/help', 'Help', MessageSquare], ['/subscriber/profile', 'Profile', Users]];

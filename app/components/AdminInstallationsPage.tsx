@@ -414,7 +414,7 @@ export function AdminInstallationsPage() {
       </div>
       <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full table-fixed text-left">
+          <table className="w-full min-w-[1100px] table-fixed text-left">
             <thead className="border-b border-slate-100 text-xs font-bold uppercase tracking-wide text-slate-400">
               <tr>
                 {[
@@ -426,7 +426,7 @@ export function AdminInstallationsPage() {
                   "Status",
                   "Actions",
                 ].map((heading) => (
-                  <th className={`px-5 py-4 ${heading === "Installation ID" ? "w-[16%]" : heading === "Subscriber" ? "w-[18%]" : heading === "Technician" ? "w-[19%]" : heading === "Date" || heading === "Time" ? "w-[13%]" : heading === "Status" ? "w-[16%]" : "w-[11%]"}`} key={heading}>
+                  <th className={`whitespace-nowrap px-4 py-4 lg:px-5 ${heading === "Installation ID" ? "w-[14%]" : heading === "Subscriber" ? "w-[17%]" : heading === "Technician" ? "w-[17%]" : heading === "Date" ? "w-[12%]" : heading === "Time" ? "w-[13%]" : heading === "Status" ? "w-[17%]" : "w-[10%]"}`} key={heading}>
                     {heading}
                     {heading !== "Actions" && (
                       <span className="ml-1 text-[10px]">▴</span>
@@ -438,23 +438,23 @@ export function AdminInstallationsPage() {
             <tbody className="text-sm">
               {visibleInstallations.map((item) => (
                 <tr className="border-t border-slate-100" key={item[0]}>
-                  <td className="whitespace-nowrap px-5 py-4 text-slate-900">
+                  <td className="whitespace-nowrap px-4 py-5 text-slate-900 lg:px-5">
                     {item[0]}
                   </td>
-                  <td className="truncate px-5 py-4 font-semibold text-slate-900">
+                  <td className="truncate px-4 py-5 font-semibold text-slate-900 lg:px-5">
                     {item[1]}
                   </td>
-                  <td className="truncate px-5 py-4 text-slate-500">{item[2]}</td>
-                  <td className="whitespace-nowrap px-5 py-4 text-slate-500">{item[4]}</td>
-                  <td className="whitespace-nowrap px-5 py-4 text-slate-500">{item[5]}</td>
-                  <td className="whitespace-nowrap px-5 py-4">
+                  <td className="truncate px-4 py-5 text-slate-500 lg:px-5">{item[2]}</td>
+                  <td className="whitespace-nowrap px-4 py-5 text-slate-500 lg:px-5">{item[4]}</td>
+                  <td className="whitespace-nowrap px-4 py-5 text-slate-500 lg:px-5">{item[5]}</td>
+                  <td className="whitespace-nowrap px-4 py-5 lg:px-5">
                     <span
                       className={`rounded-lg border px-2 py-1 text-xs font-semibold ${statusStyles[item[7]]}`}
                     >
                       {getStatusLabel(item[7])}
                     </span>
                   </td>
-                  <td className="whitespace-nowrap px-5 py-4">
+                  <td className="whitespace-nowrap px-4 py-5 lg:px-5">
                     <button type="button" className="text-xs font-semibold text-[#2563eb]">Manage</button>
                   </td>
                 </tr>
