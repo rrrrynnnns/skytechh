@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Bell, CalendarDays, CheckSquare, Clock3, ChevronLeft, ChevronRight, Wrench, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PortalShell } from '@/app/components/PortalShell';
 import { formatPersonName } from '@/app/lib/name';
 
@@ -102,18 +102,25 @@ export default function TechnicianTasks() {
     return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   });
   const [scheduledTasks, setScheduledTasks] = useState<ScheduledTask[]>([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [selectedTask, setSelectedTask] = useState<ScheduledTask | null>(null);
   const [selectedStatus, setSelectedStatus] = useState('');
   const [isSavingStatus, setIsSavingStatus] = useState(false);
   const [statusError, setStatusError] = useState('');
   const [selectedDate, setSelectedDate] = useState(() => toDateKey(new Date()));
   const [monthDate, setMonthDate] = useState(() => new Date());
-  const hasInitializedTaskDate = useRef(false);
+  useEffect(() => {
+    fetch('/api/notifications', { cache: 'no-store' }).then(async (response) => {
+      if (!response.ok) return;
+      const result = await response.json();
+      if (Array.isArray(result.data)) setUnreadNotificationCount(result.data.filter((item: { read?: boolean }) => !item.read).length);
+    }).catch(() => undefined);
+  }, []);
   useEffect(() => {
     Promise.all([
-      fetch('/api/technician/account').catch(() => null),
-      fetch('/api/installations').catch(() => null),
-      fetch('/api/tickets').catch(() => null),
+      fetch('/api/technician/account', { cache: 'no-store' }).catch(() => null),
+      fetch('/api/installations', { cache: 'no-store' }).catch(() => null),
+      fetch('/api/tickets', { cache: 'no-store' }).catch(() => null),
     ]).then(async ([accountResponse, installationResponse, ticketResponse]) => {
       const [accountResult, installationResult, ticketResult] = await Promise.all([
         accountResponse?.ok ? accountResponse.json() : Promise.resolve({ data: null }),
@@ -161,18 +168,6 @@ export default function TechnicianTasks() {
 
       const nextScheduledTasks = [...installations, ...repairs].sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`));
       setScheduledTasks(nextScheduledTasks);
-      if (!hasInitializedTaskDate.current && nextScheduledTasks.length) {
-        hasInitializedTaskDate.current = true;
-        const today = toDateKey(new Date());
-        if (!nextScheduledTasks.some((task) => task.date === today)) {
-          const nextTaskDate = nextScheduledTasks.map((task) => task.date).filter((date) => date >= today).sort()[0]
-            || nextScheduledTasks.map((task) => task.date).sort()[0];
-          if (nextTaskDate) {
-            setSelectedDate(nextTaskDate);
-            setMonthDate(new Date(`${nextTaskDate}T12:00:00`));
-          }
-        }
-      }
     });
   }, []);
   const selectedTasks = useMemo(() => scheduledTasks.filter((task) => task.date === selectedDate), [scheduledTasks, selectedDate]);
@@ -197,7 +192,6 @@ export default function TechnicianTasks() {
   const initials = displayName.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
 
   function changeMonth(offset: number) {
-    hasInitializedTaskDate.current = true;
     const nextMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + offset, 1);
     setMonthDate(nextMonth);
     setSelectedDate(toDateKey(nextMonth));
@@ -250,7 +244,7 @@ export default function TechnicianTasks() {
               <span className="grid h-14 w-14 place-items-center rounded-2xl bg-[#4770d6] text-lg font-bold">{initials}</span>
               <div><p className="text-sm text-blue-100">{greeting || 'Hello'}</p><h1 className="text-xl font-bold">{displayName.split(' ')[0]}</h1></div>
             </div>
-            <Link href="/technician/notifications" aria-label="Notifications" className="relative rounded-2xl bg-[#4770d6] p-3"><Bell size={20} /><span className="absolute right-1 top-0 grid h-4 min-w-4 place-items-center rounded-full bg-[#ff3b50] px-1 text-[9px] font-bold">2</span></Link>
+            <Link href="/technician/notifications" aria-label="Notifications" className="relative rounded-2xl bg-[#4770d6] p-3"><Bell size={20} />{unreadNotificationCount > 0 && <span className="absolute right-1 top-0 grid h-4 min-w-4 place-items-center rounded-full bg-[#ff3b50] px-1 text-[9px] font-bold">{unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}</span>}</Link>
           </div>
           <section className="overflow-hidden rounded-3xl bg-white text-slate-950 shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-5 sm:px-6"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-[#2166f3] text-white"><Wrench size={22} /></span><p className="text-xs font-bold uppercase tracking-widest text-slate-400">Sky-Tech Technician</p></div><span className={`rounded-full px-2.5 py-1 text-xs font-bold text-white ${technician?.status?.replace(/_/g, ' ') === 'On Leave' ? 'bg-amber-500' : 'bg-emerald-600'}`}>{technician?.status?.replace(/_/g, ' ') || 'Active'}</span></div>
@@ -285,7 +279,7 @@ export default function TechnicianTasks() {
         <h2 className="mt-6 text-lg font-bold">View Scheduled Task</h2>
         <section className="mt-4 rounded-2xl bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-center justify-between"><button aria-label="Previous month" onClick={() => changeMonth(-1)} className="rounded-lg p-2 text-[#2166f3]"><ChevronLeft size={18} /></button><h3 className="text-sm font-bold sm:text-base">{monthDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}</h3><button aria-label="Next month" onClick={() => changeMonth(1)} className="rounded-lg p-2 text-[#2166f3]"><ChevronRight size={18} /></button></div>
-          <div className="mt-5 grid grid-cols-7 gap-y-2 text-center text-xs sm:gap-y-3 sm:text-sm"><div className="col-span-7 grid grid-cols-7 text-[10px] font-semibold text-slate-400 sm:text-xs">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => <span key={day}>{day}</span>)}</div>{calendarDays.map(({ day, muted, date }) => { const active = selectedDate === date; const hasTasks = taskDates.has(date); return <button key={date} disabled={muted} onClick={() => { hasInitializedTaskDate.current = true; setSelectedDate(date); }} className={`relative grid min-h-8 place-items-center rounded-xl font-semibold ${muted ? 'text-slate-300' : active ? 'bg-[#2447b6] text-white' : 'text-slate-800 hover:bg-blue-50'}`}>{day}{hasTasks && !active && <span className="absolute bottom-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500" />}{hasTasks && active && <span className="absolute bottom-0.5 h-1.5 w-1.5 rounded-full bg-white" />}</button>; })}</div>
+          <div className="mt-5 grid grid-cols-7 gap-y-2 text-center text-xs sm:gap-y-3 sm:text-sm"><div className="col-span-7 grid grid-cols-7 text-[10px] font-semibold text-slate-400 sm:text-xs">{['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => <span key={day}>{day}</span>)}</div>{calendarDays.map(({ day, muted, date }) => { const active = selectedDate === date; const hasTasks = taskDates.has(date); return <button key={date} disabled={muted} onClick={() => setSelectedDate(date)} className={`relative grid min-h-8 place-items-center rounded-xl font-semibold ${muted ? 'text-slate-300' : active ? 'bg-[#2447b6] text-white' : 'text-slate-800 hover:bg-blue-50'}`}>{day}{hasTasks && !active && <span className="absolute bottom-0.5 h-1.5 w-1.5 rounded-full bg-emerald-500" />}{hasTasks && active && <span className="absolute bottom-0.5 h-1.5 w-1.5 rounded-full bg-white" />}</button>; })}</div>
         </section>
 
         <section className="mt-4 rounded-2xl bg-white p-4 shadow-sm"><h3 className="font-bold">Task Overview</h3><p className="mt-2 text-sm text-slate-400">{selectedDateLabel}</p><p className={`mt-1 text-sm font-semibold ${selectedTasks.length ? 'text-emerald-600' : 'text-slate-400'}`}>{selectedTasks.length ? `${selectedTasks.length} task${selectedTasks.length === 1 ? '' : 's'} scheduled` : 'No tasks scheduled'}</p></section>

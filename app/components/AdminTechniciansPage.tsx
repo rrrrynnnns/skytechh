@@ -256,12 +256,13 @@ export function AdminTechniciansPage() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-5" onMouseDown={() => setIsModalOpen(false)}>
-          <form onSubmit={saveTechnician} onMouseDown={(event) => event.stopPropagation()} className="modal-scrollbar max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl">
+          <form onSubmit={saveTechnician} onMouseDown={(event) => event.stopPropagation()} className="admin-form-modal-scrollbar flex h-[calc(100vh-2rem)] max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
               <h2 className="text-lg font-bold">{editingTechnician ? 'Edit Technician' : 'Add Technician'}</h2>
               <button type="button" onClick={() => setIsModalOpen(false)} aria-label="Close" className="rounded-lg p-1 text-slate-400 hover:bg-slate-50"><X size={20} /></button>
             </div>
-            <div className="space-y-5 px-6 py-6">
+            <div className="min-h-0 flex-1 overflow-y-scroll">
+              <div className="space-y-5 px-6 py-6">
               {(() => { const name = splitName(editingTechnician?.name || ''); return <>
                 <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">First name *<input name="firstName" required defaultValue={name.firstName} placeholder="Juan" className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]" /></label>
                 <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Middle name (optional)<input name="middleName" defaultValue={name.middleName} placeholder="Santos" className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]" /></label>
@@ -270,8 +271,9 @@ export function AdminTechniciansPage() {
               <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Email *<input name="email" required type="email" defaultValue={editingTechnician?.email || ''} placeholder="email@skytech.net" className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]" /></label>
               <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Contact *<input name="contact" required defaultValue={editingTechnician?.contact || ''} placeholder="09XXXXXXXXX" className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]" /></label>
               <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Status<select name="status" defaultValue={editingTechnician?.status || 'Active'} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]"><option>Active</option><option>Off Duty</option><option>On Leave</option></select></label>
+              </div>
             </div>
-            <div className="sticky bottom-0 flex justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
+            <div className="flex shrink-0 justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
               <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600">Cancel</button>
               <button type="submit" disabled={isSaving} className="rounded-xl bg-[#2563eb] px-4 py-2.5 text-sm font-bold text-white">{isSaving ? 'Saving...' : editingTechnician ? 'Save changes' : 'Add Technician'}</button>
             </div>

@@ -35,6 +35,46 @@ button:disabled {
   opacity: 0.6;
 }
 
+.notification-popover {
+  animation: notification-popover-in 160ms ease-out both;
+  transform-origin: top right;
+}
+
+.notification-item {
+  animation: notification-item-in 180ms ease-out both;
+}
+
+@keyframes notification-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes notification-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notification-popover,
+  .notification-item {
+    animation: none;
+  }
+}
+
 [class*="tracking-[0.18em]"] {
   display: none;
 }
@@ -519,18 +559,6 @@ aside nav a {
 
 aside nav a[class*="bg-blue-50"] {
   border-left-color: #2563eb;
-}
-
-.overflow-auto,
-.overflow-x-auto,
-.overflow-y-auto {
-  scrollbar-width: none;
-}
-
-.overflow-auto::-webkit-scrollbar,
-.overflow-x-auto::-webkit-scrollbar,
-.overflow-y-auto::-webkit-scrollbar {
-  display: none;
 }
 
 @keyframes modal-fade-in {

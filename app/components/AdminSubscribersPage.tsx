@@ -372,25 +372,17 @@ export function AdminSubscribersPage() {
     if (!isAdding) return;
     const form = document.querySelector<HTMLFormElement>("form");
     if (!form) return;
-    const title = form.querySelector("h2");
-    const submitButton = form.querySelector<HTMLButtonElement>(
-      'button[type="submit"]',
-    );
     ["province", "city", "barangay"].forEach((name) => {
       const field = form.elements.namedItem(name) as HTMLSelectElement | null;
       if (field) field.required = false;
     });
     if (!editingSubscriber) {
       form.reset();
-      if (title) title.textContent = "Add Subscriber";
-      if (submitButton) submitButton.textContent = "Add Subscriber";
       setProvince("");
       setCity("");
       setBarangay("");
       return;
     }
-    if (title) title.textContent = "Edit Subscriber";
-    if (submitButton) submitButton.textContent = "Save changes";
     const [firstName, ...middleAndLast] = editingSubscriber[1].split(" ");
     const lastName = middleAndLast.pop() || "";
     (form.elements.namedItem("firstName") as HTMLInputElement).value =
@@ -625,10 +617,12 @@ export function AdminSubscribersPage() {
           <form
             onSubmit={addSubscriber}
             onMouseDown={(event) => event.stopPropagation()}
-            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl"
+            className="admin-form-modal-scrollbar flex h-[calc(100vh-2rem)] max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
           >
-            <div className="sticky top-0 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
-              <h2 className="text-lg font-bold">Add Subscriber</h2>
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5">
+              <h2 className="text-lg font-bold">
+                {editingSubscriber ? "Edit Subscriber" : "Add Subscriber"}
+              </h2>
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
@@ -638,7 +632,8 @@ export function AdminSubscribersPage() {
                 <X size={20} />
               </button>
             </div>
-            <div className="space-y-5 px-6 py-6">
+            <div className="min-h-0 flex-1 overflow-y-scroll">
+              <div className="space-y-5 px-6 py-6">
               <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400">
                 Personal Information
               </h3>
@@ -806,8 +801,9 @@ export function AdminSubscribersPage() {
                   className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]"
                 />
               </Field>
+              </div>
             </div>
-            <div className="sticky bottom-0 flex justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
+            <div className="flex shrink-0 justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
               <button
                 type="button"
                 onClick={() => setIsAdding(false)}
@@ -817,9 +813,9 @@ export function AdminSubscribersPage() {
               </button>
               <button
                 type="submit"
-                className="rounded-xl bg-[#2563eb] px-4 py-2.5 text-sm font-semibold text-white"
+                className="rounded-xl bg-[#2563eb] px-4 py-2.5 text-sm font-bold text-white"
               >
-                Add Subscriber
+                {editingSubscriber ? "Save changes" : "Add Subscriber"}
               </button>
             </div>
           </form>

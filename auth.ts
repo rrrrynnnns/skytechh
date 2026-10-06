@@ -21,7 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       const demos = {
         'admin@skytech.net': { id: 'USR-ADMIN', name: 'Sky-Tech Admin', role: 'admin' },
-        'tech@skytech.net': { id: 'USR-TECH', name: 'Luis Dela Cruz', role: 'technician', technicianId: '100002' },
+        'tech@skytech.net': { id: 'USR-TECH', name: 'Luis Dela Cruz', role: 'technician', technicianId: '100001' },
         'user1@skytech.net': { id: 'USR-SUB', name: 'Alex Rivera', role: 'subscriber', subscriberId: '100000001' },
       } as const;
       const demo = demos[email as keyof typeof demos];

@@ -48,6 +48,12 @@ export default function TechnicianNotificationsPage() {
     }
   }
 
+  async function markRead(item: NotificationItem) {
+    if (item.read) return;
+    setNotifications((items) => items.map((current) => current.id === item.id ? { ...current, read: true } : current));
+    await fetch(`/api/notifications/${item.id}/read`, { method: 'PUT' }).catch(() => undefined);
+  }
+
   const filtered = notifications.filter((item) => activeFilter === 'All' || notificationCategory(item) === activeFilter);
   const unreadCount = notifications.filter((item) => !item.read).length;
   const assignmentUnreadCount = notifications.filter((item) => !item.read && notificationCategory(item) === 'Assignments').length;
@@ -78,7 +84,7 @@ export default function TechnicianNotificationsPage() {
         <main className="mx-auto max-w-7xl px-4 py-6 sm:px-8 lg:px-10">
           <div className="grid gap-3">
             {filtered.map((item) => (
-              <article key={item.id} className={`flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-colors duration-100 hover:bg-[#f8fafc] sm:gap-4 sm:p-4 ${!item.read ? 'border-l-2 border-l-[#2166f3]' : ''}`}>
+              <article key={item.id} onClick={() => markRead(item)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); markRead(item); } }} role="button" tabIndex={0} className={`flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-colors duration-100 hover:bg-[#f8fafc] sm:gap-4 sm:p-4 ${!item.read ? 'border-l-2 border-l-[#2166f3]' : ''}`}>
                 <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${notificationTone(item.type)}`}>{notificationIcon(item.type)}</span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-4">
