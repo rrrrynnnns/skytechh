@@ -299,6 +299,13 @@ export function AdminInstallationsPage() {
       }
       if (button.textContent?.trim() === "Manage") {
         setEditingInstallation(installation);
+        setInstallationStatus(
+          installation[7] === "Completed" || installation[7] === "Installation Closed"
+            ? "Completed"
+            : installation[7] === "Cancelled" || installation[7] === "Installation Rescheduled"
+              ? "Cancelled"
+              : "Scheduled",
+        );
         setIsAdding(true);
       }
     }
@@ -330,10 +337,6 @@ export function AdminInstallationsPage() {
     );
     if (!editingInstallation) {
       form.reset();
-      setSubscriberQuery("");
-      setIsSubscriberDropdownOpen(false);
-      setInstallationStatus("Scheduled");
-      setIsStatusDropdownOpen(false);
       if (title) title.textContent = "Add Schedule";
       if (submitButton) submitButton.textContent = "Add Schedule";
       return;
@@ -349,13 +352,6 @@ export function AdminInstallationsPage() {
           : editingInstallation[5] === "13:00"
             ? "1:00 PM – 4:00 PM"
             : editingInstallation[5];
-      setInstallationStatus(
-        editingInstallation[7] === "Completed" || editingInstallation[7] === "Installation Closed"
-          ? "Completed"
-          : editingInstallation[7] === "Cancelled" || editingInstallation[7] === "Installation Rescheduled"
-            ? "Cancelled"
-            : "Scheduled",
-      );
       return;
     }
     (form.elements.namedItem("subscriber") as HTMLSelectElement).value =
@@ -382,7 +378,14 @@ export function AdminInstallationsPage() {
           </p>
         </div>
         <button
-          onClick={() => setIsAdding(true)}
+          onClick={() => {
+            setEditingInstallation(null);
+            setSubscriberQuery("");
+            setIsSubscriberDropdownOpen(false);
+            setInstallationStatus("Scheduled");
+            setIsStatusDropdownOpen(false);
+            setIsAdding(true);
+          }}
           className="inline-flex items-center gap-2 rounded-full bg-[#3b4fd8] px-5 py-3 text-sm font-bold text-white hover:bg-[#2d3fc7]"
         >
           <Plus size={17} />
@@ -414,7 +417,7 @@ export function AdminInstallationsPage() {
       </div>
       <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] table-fixed text-left">
+          <table className="w-full min-w-275 table-fixed text-left">
             <thead className="border-b border-slate-100 text-xs font-bold uppercase tracking-wide text-slate-400">
               <tr>
                 {[

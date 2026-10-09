@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { ArrowLeft, CalendarDays, FileText, Plus, Router, Wrench, X } from 'lucide-react';
@@ -59,6 +59,17 @@ function formatSelectedVisitDateTime(ticket: Ticket) {
   return [date, ticket.visitTime].filter(Boolean).join(', ');
 }
 
+function getRequestSortDate(ticket: Ticket) {
+  return new Date(ticket.visitDate || ticket.createdAt).getTime();
+}
+
+function isHistoryRequest(ticket: Ticket) {
+  if (ticket.type === 'Installation') {
+    return ['Completed', 'Installation Completed', 'Installation Closed', 'Installation_Closed'].includes(ticket.status);
+  }
+  return ticket.status === 'Resolved';
+}
+
 export default function MyTicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [tab, setTab] = useState<'active' | 'history'>('active');
@@ -87,13 +98,17 @@ export default function MyTicketsPage() {
               type: 'Installation',
               subject: installation.type,
               description: installation.type,
-              status: installation.status === 'Scheduled'
-                ? 'Installation Confirmed'
-                : ['Cancelled', 'Canceled'].includes(installation.status)
-                  ? 'Installation Rescheduled'
-                  : installation.status,
+              status: ['Completed', 'Installation Completed', 'Installation_Closed', 'Installation Closed'].includes(installation.status)
+                ? 'Installation Closed'
+                : installation.status === 'Scheduled'
+                  ? 'Installation Confirmed'
+                  : ['Cancelled', 'Canceled'].includes(installation.status)
+                    ? 'Installation Rescheduled'
+                    : installation.status,
               displayStatus: installation.status === 'Scheduled'
                 ? 'Installation Confirmed'
+                : ['Completed', 'Installation Completed', 'Installation_Closed', 'Installation Closed'].includes(installation.status)
+                  ? 'Installation Closed'
                 : ['Cancelled', 'Canceled'].includes(installation.status)
                   ? 'Installation Rescheduled'
                   : installation.status.replace(/_/g, ' '),
@@ -106,7 +121,11 @@ export default function MyTicketsPage() {
               details: installation.notes || null,
             }))
           : [];
-        setTickets([...tickets, ...installations]);
+        setTickets(
+          [...tickets, ...installations].sort(
+            (first, second) => getRequestSortDate(second) - getRequestSortDate(first),
+          ),
+        );
       })
       .catch(() => undefined);
   }, []);
@@ -140,9 +159,11 @@ export default function MyTicketsPage() {
     }
   }
 
-  const visibleTickets = tickets.filter((ticket) =>
-    tab === 'active' ? !['Resolved', 'Installation_Closed'].includes(ticket.status) : ['Resolved', 'Installation_Closed'].includes(ticket.status),
-  );
+  const visibleTickets = tickets
+    .filter((ticket) =>
+      tab === 'active' ? !isHistoryRequest(ticket) : isHistoryRequest(ticket),
+    )
+    .sort((first, second) => getRequestSortDate(second) - getRequestSortDate(first));
 
   const selectedVisitDateTime = selectedTicket ? formatSelectedVisitDateTime(selectedTicket) : '';
 
@@ -154,12 +175,12 @@ export default function MyTicketsPage() {
             <Link href="/subscriber/my-account" aria-label="Back to home" className="rounded-full bg-white/15 p-2 transition-colors duration-150 hover:bg-white/25">
               <ArrowLeft size={20} />
             </Link>
-            <h1 className="text-2xl font-bold">My Requests</h1>
+            <h1 className="text-xl font-bold leading-tight sm:text-2xl">My Requests</h1>
           </div>
 
           <button
             onClick={() => setIsFormOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-3 text-sm font-semibold transition-colors duration-150 hover:bg-white/25"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-white/15 px-3 py-2.5 text-xs font-semibold transition-colors duration-150 hover:bg-white/25 sm:gap-2 sm:px-4 sm:py-3 sm:text-sm"
           >
             <Plus size={17} /> New Request
           </button>
@@ -175,7 +196,7 @@ export default function MyTicketsPage() {
             >
               In Progress
               <span className="rounded-full bg-blue-100 px-2 py-1 text-xs text-[#2166f3]">
-                {tickets.filter((ticket) => !['Resolved', 'Installation_Closed'].includes(ticket.status)).length}
+                {tickets.filter((ticket) => !isHistoryRequest(ticket)).length}
               </span>
             </button>
 
@@ -197,19 +218,23 @@ export default function MyTicketsPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedTicket(ticket)}
-                  className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-colors duration-100 hover:bg-[#f8fafc]"
+                  className="flex min-w-0 items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors duration-100 hover:bg-[#f8fafc] sm:gap-4 sm:p-5"
                   key={ticket.id}
                 >
-                  <div className="flex min-w-0 items-center gap-4">
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#2166f3]">
-                      {ticket.type === 'Installation' ? <CalendarDays size={20} /> : <Wrench size={20} />}
+                  <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#2166f3] sm:h-11 sm:w-11">
+                      {ticket.type === 'Installation' ? <CalendarDays size={19} /> : <Wrench size={19} />}
                     </span>
                     <div className="min-w-0">
-                      <h2 className="text-xl font-bold text-slate-800">{ticket.id}</h2>
-                      <p className="mt-1 text-sm text-slate-600">{formatVisitDateTime(ticket)}</p>
+                      <h2 className="truncate text-lg font-bold text-slate-800 sm:text-xl">{ticket.id}</h2>
+                      <p className="mt-1 text-sm leading-tight text-slate-600 sm:leading-normal">{formatVisitDateTime(ticket)}</p>
                     </div>
                   </div>
-                  <Badge value={formatTicketStatus(ticket.status)} compact={ticket.type === 'Installation'} />
+                  <Badge
+                    value={formatTicketStatus(ticket.status)}
+                    compact={ticket.type === 'Installation'}
+                    className="max-w-[7.5rem] shrink-0 justify-center whitespace-normal break-words px-2 text-center text-[10px] leading-3 sm:max-w-none sm:whitespace-nowrap sm:px-2.5 sm:text-xs sm:leading-normal"
+                  />
                 </button>
               ))}
             </div>
@@ -224,7 +249,7 @@ export default function MyTicketsPage() {
         {selectedTicket && (
           <div className="fixed inset-0 z-50 bg-slate-950/30" onMouseDown={() => setSelectedTicket(null)}>
             <section
-              className="absolute inset-y-0 right-0 w-full max-w-[980px] overflow-y-auto bg-[#edf3ff] p-0 shadow-2xl"
+              className="absolute inset-y-0 right-0 w-full max-w-245 overflow-y-auto bg-[#edf3ff] p-0 shadow-2xl"
               onMouseDown={(event) => event.stopPropagation()}
             >
               <div className="flex h-full flex-col">

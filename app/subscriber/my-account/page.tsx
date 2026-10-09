@@ -1,8 +1,8 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Bell, CalendarDays, CircleHelp, CreditCard, FileText, MessageSquare, Wifi, Wrench, Zap } from 'lucide-react';
+import { Bell, CalendarDays, CircleHelp, CreditCard, FileText, MessageSquare, Wifi, Wrench, Zap, X } from 'lucide-react';
 import { PortalShell } from '@/app/components/PortalShell';
 import { Badge } from '@/app/components/Badge';
 import { formatTicketStatus } from '@/app/lib/ticket-status';
@@ -14,7 +14,7 @@ const actions = [
   { label: 'Get Help', href: '/subscriber/help', Icon: CircleHelp },
 ];
 
-type RequestHistoryItem = { id: string; type: string; subject: string; status: string; createdAt: string; visitDate?: string | null; visitTime?: string | null };
+type RequestHistoryItem = { id: string; type: string; subject: string; status: string; createdAt: string; visitDate?: string | null; visitTime?: string | null; technicianName?: string | null; subscriberName?: string | null; subscriberAddress?: string | null; description?: string | null; details?: string | null };
 
 function formatMoney(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return '₱0.00';
@@ -29,6 +29,7 @@ export default function SubscriberAccount() {
   });
   const [transactions, setTransactions] = useState<Array<{ id: string; amount: number; dueDate: string; status: string }>>([]);
   const [requests, setRequests] = useState<RequestHistoryItem[]>([]);
+  const [selectedRequest, setSelectedRequest] = useState<RequestHistoryItem | null>(null);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
   useEffect(() => {
@@ -62,20 +63,33 @@ export default function SubscriberAccount() {
       .then(async ([ticketResponse, installationResponse]) => {
         const ticketsResult = ticketResponse.ok ? await ticketResponse.json() : { data: [] };
         const installationsResult = installationResponse.ok ? await installationResponse.json() : { data: [] };
-        const tickets = Array.isArray(ticketsResult.data) ? ticketsResult.data : [];
+        const tickets = Array.isArray(ticketsResult.data)
+          ? ticketsResult.data.map((ticket: RequestHistoryItem & { technician?: { name?: string | null } | null; subscriber?: { name?: string | null; address?: string | null } | null }) => ({
+              ...ticket,
+              technicianName: ticket.technician?.name || null,
+              subscriberName: ticket.subscriber?.name || null,
+              subscriberAddress: ticket.subscriber?.address || null,
+            }))
+          : [];
         const installations = Array.isArray(installationsResult.data)
-          ? installationsResult.data.map((installation: { id: string; date: string; time: string; type: string; status: string }) => ({
+          ? installationsResult.data.map((installation: { id: string; date: string; time: string; type: string; status: string; address?: string | null; notes?: string | null; technician?: { name?: string | null } | null; subscriber?: { name?: string | null; address?: string | null } | null }) => ({
               id: installation.id,
               type: 'Installation',
               subject: installation.type,
-              status: installation.status === 'Scheduled'
-                ? 'Installation Confirmed'
-                : ['Cancelled', 'Canceled'].includes(installation.status)
-                  ? 'Installation Rescheduled'
-                  : installation.status,
+              status: ['Completed', 'Installation Completed', 'Installation_Closed', 'Installation Closed'].includes(installation.status)
+                ? 'Installation Closed'
+                : installation.status === 'Scheduled'
+                  ? 'Installation Confirmed'
+                  : ['Cancelled', 'Canceled'].includes(installation.status)
+                    ? 'Installation Rescheduled'
+                    : installation.status,
               createdAt: installation.date,
               visitDate: installation.date,
               visitTime: installation.time,
+              technicianName: installation.technician?.name || null,
+              subscriberName: installation.subscriber?.name || null,
+              subscriberAddress: installation.subscriber?.address || installation.address || null,
+              details: installation.notes || null,
             }))
           : [];
         setRequests(
@@ -141,11 +155,39 @@ export default function SubscriberAccount() {
       </div>
       <div className="mt-4 grid gap-3">{visibleRequests.length ? visibleRequests.map((request) => {
         const status = formatTicketStatus(request.status);
-        const compactStatusClass = status === 'Installation Rescheduled'
-          ? 'h-6 w-24 shrink-0 justify-center whitespace-normal px-1 py-0 text-center text-xs leading-3 sm:h-auto sm:w-auto sm:shrink sm:whitespace-nowrap sm:px-2.5 sm:py-1 sm:text-xs sm:leading-normal'
-          : '';
-        return <Link href="/subscriber/my-tickets" className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm" key={`${request.type}-${request.id}`}><div className="flex min-w-0 items-center gap-4"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#2166f3]">{request.type === 'Installation' ? <CalendarDays size={20} /> : <Wrench size={20} />}</span><div className="min-w-0"><p className="truncate text-xl font-bold text-slate-800">{request.id}</p><p className="mt-1 text-sm text-slate-600">{formatRequestVisitDateTime(request)}</p></div></div><Badge value={status} className={compactStatusClass} /></Link>;
+        const statusClass = 'max-w-none shrink-0 justify-center whitespace-nowrap px-2 text-[9px] leading-3 sm:px-2.5 sm:text-xs sm:leading-normal';
+        return <button type="button" onClick={() => setSelectedRequest(request)} className="flex min-w-0 w-full items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:bg-slate-50 sm:gap-4 sm:p-5" key={`${request.type}-${request.id}`}><div className="flex min-w-0 items-center gap-3 sm:gap-4"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#2166f3] sm:h-11 sm:w-11">{request.type === 'Installation' ? <CalendarDays size={19} /> : <Wrench size={19} />}</span><div className="min-w-0"><p className="truncate text-lg font-bold text-slate-800 sm:text-xl">{request.id}</p><p className="mt-1 text-sm leading-tight text-slate-600 sm:leading-normal">{formatRequestVisitDateTime(request)}</p></div></div><Badge value={status} className={statusClass} /></button>;
       }) : <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">No requests yet.</div>}</div>
     </div>
+    {selectedRequest ? <div className="fixed inset-0 z-50 bg-slate-950/30" onMouseDown={() => setSelectedRequest(null)}>
+      <section className="absolute inset-y-0 right-0 w-full max-w-245 overflow-y-auto bg-[#edf3ff] shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="flex min-h-full flex-col">
+          <div className="flex items-center justify-between bg-[#2447b6] px-5 py-6 text-white sm:px-8">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/15">{selectedRequest.type === 'Installation' ? <CalendarDays size={18} /> : <Wrench size={18} />}</span>
+              <div className="min-w-0"><p className="text-xs font-bold uppercase tracking-widest text-blue-100">Status</p><p className="truncate text-xl font-bold">{formatTicketStatus(selectedRequest.status)}</p></div>
+            </div>
+            <button aria-label="Close request details" onClick={() => setSelectedRequest(null)} className="rounded-full bg-white/15 p-2"><X size={20} /></button>
+          </div>
+          <div className="flex-1 px-4 py-5 sm:px-6">
+            <div className="mb-5 flex items-center justify-between gap-4 rounded-xl bg-white/70 px-4 py-3"><p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Work order number</p><p className="text-lg font-bold text-slate-900">{selectedRequest.id}</p></div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="text-2xl font-bold text-slate-800">Work order details</h3>
+              <p className="mt-5 text-sm text-slate-500">Technician visit date and time</p>
+              <p className="mt-1 text-lg font-semibold text-slate-800">{formatRequestVisitDateTime(selectedRequest)}</p>
+              <p className="mt-4 text-sm text-slate-500">Technician</p>
+              <p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.technicianName || 'Not assigned yet'}</p>
+            </div>
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="text-2xl font-bold text-slate-800">Request details</h3>
+              <p className="mt-5 text-sm text-slate-500">Name</p><p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.subscriberName || displayName}</p>
+              <p className="mt-4 text-sm text-slate-500">Address</p><p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.subscriberAddress || 'No address provided'}</p>
+              <p className="mt-4 text-sm text-slate-500">{selectedRequest.type === 'Installation' ? 'Service Type' : 'Concern'}</p><p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.type === 'Installation' ? 'Installation' : selectedRequest.subject}</p>
+              {selectedRequest.type !== 'Installation' ? <><p className="mt-4 text-sm text-slate-500">Details</p><p className="mt-1 whitespace-pre-line text-base leading-7 text-slate-700">{selectedRequest.details || selectedRequest.description || 'No additional details provided.'}</p></> : null}
+            </div>
+          </div>
+        </div>
+      </section>
+    </div> : null}
   </PortalShell>;
 }

@@ -20,10 +20,10 @@ export async function PUT(request: Request) {
   if (!technicianId) return NextResponse.json({ data: null, error: 'Technician account is not linked.' }, { status: 404 });
 
   const body = await request.json();
-  if (!body.name || !body.email) return NextResponse.json({ data: null, error: 'Name and email are required.' }, { status: 400 });
+  if (!body.name || !body.email || !body.contact) return NextResponse.json({ data: null, error: 'Name, email, and contact are required.' }, { status: 400 });
   const technician = await prisma.technician.update({
     where: { id: technicianId },
-    data: { name: body.name, email: body.email },
+    data: { name: body.name, email: body.email, contact: body.contact },
   });
   return NextResponse.json({ data: technician, error: null });
 }

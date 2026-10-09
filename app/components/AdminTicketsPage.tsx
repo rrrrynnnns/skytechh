@@ -124,7 +124,7 @@ export function AdminTicketsPage() {
   }, []);
 
   useEffect(() => {
-    const table = document.querySelector('table[class*="min-w-[1200px]"]');
+    const table = document.querySelector('table[class*="min-w-300"]');
     const toolbar = table?.closest('.mt-4')?.previousElementSibling;
     if (!toolbar) return;
     toolbar.querySelectorAll('.installation-record-counter').forEach((node) => node.remove());
@@ -213,8 +213,8 @@ export function AdminTicketsPage() {
       </div>
 
       <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <div className="overflow-x-auto">
-          <table className="min-w-[1200px] w-full text-left">
+        <div className="overflow-x-auto scrollbar-hidden">
+          <table className="min-w-300 w-full text-left">
             <thead className="border-b border-slate-100 text-xs font-bold uppercase tracking-wide text-slate-400">
               <tr>
                 {['Ticket ID', 'Subscriber', 'Concern', 'Date', 'Time', 'Status', 'Actions'].map((heading) => (

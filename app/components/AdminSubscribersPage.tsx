@@ -55,6 +55,12 @@ function Field({
   );
 }
 
+function displayFirstAndLastName(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 2) return parts.join(" ");
+  return `${parts[0]} ${parts[parts.length - 1]}`;
+}
+
 export function AdminSubscribersPage() {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [query, setQuery] = useState("");
@@ -196,17 +202,18 @@ export function AdminSubscribersPage() {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const firstName = String(form.get("firstName") || "Juan");
+    const middleName = String(form.get("middleName") || "");
     const lastName = String(form.get("lastName") || "Santos");
     const email = String(form.get("email") || "email@skytech.net");
     const contact = String(form.get("contact") || "09XXXXXXXXX");
     const plan = String(form.get("plan") || "Fiber 100Mbps");
-    const connectionDate = String(form.get("connectionDate") || "2026-09-04");
+    const connectionDate = editingSubscriber?.[5] || "2026-09-04";
     const province = String(form.get("province") || "");
     const city = String(form.get("city") || "");
     const barangay = String(form.get("barangay") || "");
     const street = String(form.get("street") || "");
     const zipCode = String(form.get("zipCode") || "");
-    const fullName = `${firstName} ${lastName}`;
+    const fullName = [firstName, middleName, lastName].filter(Boolean).join(" ");
 
     if (editingSubscriber) {
       const address =
@@ -385,8 +392,11 @@ export function AdminSubscribersPage() {
     }
     const [firstName, ...middleAndLast] = editingSubscriber[1].split(" ");
     const lastName = middleAndLast.pop() || "";
+    const middleName = middleAndLast.join(" ");
     (form.elements.namedItem("firstName") as HTMLInputElement).value =
       firstName;
+    (form.elements.namedItem("middleName") as HTMLInputElement).value =
+      middleName;
     (form.elements.namedItem("lastName") as HTMLInputElement).value = lastName;
     (form.elements.namedItem("email") as HTMLInputElement).value =
       editingSubscriber[2];
@@ -394,8 +404,6 @@ export function AdminSubscribersPage() {
       editingSubscriber[7];
     (form.elements.namedItem("plan") as HTMLSelectElement).value =
       formatPlanName(editingSubscriber[3]);
-    (form.elements.namedItem("connectionDate") as HTMLInputElement).value =
-      editingSubscriber[5];
     setProvince(editingSubscriber[8]);
     setCity(editingSubscriber[9]);
     setBarangay(editingSubscriber[10]);
@@ -564,7 +572,6 @@ export function AdminSubscribersPage() {
                   "Email",
                   "Plan",
                   "Status",
-                  "Connected",
                   "Actions",
                 ].map((heading) => (
                   <th className="px-5 py-4" key={heading}>
@@ -575,11 +582,11 @@ export function AdminSubscribersPage() {
             </thead>
             <tbody className="text-sm">
               {rows.map(
-                ([id, name, email, plan, subscriberStatus, connected]) => (
+                ([id, name, email, plan, subscriberStatus]) => (
                   <tr className="border-t border-slate-100" key={id}>
                     <td className="px-5 py-4 text-slate-900">{id}</td>
                     <td className="px-5 py-4 font-semibold text-slate-900">
-                      {name}
+                      {displayFirstAndLastName(name)}
                     </td>
                     <td className="px-5 py-4 text-slate-500">{email}</td>
                     <td className="px-5 py-4 text-slate-500">{plan}</td>
@@ -590,7 +597,6 @@ export function AdminSubscribersPage() {
                         {subscriberStatus}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-slate-500">{connected}</td>
                     <td className="px-5 py-4">
                       <div className="flex gap-3 text-xs font-semibold">
                         {!subscribers.find((item) => item[0] === id)?.[13] ? <>
@@ -642,6 +648,13 @@ export function AdminSubscribersPage() {
                   name="firstName"
                   placeholder="Juan"
                   required
+                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]"
+                />
+              </Field>
+              <Field label="Middle name (optional)">
+                <input
+                  name="middleName"
+                  placeholder="Santos"
                   className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]"
                 />
               </Field>
@@ -701,14 +714,6 @@ export function AdminSubscribersPage() {
                   <option>Active</option>
                   <option>Suspended</option>
                 </select>
-              </Field>
-              <Field label="Connection date">
-                <input
-                  name="connectionDate"
-                  type="date"
-                  defaultValue="2026-09-04"
-                  className="mt-2 w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none"
-                />
               </Field>
               <h3 className="pt-2 text-xs font-bold uppercase tracking-wide text-slate-400">
                 Address

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Check, CheckSquare, Clock3, FileText } from 'lucide-react';
+import { ArrowLeft, CalendarClock, CheckSquare, CircleCheckBig, ClipboardList, FileText, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PortalShell } from '@/app/components/PortalShell';
 
@@ -10,20 +10,25 @@ type Filter = 'All' | 'Assignments' | 'Updates' | 'Advisories';
 
 const filters: Filter[] = ['All', 'Assignments', 'Updates', 'Advisories'];
 
-function notificationIcon(type: string) {
-  if (type === 'system') return <Clock3 size={16} />;
+function notificationIcon(type: string, title: string) {
+  if (type === 'system') return <Info size={16} />;
+  if (title === 'Schedule Updated') return <CalendarClock size={16} />;
+  if (title === 'New Task Assigned') return <ClipboardList size={16} />;
+  if (title === 'Task Completed') return <CircleCheckBig size={16} />;
   if (type === 'update' || type === 'task') return <CheckSquare size={16} />;
   return <FileText size={16} />;
 }
 
-function notificationTone(type: string) {
+function notificationTone(type: string, title: string) {
   if (type === 'system') return 'bg-violet-50 text-violet-500';
+  if (title === 'Schedule Updated') return 'bg-amber-50 text-amber-500';
   if (type === 'update' || type === 'task') return 'bg-emerald-50 text-emerald-500';
   return 'bg-blue-50 text-blue-500';
 }
 
 function notificationCategory(item: NotificationItem): Exclude<Filter, 'All'> {
   if (item.type === 'system') return 'Advisories';
+  if (item.title === 'Schedule Updated') return 'Assignments';
   if (['assignment', 'installation', 'booking'].includes(item.type)) return 'Assignments';
   if (item.type === 'task' && !/complete|closed|resolved/i.test(`${item.title} ${item.body}`)) return 'Assignments';
   return 'Updates';
@@ -85,7 +90,7 @@ export default function TechnicianNotificationsPage() {
           <div className="grid gap-3">
             {filtered.map((item) => (
               <article key={item.id} onClick={() => markRead(item)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); markRead(item); } }} role="button" tabIndex={0} className={`flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-colors duration-100 hover:bg-[#f8fafc] sm:gap-4 sm:p-4 ${!item.read ? 'border-l-2 border-l-[#2166f3]' : ''}`}>
-                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${notificationTone(item.type)}`}>{notificationIcon(item.type)}</span>
+                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${notificationTone(item.type, item.title)}`}>{notificationIcon(item.type, item.title)}</span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-4">
                     <div>
@@ -96,7 +101,6 @@ export default function TechnicianNotificationsPage() {
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <p className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
-                    {item.read && <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600"><Check size={14} />Read</span>}
                   </div>
                 </div>
               </article>
