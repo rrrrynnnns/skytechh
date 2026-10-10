@@ -68,15 +68,15 @@ export default function TransactionsPage() {
 
   return (
     <PortalShell role="subscriber">
-      <div className="min-h-screen bg-[#f7f9fc]">
-        <header className="flex items-center gap-3 bg-[#2447b6] px-5 py-6 text-white sm:px-8 lg:px-10">
+      <div className="flex h-[calc(100svh-4rem)] flex-col overflow-hidden bg-[#f7f9fc]">
+        <header className="flex shrink-0 items-center gap-3 bg-[#2447b6] px-5 py-6 text-white sm:px-8 lg:px-10">
           <Link href="/subscriber/my-account" aria-label="Back to home" className="rounded-full bg-white/15 p-2">
             <ArrowLeft size={20} />
           </Link>
           <h1 className="text-2xl font-bold">My Transactions</h1>
         </header>
 
-        <div className="border-b border-slate-200 bg-white px-5 sm:px-8 lg:px-10">
+        <div className="shrink-0 border-b border-slate-200 bg-white px-5 sm:px-8 lg:px-10">
           <div className="flex gap-8">
             <button
               type="button"
@@ -95,7 +95,7 @@ export default function TransactionsPage() {
           </div>
         </div>
 
-        <main className="mx-auto max-w-7xl px-4 py-5 sm:px-8 lg:px-10">
+        <main className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-8 lg:px-10">
           {activeTab === 'Pending' ? (
             pending ? (
               <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

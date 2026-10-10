@@ -260,17 +260,15 @@ export default function TechnicianTasks() {
           {todaysTasks.map((task) => {
             const displayStatus = getDisplayStatus(task.rawStatus || task.status);
             return (
-              <button type="button" key={`${task.isInstallation ? 'installation' : 'repair'}-${task.id}`} onClick={() => openTask(task)} aria-label={`Open task for ${formatPersonName(task.name)}`} className="flex w-full items-center justify-between gap-3 rounded-2xl bg-white p-4 text-left shadow-sm transition-colors hover:bg-slate-50">
+              <button type="button" key={`${task.isInstallation ? 'installation' : 'repair'}-${task.id}`} onClick={() => openTask(task)} aria-label={`Open task for ${formatPersonName(task.name)}`} className="flex min-h-[76px] w-full items-center justify-between gap-2 overflow-hidden rounded-2xl border border-slate-200 bg-white px-3 py-3 text-left shadow-sm transition-colors hover:bg-slate-50 sm:gap-3 sm:px-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#2166f3]">{task.isInstallation ? <CalendarDays size={20} /> : <Wrench size={20} />}</span>
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#2166f3]">{task.isInstallation ? <CalendarDays size={18} /> : <Wrench size={18} />}</span>
                   <div className="min-w-0">
-                    <h3 className="truncate font-bold">{formatPersonName(task.name)}</h3>
-                    <p className="mt-1 truncate text-sm text-slate-400">{formatTaskDate(task.date)}</p>
+                    <h3 className="truncate text-sm font-bold text-slate-900">{formatPersonName(task.name)}</h3>
+                    <p className="mt-1 truncate text-xs text-slate-400">{formatTaskDate(task.date)}</p>
                   </div>
                 </div>
-                <div className="shrink-0 text-right">
-                  <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyles[displayStatus] || 'border-blue-200 bg-blue-50 text-blue-600'}`}>{displayStatus}</span>
-                </div>
+                <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-bold ${statusStyles[displayStatus] || 'border-blue-200 bg-blue-50 text-blue-600'}`}>{displayStatus}</span>
               </button>
             );
           })}
@@ -287,12 +285,12 @@ export default function TechnicianTasks() {
         {selectedTasks.length > 0 && <div className="mt-4 grid gap-3">{selectedTasks.map((task) => {
           const displayStatus = getDisplayStatus(task.rawStatus || task.status);
           return (
-            <button type="button" key={`${task.isInstallation ? 'installation' : 'repair'}-${task.id}`} onClick={() => openTask(task)} aria-label={`Open task for ${formatPersonName(task.name)}`} className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:bg-slate-50">
+            <button type="button" key={`${task.isInstallation ? 'installation' : 'repair'}-${task.id}`} onClick={() => openTask(task)} aria-label={`Open task for ${formatPersonName(task.name)}`} className="flex min-h-[76px] w-full items-center justify-between gap-2 overflow-hidden rounded-2xl border border-slate-200 bg-white px-3 py-3 text-left shadow-sm transition-colors hover:bg-slate-50 sm:gap-3 sm:px-4">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#2166f3]">{task.isInstallation ? <CalendarDays size={20} /> : <Wrench size={20} />}</span>
-                <div className="min-w-0"><h3 className="truncate font-bold">{formatPersonName(task.name)}</h3><p className="mt-1 truncate text-sm text-slate-400">{formatTaskDate(task.date)}</p></div>
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#2166f3]">{task.isInstallation ? <CalendarDays size={18} /> : <Wrench size={18} />}</span>
+                <div className="min-w-0"><h3 className="truncate text-sm font-bold text-slate-900">{formatPersonName(task.name)}</h3><p className="mt-1 truncate text-xs text-slate-400">{formatTaskDate(task.date)}</p></div>
               </div>
-              <div className="shrink-0 text-right"><span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${statusStyles[displayStatus] || 'border-blue-200 bg-blue-50 text-blue-600'}`}>{displayStatus}</span></div>
+              <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-bold ${statusStyles[displayStatus] || 'border-blue-200 bg-blue-50 text-blue-600'}`}>{displayStatus}</span>
             </button>
           );
         })}</div>}

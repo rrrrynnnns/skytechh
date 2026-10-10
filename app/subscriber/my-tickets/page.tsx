@@ -169,7 +169,7 @@ export default function MyTicketsPage() {
 
   return (
     <PortalShell role="subscriber">
-      <div className="min-h-screen bg-[#f7f9fc]">
+      <div className="flex h-[calc(100svh-4rem)] touch-pan-y overscroll-none flex-col overflow-hidden bg-[#f7f9fc] lg:h-screen">
         <header className="flex items-center justify-between gap-4 bg-[#2447b6] px-5 py-6 text-white sm:px-8 lg:px-10">
           <div className="flex items-center gap-3">
             <Link href="/subscriber/my-account" aria-label="Back to home" className="rounded-full bg-white/15 p-2 transition-colors duration-150 hover:bg-white/25">
@@ -211,7 +211,8 @@ export default function MyTicketsPage() {
           </div>
         </div>
 
-        <main className="mx-auto max-w-7xl px-4 py-5 sm:px-8 lg:px-10">
+        <main className="scrollbar-hidden min-h-0 flex-1 touch-pan-y overscroll-contain overflow-x-hidden overflow-y-auto px-4 py-5 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-7xl">
           {visibleTickets.length ? (
             <div className="grid gap-3">
               {visibleTickets.map((ticket) => (
@@ -244,6 +245,7 @@ export default function MyTicketsPage() {
               <p className="mt-5 text-2xl font-bold text-[#2447b6]">No request yet.</p>
             </div>
           )}
+          </div>
         </main>
 
         {selectedTicket && (

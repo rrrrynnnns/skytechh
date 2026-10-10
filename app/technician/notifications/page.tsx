@@ -65,8 +65,8 @@ export default function TechnicianNotificationsPage() {
 
   return (
     <PortalShell role="technician">
-      <div className="min-h-screen bg-[#f7f9fc]">
-        <header className="flex items-center justify-between gap-4 bg-[#2447b6] px-5 py-6 text-white sm:px-8 lg:px-10">
+      <div className="flex h-[calc(100svh-4rem)] flex-col overflow-hidden bg-[#f7f9fc]">
+        <header className="flex shrink-0 items-center justify-between gap-4 bg-[#2447b6] px-5 py-6 text-white sm:px-8 lg:px-10">
           <div className="flex items-center gap-3">
             <Link href="/technician/my-tasks" aria-label="Back to home" className="rounded-full bg-white/15 p-2 transition-colors duration-150 hover:bg-white/25"><ArrowLeft size={20} /></Link>
             <h1 className="text-2xl font-bold">Notifications</h1>
@@ -74,7 +74,7 @@ export default function TechnicianNotificationsPage() {
           <button disabled={isMarkingRead || unreadCount === 0} onClick={markAllRead} className="rounded-xl bg-white/15 px-4 py-3 text-sm font-semibold transition-colors duration-150 hover:bg-white/25">{isMarkingRead ? 'Marking...' : 'Mark all read'}</button>
         </header>
 
-        <div className="border-b border-slate-200 bg-white px-5 sm:px-8 lg:px-10">
+        <div className="shrink-0 border-b border-slate-200 bg-white px-5 sm:px-8 lg:px-10">
           <div className="flex gap-7 overflow-x-auto scrollbar-hidden">
             {filters.map((label) => (
               <button key={label} onClick={() => setActiveFilter(label)} className={`flex shrink-0 items-center gap-2 border-b-2 px-0 py-5 text-sm font-semibold transition-colors duration-150 ${activeFilter === label ? 'border-[#2166f3] text-[#2166f3]' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
@@ -86,8 +86,8 @@ export default function TechnicianNotificationsPage() {
           </div>
         </div>
 
-        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-8 lg:px-10">
-          <div className="grid gap-3">
+        <main className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8 lg:px-10">
+          <div className="mx-auto max-w-7xl"><div className="grid gap-3">
             {filtered.map((item) => (
               <article key={item.id} onClick={() => markRead(item)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); markRead(item); } }} role="button" tabIndex={0} className={`flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-colors duration-100 hover:bg-[#f8fafc] sm:gap-4 sm:p-4 ${!item.read ? 'border-l-2 border-l-[#2166f3]' : ''}`}>
                 <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${notificationTone(item.type, item.title)}`}>{notificationIcon(item.type, item.title)}</span>
@@ -101,11 +101,10 @@ export default function TechnicianNotificationsPage() {
                   </div>
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <p className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
-                  </div>
-                </div>
+                  </div></div>
               </article>
             ))}
-          </div>
+          </div></div>
           {filtered.length === 0 && <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">No notifications in this category yet.</div>}
         </main>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, UserRound } from 'lucide-react';
+import { ChevronRight, Eye, EyeOff, LockKeyhole, UserRound } from 'lucide-react';
 import { useEffect, useState, type FormEvent } from 'react';
 import { signOut } from 'next-auth/react';
 import { PortalShell } from '@/app/components/PortalShell';
@@ -26,6 +26,7 @@ export default function TechnicianProfilePage() {
   const [technician, setTechnician] = useState<Technician | null>(null);
   const [form, setForm] = useState<ProfileForm | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -82,14 +83,31 @@ export default function TechnicianProfilePage() {
   const initials = displayName.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
   const inputClass = 'mt-2 w-full border-b border-slate-300 px-0 py-3 outline-none';
 
+  async function changePassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError('');
+    const values = Object.fromEntries(new FormData(event.currentTarget));
+    if (values.newPassword !== values.confirmPassword) {
+      setError('New passwords do not match.');
+      return;
+    }
+    const response = await fetch('/api/account/password', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: values.currentPassword, newPassword: values.newPassword }) });
+    const result = await response.json();
+    if (!response.ok) {
+      setError(result.error || 'Unable to change password.');
+      return;
+    }
+    setIsChangingPassword(false);
+  }
+
   if (isEditing) {
     return <PortalShell role="technician">
-      <div className="min-h-screen bg-white">
-        <header className="flex items-center gap-5 bg-[#eef3fb] px-5 py-4 text-[#33415c] sm:px-8 lg:px-10">
+      <div className="flex h-[calc(100svh-4rem)] flex-col overflow-hidden bg-white">
+        <header className="flex shrink-0 items-center gap-5 bg-[#eef3fb] px-5 py-4 text-[#33415c] sm:px-8 lg:px-10">
           <button type="button" onClick={() => setIsEditing(false)} aria-label="Back to profile" className="text-2xl">&lsaquo;</button>
           <span className="text-sm font-semibold tracking-widest">PROFILE</span>
         </header>
-        <form onSubmit={saveProfile} className="px-5 py-7 sm:px-8 lg:px-10">
+        <form onSubmit={saveProfile} className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-5 py-7 sm:px-8 lg:px-10">
           <h1 className="text-3xl font-bold text-[#24417e]">Profile details</h1>
           <p className="mt-4 text-sm text-slate-500">Update your technician profile details anytime.</p>
           <div className="mt-8 flex items-center gap-5">
@@ -110,6 +128,8 @@ export default function TechnicianProfilePage() {
     </PortalShell>;
   }
 
+  if (isChangingPassword) return <PortalShell role="technician"><div className="flex h-[calc(100svh-4rem)] flex-col overflow-hidden bg-white"><header className="flex shrink-0 items-center gap-5 bg-[#eef3fb] px-5 py-4 text-[#33415c] sm:px-8 lg:px-10"><button type="button" onClick={() => { setIsChangingPassword(false); setError(''); }} aria-label="Back to profile" className="text-2xl">&lsaquo;</button><span className="text-sm font-semibold tracking-widest">PROFILE</span></header><form onSubmit={changePassword} className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-5 py-7 sm:px-8 lg:px-10"><span className="grid h-16 w-16 place-items-center rounded-2xl bg-blue-50 text-[#2161e8]"><LockKeyhole size={30} /></span><h1 className="mt-7 text-3xl font-bold text-[#24417e]">Change password</h1><p className="mt-4 text-sm text-slate-500">Create a strong password with at least 8 characters to keep your account secure.</p><div className="mt-10 grid gap-6">{[['currentPassword', 'Current password', 'Enter current password'], ['newPassword', 'New password', 'Enter new password'], ['confirmPassword', 'Confirm new password', 'Enter confirm new password']].map(([name, label, placeholder]) => <label key={name} className="text-sm text-slate-700">{label}<div className="relative"><input required minLength={name === 'currentPassword' ? undefined : 8} type="password" name={name} placeholder={placeholder} className={`${inputClass} pr-10`} /><span className="absolute right-0 top-3 text-slate-400">{name === 'currentPassword' ? <Eye size={18} /> : <EyeOff size={18} />}</span></div></label>)}</div>{error ? <p className="mt-5 text-sm text-red-600">{error}</p> : null}<button type="submit" className="mt-8 w-full rounded-2xl bg-[#2161e8] px-5 py-4 font-bold text-white">Change password</button></form></div></PortalShell>;
+
   return <PortalShell role="technician">
     <div className="min-h-screen bg-white">
       <section className="border-b border-slate-100 px-5 pb-9 pt-11 text-center sm:px-8">
@@ -120,8 +140,8 @@ export default function TechnicianProfilePage() {
       </section>
       <main className="mx-auto max-w-7xl">
         <section>
-          <h2 className="px-5 pb-4 pt-7 text-xl font-bold text-[#24417e] sm:px-8 lg:px-10">Account Settings</h2>
           <button onClick={() => setIsEditing(true)} className="flex w-full items-center gap-4 border-b border-slate-100 px-5 py-5 text-left text-base text-slate-600 transition-colors duration-150 hover:bg-slate-50 sm:px-8 lg:px-10"><UserRound size={21} /><span className="flex-1">Profile details</span><ChevronRight size={18} /></button>
+          <button onClick={() => { setError(''); setIsChangingPassword(true); }} className="flex w-full items-center gap-4 border-b border-slate-100 px-5 py-5 text-left text-base text-slate-600 transition-colors duration-150 hover:bg-slate-50 sm:px-8 lg:px-10"><LockKeyhole size={21} /><span className="flex-1">Change password</span><ChevronRight size={18} /></button>
         </section>
         <div className="px-5 pb-32 pt-7 sm:px-8 lg:px-10"><button onClick={handleSignOut} className="w-full rounded-2xl border border-red-200 bg-red-50 py-4 text-base font-bold text-red-600 transition-colors duration-150 hover:bg-red-100">Sign Out</button></div>
       </main>
