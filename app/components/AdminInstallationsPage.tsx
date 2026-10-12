@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Plus, Search, X } from "lucide-react";
 import { PortalShell } from "@/app/components/PortalShell";
 import { formatPersonName } from "@/app/lib/name";
@@ -17,6 +17,7 @@ type Installation = readonly [
 ];
 type Filter = "All" | "Scheduled" | "In Progress" | "Completed" | "Cancelled";
 type Technician = { id: string; name: string; status: string };
+type TicketSchedule = { technicianId: string | null; date: string | null; time: string | null };
 
 const statusStyles: Record<string, string> = {
   Scheduled: "border-emerald-200 bg-emerald-50 text-emerald-600",
@@ -44,6 +45,19 @@ function getStatusLabel(status: string) {
   return statusLabels[status] || status;
 }
 
+function getMinimumVisitDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function normalizeTimeSlot(value: string | null | undefined) {
+  if (!value) return '';
+  if (value === '09:00') return '9:00 AM – 12:00 NN';
+  if (value === '13:00') return '1:00 PM – 4:00 PM';
+  return value;
+}
+
 export function AdminInstallationsPage() {
   const [installations, setInstallations] = useState<Installation[]>([]);
   const [query, setQuery] = useState("");
@@ -51,12 +65,50 @@ export function AdminInstallationsPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [subscriberQuery, setSubscriberQuery] = useState("");
   const [isSubscriberDropdownOpen, setIsSubscriberDropdownOpen] = useState(false);
+  const subscriberPickerRef = useRef<HTMLDivElement>(null);
   const [subscribers, setSubscribers] = useState<string[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [installationStatus, setInstallationStatus] = useState("Scheduled");
-  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
   const [editingInstallation, setEditingInstallation] =
     useState<Installation | null>(null);
+  const [installationDate, setInstallationDate] = useState('');
+  const [installationTime, setInstallationTime] = useState('');
+  const [installationTechnician, setInstallationTechnician] = useState('');
+  const [scheduleChanged, setScheduleChanged] = useState(false);
+  const [ticketSchedules, setTicketSchedules] = useState<TicketSchedule[]>([]);
+  function closeScheduleModal() {
+    setIsAdding(false);
+    setEditingInstallation(null);
+    setSubscriberQuery("");
+    setIsSubscriberDropdownOpen(false);
+    setInstallationStatus("Scheduled");
+    setInstallationDate("");
+    setInstallationTime("");
+    setInstallationTechnician("");
+    setScheduleChanged(false);
+  }
+  const isTechnicianAvailable = (technician: Technician) => !installations.some((installation) =>
+    installation[2] === formatPersonName(technician.name) &&
+    installation[4] === installationDate &&
+    normalizeTimeSlot(installation[5]) === normalizeTimeSlot(installationTime) &&
+    installation[0] !== editingInstallation?.[0],
+  ) && !ticketSchedules.some((ticket) =>
+    ticket.technicianId === technician.id &&
+    ticket.date?.slice(0, 10) === installationDate &&
+    normalizeTimeSlot(ticket.time) === normalizeTimeSlot(installationTime),
+  );
+  const availableTechnicianCount = technicians.filter(isTechnicianAvailable).length;
+
+  useEffect(() => {
+    if (!isSubscriberDropdownOpen) return;
+    function closeSubscriberDropdown(event: MouseEvent) {
+      if (!subscriberPickerRef.current?.contains(event.target as Node)) {
+        setIsSubscriberDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", closeSubscriberDropdown);
+    return () => document.removeEventListener("mousedown", closeSubscriberDropdown);
+  }, [isSubscriberDropdownOpen]);
 
   useEffect(() => {
     fetch("/api/installations")
@@ -106,6 +158,21 @@ export function AdminInstallationsPage() {
           );
       })
       .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/tickets")
+      .then((response) => response.json())
+      .then((result) => {
+        if (Array.isArray(result.data)) {
+          setTicketSchedules(result.data.map((ticket: { technicianId?: string | null; visitDate?: string | null; visitTime?: string | null }) => ({
+            technicianId: ticket.technicianId || null,
+            date: ticket.visitDate || null,
+            time: ticket.visitTime || null,
+          })));
+        }
+      })
+      .catch(() => setTicketSchedules([]));
   }, []);
 
   useEffect(() => {
@@ -181,12 +248,16 @@ export function AdminInstallationsPage() {
   async function addSchedule(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const subscriber = String(form.get("subscriber") || "Maria Santos");
-    const technician = String(form.get("technician") || "Marcus Chen");
-    const date = String(form.get("date") || "2026-06-27");
-    const time = String(form.get("time") || "09:00");
+    const subscriber = String(form.get("subscriber") || "").trim();
+    const technician = installationTechnician || String(form.get("technician") || "").trim();
+    const date = String(form.get("date") || "").trim();
+    const time = String(form.get("time") || "").trim();
     const type = editingInstallation?.[6] || "Installation";
     const status = String(form.get("status") || "Scheduled");
+    if (!subscriber || !technician || !date || !time) {
+      window.alert("Please select a subscriber, visit date, time slot, and technician.");
+      return;
+    }
     if (editingInstallation) {
       const response = await fetch(
         `/api/installations/${editingInstallation[0]}`,
@@ -199,6 +270,7 @@ export function AdminInstallationsPage() {
             time,
             type,
             status,
+            technicianName: technician,
           }),
         },
       );
@@ -252,7 +324,7 @@ export function AdminInstallationsPage() {
         subscriber,
         technician,
         created.address,
-        created.date.slice(0, 10),
+        created.date?.slice(0, 10) || date,
         created.time,
         created.type,
         created.status.replace("_", " "),
@@ -307,6 +379,10 @@ export function AdminInstallationsPage() {
               : "Scheduled",
         );
         setIsAdding(true);
+        setInstallationDate(installation[4]);
+        setInstallationTime(normalizeTimeSlot(installation[5]));
+        setInstallationTechnician(installation[2]);
+        setScheduleChanged(false);
       }
     }
     document.addEventListener("click", handleTableAction);
@@ -383,8 +459,11 @@ export function AdminInstallationsPage() {
             setSubscriberQuery("");
             setIsSubscriberDropdownOpen(false);
             setInstallationStatus("Scheduled");
-            setIsStatusDropdownOpen(false);
             setIsAdding(true);
+            setInstallationDate("");
+            setInstallationTime("");
+            setInstallationTechnician("");
+            setScheduleChanged(false);
           }}
           className="inline-flex items-center gap-2 rounded-full bg-[#3b4fd8] px-5 py-3 text-sm font-bold text-white hover:bg-[#2d3fc7]"
         >
@@ -469,26 +548,27 @@ export function AdminInstallationsPage() {
       {isAdding && (
         <div
           className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-3 sm:p-5"
-          onMouseDown={() => setIsAdding(false)}
+          onMouseDown={closeScheduleModal}
         >
           <form
             onSubmit={addSchedule}
             onMouseDown={(event) => event.stopPropagation()}
-            className="modal-scrollbar max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl"
+            className={`admin-form-modal-scrollbar flex ${editingInstallation ? "h-[calc(100vh-2rem)] max-h-[90vh]" : "h-auto max-h-[calc(100vh-2rem)]"} w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl`}
           >
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5 sm:px-8">
               <h2 className="text-lg font-bold">Add Schedule</h2>
               <button
                 type="button"
-                onClick={() => setIsAdding(false)}
+                onClick={closeScheduleModal}
                 aria-label="Close"
                 className="text-slate-400 hover:text-slate-600"
               >
                 <X size={20} />
               </button>
             </div>
-            {editingInstallation ? (
-              <>
+            <div className="scrollbar-hidden min-h-0 flex-1 overflow-y-scroll">
+              {editingInstallation ? (
+                <>
                 <div className="space-y-5 px-6 py-7 sm:px-8">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Name</p>
@@ -510,18 +590,18 @@ export function AdminInstallationsPage() {
                 <div className="border-t border-slate-100 px-6 pb-7 pt-6 sm:px-8">
                   <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Technician visit date and time</p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <input name="date" type="date" required className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]" />
-                    <select name="time" required className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]">
+                    <input name="date" type="date" min={getMinimumVisitDate()} value={installationDate} onChange={(event) => { setInstallationDate(event.target.value); setScheduleChanged(true); }} required className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]" />
+                    <select name="time" value={normalizeTimeSlot(installationTime)} onChange={(event) => { setInstallationTime(event.target.value); setScheduleChanged(true); }} required className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]">
                       <option value="">— Time slot —</option>
                       <option value="9:00 AM – 12:00 NN">9:00 AM – 12:00 NN</option>
                       <option value="1:00 PM – 4:00 PM">1:00 PM – 4:00 PM</option>
                     </select>
                   </div>
                   <label className="mt-6 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                    Technician
-                    <select name="technician" required className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]">
+                    Technician {scheduleChanged && installationDate && installationTime && <span className="font-normal normal-case text-[#2447b6]">({availableTechnicianCount} available on this date and time)</span>}
+                    <select name="technician" disabled={!scheduleChanged && Boolean(editingInstallation?.[2] && editingInstallation?.[4] && editingInstallation?.[5])} value={installationTechnician} onChange={(event) => setInstallationTechnician(event.target.value)} required className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500">
                       <option value="">— Choose available technician —</option>
-                      {technicians.map((technician) => (
+                      {(scheduleChanged ? technicians.filter(isTechnicianAvailable) : technicians).map((technician) => (
                         <option value={technician.name} key={technician.id}>
                           {formatPersonName(technician.name)}
                         </option>
@@ -530,46 +610,32 @@ export function AdminInstallationsPage() {
                   </label>
                   <label className="mt-6 block text-xs font-bold uppercase tracking-wide text-slate-500">
                     Status
-                    <input type="hidden" name="status" value={installationStatus} />
-                    <div className="relative mt-3">
-                      <button
-                        type="button"
-                        onClick={() => setIsStatusDropdownOpen((open) => !open)}
-                        className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-normal normal-case tracking-normal text-slate-700 outline-none focus:border-[#3b4fd8]"
-                      >
-                        {getStatusLabel(installationStatus)}
-                        <ChevronDown size={18} className="text-slate-500" />
-                      </button>
-                      {isStatusDropdownOpen && (
-                        <div className="absolute bottom-full left-0 right-0 z-30 mb-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
-                          {[
-                            ["Scheduled", "Installation Confirmed"],
-                            ["Completed", "Installation Closed"],
-                            ["Cancelled", "Installation Rescheduled"],
-                          ].map(([value, label]) => (
-                            <button
-                              type="button"
-                              key={value}
-                              onClick={() => {
-                                setInstallationStatus(value);
-                                setIsStatusDropdownOpen(false);
-                              }}
-                              className={`block w-full px-4 py-3 text-left text-sm ${installationStatus === value ? "bg-slate-100 font-semibold text-slate-900" : "text-slate-700 hover:bg-slate-50"}`}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <select
+                      name="status"
+                      value={installationStatus}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setInstallationStatus(value);
+                        if (value === "Cancelled" && editingInstallation?.[7] !== "Cancelled" && editingInstallation?.[7] !== "Installation Rescheduled") {
+                          setInstallationDate("");
+                          setInstallationTime("");
+                          setInstallationTechnician("");
+                        }
+                      }}
+                      className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal text-slate-700 outline-none focus:border-[#3b4fd8]"
+                    >
+                      <option value="Scheduled">Installation Confirmed</option>
+                      <option value="Completed">Installation Closed</option>
+                      <option value="Cancelled">Installation Rescheduled</option>
+                    </select>
                   </label>
                 </div>
               </>
             ) : (
-            <div className="max-h-[65vh] overflow-y-auto px-6 py-6 sm:px-8">
+            <div className="px-6 py-6 sm:px-8">
               <label className="text-xs font-bold uppercase tracking-wide text-slate-500">
                 Subscriber
-                <div className="relative">
+                <div ref={subscriberPickerRef} className="relative">
                   <input
                   name="subscriber"
                   value={subscriberQuery}
@@ -600,15 +666,15 @@ export function AdminInstallationsPage() {
                     )) : (
                       <p className="px-4 py-2.5 text-sm text-slate-400">No subscribers found</p>
                     )}
-                  </div>
+                    </div>
                 )}
                 </div>
               </label>
               <div className="mt-6 border-t border-slate-100 pt-6">
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Technician visit date and time</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <input name="date" type="date" required className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]" />
-                  <select name="time" required className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]">
+                  <input name="date" type="date" min={getMinimumVisitDate()} value={installationDate} onChange={(event) => { setInstallationDate(event.target.value); setScheduleChanged(true); }} required className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]" />
+                  <select name="time" value={installationTime} onChange={(event) => { setInstallationTime(event.target.value); setScheduleChanged(true); }} required className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]">
                     <option value="">— Time slot —</option>
                     <option value="9:00 AM – 12:00 NN">9:00 AM – 12:00 NN</option>
                     <option value="1:00 PM – 4:00 PM">1:00 PM – 4:00 PM</option>
@@ -616,10 +682,10 @@ export function AdminInstallationsPage() {
                 </div>
               </div>
               <label className="mt-6 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                Technician
-                <select name="technician" defaultValue="" required className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]">
+                Technician {scheduleChanged && installationDate && installationTime && <span className="font-normal normal-case text-[#2447b6]">({availableTechnicianCount} available on this date and time)</span>}
+                <select name="technician" disabled={!scheduleChanged && Boolean(editingInstallation?.[2] && editingInstallation?.[4] && editingInstallation?.[5])} value={installationTechnician} onChange={(event) => setInstallationTechnician(event.target.value)} required className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500">
                   <option value="" disabled>— Choose available technician —</option>
-                  {technicians.map((technician) => (
+                  {(scheduleChanged ? technicians.filter(isTechnicianAvailable) : technicians).map((technician) => (
                     <option value={technician.name} key={technician.id}>
                       {formatPersonName(technician.name)}
                     </option>
@@ -628,10 +694,11 @@ export function AdminInstallationsPage() {
               </label>
             </div>
             )}
+            </div>
             <div className="sticky bottom-0 flex justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
               <button
                 type="button"
-                onClick={() => setIsAdding(false)}
+                onClick={closeScheduleModal}
                 className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600"
               >
                 Cancel

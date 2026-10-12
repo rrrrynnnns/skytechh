@@ -587,6 +587,16 @@ aside nav a[class*="bg-blue-50"] {
   display: none;
 }
 
+.portal-scrollbar-hidden,
+.portal-scrollbar-hidden * {
+  scrollbar-width: none;
+}
+
+.portal-scrollbar-hidden::-webkit-scrollbar,
+.portal-scrollbar-hidden *::-webkit-scrollbar {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

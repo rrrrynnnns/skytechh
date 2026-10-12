@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { PortalShell } from '@/app/components/PortalShell';
 import { formatPersonName } from '@/app/lib/name';
@@ -22,6 +22,7 @@ type TicketApiItem = {
 };
 
 type Technician = { id: string; name: string; status: string };
+type InstallationSchedule = { id: string; technicianId: string; date: string; time: string };
 
 function formatVisitDate(value: string | null) {
   if (!value) return '—';
@@ -32,6 +33,19 @@ function formatVisitDate(value: string | null) {
 
 function formatVisitTime(value: string | null) {
   return value || '—';
+}
+
+function getMinimumVisitDate() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function normalizeTimeSlot(value: string | null | undefined) {
+  if (!value) return '';
+  if (value === '09:00') return '9:00 AM – 12:00 NN';
+  if (value === '13:00') return '1:00 PM – 4:00 PM';
+  return value;
 }
 
 const statusStyles: Record<string, string> = {
@@ -63,17 +77,19 @@ export function AdminTicketsPage() {
   const [visitDate, setVisitDate] = useState('');
   const [timeSlot, setTimeSlot] = useState('');
   const [technicianId, setTechnicianId] = useState('');
-  const availableDates = useMemo(() => {
-    const dates: string[] = [];
-    const date = new Date();
-    while (dates.length < 30) {
-      date.setDate(date.getDate() + 1);
-      const day = date.getDay();
-      if (day !== 0 && day !== 6) dates.push(date.toISOString().slice(0, 10));
-    }
-    return dates;
-  }, []);
-
+  const [scheduleChanged, setScheduleChanged] = useState(false);
+  const [installationSchedules, setInstallationSchedules] = useState<InstallationSchedule[]>([]);
+  const isTechnicianAvailable = (technician: Technician) => !tickets.some((ticket) =>
+    ticket[11] === technician.id &&
+    ticket[9]?.slice(0, 10) === visitDate &&
+    normalizeTimeSlot(ticket[10]) === normalizeTimeSlot(timeSlot) &&
+    ticket[0] !== selectedTicket?.[0],
+  ) && !installationSchedules.some((installation) =>
+    installation.technicianId === technician.id &&
+    installation.date.slice(0, 10) === visitDate &&
+    normalizeTimeSlot(installation.time) === normalizeTimeSlot(timeSlot),
+  );
+  const availableTechnicianCount = technicians.filter(isTechnicianAvailable).length;
   const counts = {
     Open: tickets.filter((ticket) => ticket[5] === 'Open').length,
     'In Progress': tickets.filter((ticket) => ticket[5] === 'In Progress').length,
@@ -113,6 +129,22 @@ export function AdminTicketsPage() {
   }, []);
 
   useEffect(() => {
+    fetch('/api/installations')
+      .then((response) => response.json())
+      .then((result) => {
+        if (Array.isArray(result.data)) {
+          setInstallationSchedules(result.data.map((installation: InstallationSchedule) => ({
+            id: installation.id,
+            technicianId: installation.technicianId,
+            date: installation.date,
+            time: installation.time,
+          })));
+        }
+      })
+      .catch(() => setInstallationSchedules([]));
+  }, []);
+
+  useEffect(() => {
     fetch('/api/technicians')
       .then((response) => response.json())
       .then((result) => {
@@ -147,6 +179,16 @@ export function AdminTicketsPage() {
     setVisitDate(ticket[9]?.slice(0, 10) || '');
     setTimeSlot(ticket[10] || '');
     setTechnicianId(ticket[11] || '');
+    setScheduleChanged(false);
+  }
+
+  function selectTicketStatus(nextStatus: string) {
+    setStatus(nextStatus);
+    if (nextStatus === 'Closed' && selectedTicket?.[5] !== 'Closed') {
+      setVisitDate('');
+      setTimeSlot('');
+      setTechnicianId('');
+    }
   }
 
   async function saveTicket() {
@@ -243,19 +285,20 @@ export function AdminTicketsPage() {
 
       {selectedTicket && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-3 sm:p-5" onMouseDown={() => setSelectedTicket(null)}>
-          <div className="modal-scrollbar max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
+          <div className="admin-form-modal-scrollbar flex h-[calc(100vh-2rem)] max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white px-6 py-5 sm:px-8">
               <h2 className="text-lg font-bold">Manage Ticket</h2>
               <button onClick={() => setSelectedTicket(null)} aria-label="Close" className="text-slate-400 hover:text-slate-600"><X size={24} /></button>
             </div>
 
-            <div className="space-y-6 px-6 py-7 sm:px-8">
+            <div className="min-h-0 flex-1 overflow-y-scroll">
+              <div className="space-y-6 px-6 py-7 sm:px-8">
               <div className="space-y-5">
                 <div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Name</p><p className="mt-2 text-sm text-slate-900">{selectedTicket[1]}</p></div>
                 <div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Address</p><p className="mt-2 text-sm text-slate-900">{selectedTicket[8] || 'No address provided'}</p></div>
                 <div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Ticket ID</p><p className="mt-2 text-sm text-slate-900">{selectedTicket[0]}</p></div>
                 <div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Concern</p><p className="mt-2 text-sm text-slate-900">{selectedTicket[2]}</p></div>
-              </div>
+                </div>
 
               <div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Subject</p><p className="mt-2 text-sm text-slate-900">{selectedTicket[3]}</p></div>
               <div><p className="text-xs font-bold uppercase tracking-wide text-slate-500">Details</p><p className="mt-2 rounded-2xl border border-slate-100 bg-slate-50 px-5 py-4 text-sm leading-6 text-slate-600">{selectedTicket[7] || 'No details provided.'}</p></div>
@@ -264,14 +307,15 @@ export function AdminTicketsPage() {
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Technician visit date and time</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <input min={availableDates[0]} max={availableDates[availableDates.length - 1]} type="date" value={visitDate} onChange={(event) => setVisitDate(availableDates.includes(event.target.value) ? event.target.value : '')} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]" />
+                    <input min={getMinimumVisitDate()} type="date" value={visitDate} onChange={(event) => { setVisitDate(event.target.value); setScheduleChanged(true); }} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]" />
                   </div>
-                  <select value={timeSlot} onChange={(event) => setTimeSlot(event.target.value)} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]"><option value="">— Time slot —</option><option>9:00 AM – 12:00 NN</option><option>1:00 PM – 4:00 PM</option></select>
+                  <select value={normalizeTimeSlot(timeSlot)} onChange={(event) => { setTimeSlot(event.target.value); setScheduleChanged(true); }} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]"><option value="">— Time slot —</option><option>9:00 AM – 12:00 NN</option><option>1:00 PM – 4:00 PM</option></select>
                 </div>
               </div>
 
-              <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Technician<select value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8]"><option value="">— Choose available technician —</option>{technicians.map((technician) => <option value={technician.id} key={technician.id}>{formatPersonName(technician.name)}</option>)}</select></label>
-              <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Status<select value={status} onChange={(event) => setStatus(event.target.value)} className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal text-slate-700 outline-none focus:border-[#3b4fd8]"><option value="Open">Submitted</option><option value="In Progress">Repair Confirmed</option><option value="Resolved">Repair Closed</option><option value="Closed">Repair Rescheduled</option></select></label>
+              <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Technician {scheduleChanged && visitDate && timeSlot && <span className="font-normal normal-case text-[#2447b6]">({availableTechnicianCount} available on this date and time)</span>}<select disabled={!scheduleChanged && Boolean(selectedTicket[9] && selectedTicket[10] && selectedTicket[11])} value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"><option value="">— Choose available technician —</option>{(scheduleChanged ? technicians.filter(isTechnicianAvailable) : technicians).map((technician) => <option value={technician.id} key={technician.id}>{formatPersonName(technician.name)}</option>)}</select></label>
+              <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Status<select value={status} onChange={(event) => selectTicketStatus(event.target.value)} className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal text-slate-700 outline-none focus:border-[#3b4fd8]"><option value="In Progress">Repair Confirmed</option><option value="Resolved">Repair Closed</option><option value="Closed">Repair Rescheduled</option></select></label>
+              </div>
             </div>
 
             <div className="sticky bottom-0 flex justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">

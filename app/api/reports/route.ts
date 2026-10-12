@@ -25,7 +25,7 @@ export async function GET() {
     installations.map(async (installation) => {
       const [subscriber, technician] = await Promise.all([
         prisma.subscriber.findUnique({ where: { id: installation.subscriberId } }),
-        prisma.technician.findUnique({ where: { id: installation.technicianId } }),
+        installation.technicianId ? prisma.technician.findUnique({ where: { id: installation.technicianId } }) : Promise.resolve(null),
       ]);
 
       return {
@@ -79,7 +79,7 @@ export async function GET() {
       id: installation.id,
       subscriber: installation.subscriber?.name || 'Unknown subscriber',
       technician: installation.technician?.name || 'Unassigned technician',
-      date: installation.date,
+      date: installation.date || undefined,
       status: installation.status,
     })),
     recentActivity: notifications.map((notification) => ({

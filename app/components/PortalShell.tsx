@@ -33,6 +33,7 @@ export function PortalShell({ role, children }: { role: Role; children: React.Re
     '/subscriber/pay-bills',
     '/subscriber/notifications',
     '/technician/notifications',
+    '/technician/tasks',
   ].includes(path);
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -117,7 +118,7 @@ export function PortalShell({ role, children }: { role: Role; children: React.Re
   const unreadNotificationCount = notifications.filter((notification) => !notification.read).length;
 
   const navigation = <nav className="space-y-1">{links.map(([href, label, Icon]) => <Link key={href} href={href} onClick={() => setIsOpen(false)} className={`flex items-center gap-3 rounded-xl border-l-2 px-3 py-3 text-sm font-semibold transition-all duration-150 ${path === href ? 'border-[#2563eb] bg-blue-50 text-[#2166f3]' : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}><Icon size={18} />{label}</Link>)}</nav>;
-  return <div className={`min-h-screen overflow-x-hidden text-slate-950 ${role === 'admin' ? 'bg-[#f8fafc]' : 'bg-[#eef4fb]'}`}>
+  return <div className={`portal-shell ${role !== 'admin' ? 'portal-scrollbar-hidden' : ''} min-h-screen overflow-x-hidden text-slate-950 ${role === 'admin' ? 'bg-[#f8fafc]' : 'bg-[#eef4fb]'}`}>
     {isOpen && <button aria-label="Close navigation" className="fixed inset-0 z-30 bg-slate-950/30 opacity-100 transition-opacity duration-200 lg:hidden" onClick={() => setIsOpen(false)} />}
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-slate-200 bg-white px-3 py-5 transition-transform duration-250 ease-out ${role === 'admin' || isOpen ? 'translate-x-0' : 'lg:translate-x-0 -translate-x-full'}`}>
       <div className="flex items-center justify-between border-b border-slate-200 px-3 pb-6"><Link href="/" onClick={() => setIsOpen(false)} className="flex items-center gap-3 text-lg font-bold tracking-tight"><span className="grid h-6 w-6 place-items-center text-[#2166f3]"><Router size={20} /></span>Sky-Tech ISP</Link><button aria-label="Close navigation" onClick={() => setIsOpen(false)} className="rounded-lg p-2 text-slate-500 transition-colors duration-150 hover:bg-[#f1f5f9] lg:hidden"><X size={18} /></button></div>

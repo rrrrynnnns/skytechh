@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, FileText, Wrench, X } from 'lucide-react';
+import { CalendarDays, CircleAlert, FileText, Wrench, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { PortalShell } from '@/app/components/PortalShell';
 import { formatPersonName } from '@/app/lib/name';
@@ -8,18 +8,16 @@ import { formatTicketStatus } from '@/app/lib/ticket-status';
 
 type Task = readonly [string, string, string, string, string, string];
 
-type InstallationApiItem = { id: string; date: string; time: string; type: string; status: string; address?: string | null; technician?: { name?: string | null } | null; subscriber?: { name?: string | null; address?: string | null } | null };
+type InstallationApiItem = { id: string; date: string | null; time: string | null; type: string; status: string; address?: string | null; technician?: { name?: string | null } | null; subscriber?: { name?: string | null; address?: string | null } | null };
 type Ticket = { id: string; type: string; subject: string; description: string; status: string; createdAt: string; visitDate?: string | null; visitTime?: string | null; details?: string | null; technician?: { name: string } | null; subscriber?: { name: string; address?: string | null } };
 
 const taskCategories = ['All', 'Installation', 'Repair'] as const;
 const subStatusFilters = ['All', 'Confirmed', 'Rescheduled', 'Closed'] as const;
 const installationStatusOptions = [
-  ['Installation_Confirmed', 'Installation Confirmed'],
   ['Installation_Closed', 'Installation Closed'],
   ['Installation_Rescheduled', 'Installation Rescheduled'],
 ] as const;
 const technicianTicketStatuses = [
-  ['In Progress', 'Repair Confirmed'],
   ['Resolved', 'Repair Closed'],
   ['Closed', 'Repair Rescheduled'],
 ] as const;
@@ -75,7 +73,22 @@ function getInstallationStatusValue(status: string) {
 
 function getInstallationStatusOptionValue(status: string) {
   const displayStatus = formatInstallationStatus(status);
-  return installationStatusOptions.find(([, label]) => label === displayStatus)?.[0] || installationStatusOptions[0][0];
+  return installationStatusOptions.find(([, label]) => label === displayStatus)?.[0] || '';
+}
+
+function getRepairStatusOptionValue(status: string) {
+  const normalized = String(status || '').trim().replace(/_/g, ' ');
+  if (normalized === 'Resolved' || normalized === 'Repair Closed') return 'Resolved';
+  if (normalized === 'Closed' || normalized === 'Repair Rescheduled') return 'Closed';
+  return '';
+}
+
+function isInstallationClosed(status: string) {
+  return getInstallationStatusOptionValue(status) === 'Installation_Closed';
+}
+
+function isRepairClosed(status: string) {
+  return getRepairStatusOptionValue(status) === 'Resolved';
 }
 
 export default function TechnicianTaskList() {
@@ -86,7 +99,9 @@ export default function TechnicianTaskList() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [selectedInstallation, setSelectedInstallation] = useState<InstallationApiItem | null>(null);
   const [ticketStatus, setTicketStatus] = useState('Open');
-  const [installationStatus, setInstallationStatus] = useState('Installation_Confirmed');
+  const [installationStatus, setInstallationStatus] = useState('');
+  const [pendingStatus, setPendingStatus] = useState<{ value: string; label: string } | null>(null);
+  const [hasStatusSelection, setHasStatusSelection] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   useEffect(() => {
     fetch('/api/installations').then((response) => response.json()).then((result) => {
@@ -97,9 +112,9 @@ export default function TechnicianTaskList() {
           item.id,
           item.subscriber?.name || 'Subscriber',
           item.type.replace(/_/g, ' '),
-          item.time,
+          item.time || '',
           getInstallationStatusValue(item.status),
-          item.date.slice(0, 10),
+          item.date?.slice(0, 10) || '',
         ]));
         const requestedTaskId = new URLSearchParams(window.location.search).get('taskId');
         const requestedInstallation = requestedTaskId ? nextInstallations.find((item) => item.id === requestedTaskId) : null;
@@ -155,19 +170,43 @@ export default function TechnicianTaskList() {
     done: allStatuses.filter((status) => status.endsWith('Closed')).length,
   };
 
+  function selectStatus(value: string, label: string, setStatus: (status: string) => void) {
+    const currentStatus = selectedInstallation ? installationStatus : ticketStatus;
+    if (value === currentStatus) {
+      setStatus(value);
+      setHasStatusSelection(true);
+      return;
+    }
+    if (label.includes('Closed') || label.includes('Rescheduled')) {
+      setPendingStatus({ value, label });
+      return;
+    }
+    setStatus(value);
+    setHasStatusSelection(true);
+  }
+
+  function confirmPendingStatus() {
+    if (!pendingStatus) return;
+    if (selectedInstallation) setInstallationStatus(pendingStatus.value);
+    else setTicketStatus(pendingStatus.value);
+    setHasStatusSelection(true);
+    setPendingStatus(null);
+  }
+
   function openTicket(ticket: Ticket) {
     setSelectedTicket(ticket);
     setSelectedInstallation(null);
     setTicketStatus(ticket.status === 'Open' ? 'In Progress' : ticket.status.replace(/_/g, ' '));
+    setHasStatusSelection(false);
   }
 
   function openInstallationTask(name: string, type: string, detail: string, status: string, date: string) {
     const installation = installations.find((item) =>
       item.subscriber?.name === name &&
-      item.date.slice(0, 10) === date &&
+      item.date?.slice(0, 10) === date &&
       item.time === detail &&
       item.type.replace(/_/g, ' ') === type
-    ) || installations.find((item) => item.subscriber?.name === name && item.date.slice(0, 10) === date) || null;
+    ) || installations.find((item) => item.subscriber?.name === name && item.date?.slice(0, 10) === date) || null;
 
     setSelectedTicket(null);
     setSelectedInstallation(installation ?? {
@@ -181,6 +220,7 @@ export default function TechnicianTaskList() {
       subscriber: { name, address: 'No address provided' },
     });
     setInstallationStatus(getInstallationStatusOptionValue(installation?.status || status));
+    setHasStatusSelection(false);
   }
 
   async function saveTicketStatus() {
@@ -190,7 +230,7 @@ export default function TechnicianTaskList() {
       const response = await fetch(`/api/tickets/${selectedTicket.id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: ticketStatus }),
+        body: JSON.stringify({ status: ticketStatus, ...(ticketStatus === 'Closed' ? { technicianId: null, visitDate: null, visitTime: null } : {}) }),
       });
       if (!response.ok) return;
       setTickets((current) => current.map((ticket) => ticket.id === selectedTicket.id ? { ...ticket, status: ticketStatus } : ticket));
@@ -207,7 +247,7 @@ export default function TechnicianTaskList() {
       const response = await fetch(`/api/installations/${selectedInstallation.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: installationStatus }),
+        body: JSON.stringify({ status: installationStatus, ...(installationStatus === 'Installation_Rescheduled' ? { technicianId: null, date: null, time: null, technicianName: null } : {}) }),
       });
       if (!response.ok) return;
       setInstallations((current) => current.map((item) => item.id === selectedInstallation.id ? { ...item, status: installationStatus } : item));
@@ -220,15 +260,15 @@ export default function TechnicianTaskList() {
 
   return (
     <PortalShell role="technician">
-      <div className="min-h-screen bg-[#eef4fb]">
-        <header className="bg-[#2447b6] px-5 py-5 text-white sm:px-8 sm:py-7 lg:px-10">
+      <div className="flex h-[calc(100svh-4rem)] flex-col overflow-hidden bg-[#eef4fb]">
+        <header className="shrink-0 bg-[#2447b6] px-5 py-5 text-white sm:px-8 sm:py-7 lg:px-10">
           <div className="mx-auto max-w-7xl">
             <h1 className="text-2xl font-bold">My Tasks</h1>
           </div>
         </header>
 
-        <div className="px-4 py-4 sm:px-8 sm:py-6 lg:px-10">
-          <div className="mx-auto max-w-7xl">
+        <div className="min-h-0 flex-1 px-4 py-4 sm:px-8 sm:py-6 lg:px-10">
+          <div className="mx-auto flex h-full min-h-0 max-w-7xl flex-col">
             <div className="grid grid-cols-4 gap-2.5 sm:gap-3">
               {[
                 [counts.total, 'Total'],
@@ -272,7 +312,8 @@ export default function TechnicianTaskList() {
               })}
             </div>}
 
-            <div className="mt-4 grid gap-3">
+            <div className="scrollbar-hidden mt-4 min-h-0 flex-1 touch-pan-y overscroll-contain overflow-y-auto">
+              <div className="grid gap-3 pb-2">
               {visibleTaskCards.map((item) => item.kind === 'repair' ? (
                 <button type="button" key={`repair-${item.id}`} onClick={() => openTicket(item.ticket)} className="flex min-h-[76px] w-full items-center justify-between gap-2 overflow-hidden rounded-2xl border border-slate-200 bg-white px-3 py-3 text-left shadow-sm transition-colors hover:bg-slate-50 sm:gap-3 sm:px-4">
                   <div className="flex min-w-0 items-center gap-3">
@@ -300,18 +341,19 @@ export default function TechnicianTaskList() {
             </div>
           </div>
         </div>
+      </div>
 
         {(selectedTicket || selectedInstallation) && (
           <div className="fixed inset-0 z-50 bg-slate-950/40" onMouseDown={() => { setSelectedTicket(null); setSelectedInstallation(null); }}>
-            <section className="absolute inset-y-0 right-0 w-full max-w-[980px] overflow-y-auto bg-[#eef4fb] shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
-              <header className="flex items-center justify-between bg-[#2447b6] px-5 py-5 text-white sm:px-7">
+            <section className="absolute inset-y-0 right-0 flex w-full max-w-[980px] flex-col overflow-hidden bg-[#eef4fb] shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
+              <header className="flex shrink-0 items-center justify-between bg-[#2447b6] px-5 py-5 text-white sm:px-7">
                 <div className="flex items-center gap-3">
                   <span className="grid h-11 w-11 place-items-center rounded-full bg-white/15"><FileText size={21} /></span>
                   <div><p className="text-xs font-bold uppercase tracking-widest text-blue-100">Status</p><h2 className="text-xl font-bold">{selectedInstallation ? formatInstallationStatus(selectedInstallation.status || 'Scheduled') : formatTicketStatus(selectedTicket?.status || 'Open')}</h2></div>
                 </div>
                 <button aria-label="Close ticket details" onClick={() => { setSelectedTicket(null); setSelectedInstallation(null); }} className="rounded-full bg-white/15 p-2.5 transition-colors hover:bg-white/25"><X size={20} /></button>
               </header>
-              <div className="space-y-5 p-5 sm:p-7">
+              <div className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto space-y-5 p-5 sm:p-7">
                 <div className="flex items-center justify-between rounded-xl bg-white/75 px-5 py-4">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Work order number</span>
                   <strong className="text-lg font-bold text-slate-900">{selectedInstallation?.id || selectedTicket?.id}</strong>
@@ -320,7 +362,7 @@ export default function TechnicianTaskList() {
                 <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                   <h3 className="text-2xl font-bold text-slate-900">Work order details</h3>
                   <div className="mt-5 space-y-5">
-                    <div><p className="text-sm text-slate-500">Technician visit date and time</p><p className={`mt-1 text-lg font-semibold ${(selectedInstallation ? selectedInstallation.date || selectedInstallation.time : selectedTicket?.visitDate || selectedTicket?.visitTime) ? 'text-slate-800' : 'text-slate-400'}`}>{selectedInstallation ? `${new Date(`${selectedInstallation.date.slice(0, 10)}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}, ${selectedInstallation.time}` : formatVisitDateTime(selectedTicket as Ticket)}</p></div>
+                    <div><p className="text-sm text-slate-500">Technician visit date and time</p><p className={`mt-1 text-lg font-semibold ${(selectedInstallation ? selectedInstallation.date || selectedInstallation.time : selectedTicket?.visitDate || selectedTicket?.visitTime) ? 'text-slate-800' : 'text-slate-400'}`}>{selectedInstallation ? selectedInstallation.date || selectedInstallation.time ? `${new Date(`${selectedInstallation.date?.slice(0, 10)}T00:00:00`).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}, ${selectedInstallation.time || ''}` : 'Not scheduled yet' : formatVisitDateTime(selectedTicket as Ticket)}</p></div>
                     <div><p className="text-sm text-slate-500">Technician</p><p className="mt-1 text-lg font-semibold text-slate-800">{selectedInstallation?.technician?.name || selectedTicket?.technician?.name || 'Not assigned yet'}</p></div>
                   </div>
                 </div>
@@ -343,28 +385,39 @@ export default function TechnicianTaskList() {
                     <h3 className="text-lg font-bold text-slate-900">Update Status</h3>
                     <div className="mt-4 grid gap-2">
                       {installationStatusOptions.map(([value, label]) => (
-                        <button type="button" key={value} onClick={() => setInstallationStatus(value)} className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${installationStatus === value ? 'border-blue-200 bg-blue-50 text-[#2166f3]' : 'border-transparent bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
+                        <button type="button" key={value} disabled={value === 'Installation_Rescheduled' && isInstallationClosed(selectedInstallation.status)} onClick={() => selectStatus(value, label, setInstallationStatus)} className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${installationStatus === value ? 'border-[#2447b6] bg-[#2447b6] text-white shadow-sm' : 'border-transparent bg-slate-50 text-slate-400 hover:bg-slate-100'} disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-slate-50`}>
                           {installationStatus === value && <span className="mr-2">✓</span>}{label}
                         </button>
                       ))}
                     </div>
-                    <button disabled={isSaving} onClick={saveInstallationStatus} className="mt-4 w-full rounded-xl bg-[#2447b6] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">{isSaving ? 'Saving...' : 'Save Status'}</button>
+                    <button disabled={isSaving || !installationStatus || !hasStatusSelection || installationStatus === getInstallationStatusOptionValue(selectedInstallation?.status || '')} onClick={saveInstallationStatus} className="mt-4 w-full rounded-xl bg-[#2447b6] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-[#1d3ea5] disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? 'Saving...' : 'Save Status'}</button>
                   </div>
                 ) : (
                   <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                     <h3 className="text-lg font-bold text-slate-900">Update Status</h3>
                     <div className="mt-4 grid gap-2">
                       {technicianTicketStatuses.map(([value, label]) => (
-                        <button type="button" key={value} onClick={() => setTicketStatus(value)} className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${ticketStatus === value ? 'border-blue-200 bg-blue-50 text-[#2166f3]' : 'border-transparent bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
+                        <button type="button" key={value} disabled={value === 'Closed' && isRepairClosed(selectedTicket?.status || '')} onClick={() => selectStatus(value, label, setTicketStatus)} className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${ticketStatus === value ? 'border-[#2447b6] bg-[#2447b6] text-white shadow-sm' : 'border-transparent bg-slate-50 text-slate-400 hover:bg-slate-100'} disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-slate-50`}>
                           {ticketStatus === value && <span className="mr-2">✓</span>}{label}
                         </button>
                       ))}
                     </div>
-                    <button disabled={isSaving} onClick={saveTicketStatus} className="mt-4 w-full rounded-xl bg-[#2447b6] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">{isSaving ? 'Saving...' : 'Save Status'}</button>
+                    <button disabled={isSaving || !ticketStatus || ticketStatus === 'Open' || !hasStatusSelection || ticketStatus === getRepairStatusOptionValue(selectedTicket?.status || '')} onClick={saveTicketStatus} className="mt-4 w-full rounded-xl bg-[#2447b6] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-[#1d3ea5] disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? 'Saving...' : 'Save Status'}</button>
                   </div>
                 )}
               </div>
             </section>
+          </div>
+        )}
+        {pendingStatus && (
+          <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/45 p-5" onMouseDown={() => setPendingStatus(null)}>
+            <div role="dialog" aria-modal="true" aria-labelledby="confirm-status-title" onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-xs rounded-3xl bg-white p-5 text-center shadow-2xl">
+              <div className="mx-auto grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#2166f3]"><CircleAlert size={20} /></div>
+              <h2 id="confirm-status-title" className="mt-4 text-base font-bold text-slate-950">Confirm Status Update</h2>
+              <p className="mt-2 text-xs leading-5 text-slate-500">{pendingStatus.label.includes('Rescheduled') ? `Are you sure you want to reschedule this ${selectedInstallation ? 'installation' : 'repair'}?` : `Are you sure you want to mark this ${selectedInstallation ? 'installation' : 'repair'} as complete?`}</p>
+              <button type="button" onClick={confirmPendingStatus} className="mt-5 w-full rounded-xl bg-[#2447b6] px-4 py-3 text-xs font-bold text-white">Yes</button>
+              <button type="button" onClick={() => setPendingStatus(null)} className="mt-2 w-full rounded-xl bg-slate-100 px-4 py-3 text-xs font-semibold text-slate-600">Cancel</button>
+            </div>
           </div>
         )}
       </div>

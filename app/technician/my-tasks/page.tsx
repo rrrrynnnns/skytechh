@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bell, CalendarDays, CheckSquare, Clock3, ChevronLeft, ChevronRight, Wrench, X } from 'lucide-react';
+import { Bell, CalendarDays, CheckSquare, CircleAlert, Clock3, ChevronLeft, ChevronRight, Wrench, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { PortalShell } from '@/app/components/PortalShell';
 import { formatPersonName } from '@/app/lib/name';
@@ -23,16 +23,14 @@ type ScheduledTask = {
 };
 
 type Technician = { id: string; name: string; status: string };
-type InstallationApiItem = { id: string; date: string; time: string; type: string; status: string; notes?: string | null; address?: string | null; technician?: { name?: string | null } | null; subscriber?: { name?: string | null; address?: string | null } | null };
+type InstallationApiItem = { id: string; date: string | null; time: string | null; type: string; status: string; notes?: string | null; address?: string | null; technician?: { name?: string | null } | null; subscriber?: { name?: string | null; address?: string | null } | null };
 type TicketApiItem = { id: string; subject: string; description: string; type: string; status: string; visitDate?: string | null; visitTime?: string | null; technician?: { name?: string | null } | null; subscriber?: { name?: string | null; address?: string | null } | null };
 
 const installationStatusOptions = [
-  ['Installation_Confirmed', 'Installation Confirmed'],
   ['Installation_Closed', 'Installation Closed'],
   ['Installation_Rescheduled', 'Installation Rescheduled'],
 ] as const;
 const repairStatusOptions = [
-  ['In Progress', 'Repair Confirmed'],
   ['Resolved', 'Repair Closed'],
   ['Closed', 'Repair Rescheduled'],
 ] as const;
@@ -70,6 +68,23 @@ function getDisplayStatus(status: string) {
   return map[normalized] || normalized.replace(/_/g, ' ');
 }
 
+function getCurrentStatusValue(task: ScheduledTask) {
+  const normalized = task.rawStatus.replace(/_/g, ' ');
+  if (task.isInstallation) {
+    if (['Completed', 'Installation Closed'].includes(normalized)) return 'Installation_Closed';
+    if (['Cancelled', 'Canceled', 'Installation Rescheduled'].includes(normalized)) return 'Installation_Rescheduled';
+    return '';
+  }
+
+  if (['Resolved', 'Repair Closed'].includes(normalized)) return 'Resolved';
+  if (['Closed', 'Repair Rescheduled'].includes(normalized)) return 'Closed';
+  return '';
+}
+
+function isTaskClosed(task: ScheduledTask) {
+  return getCurrentStatusValue(task) === (task.isInstallation ? 'Installation_Closed' : 'Resolved');
+}
+
 function getInstallationDisplayStatus(status: string) {
   const normalized = String(status || '').trim().replace(/_/g, ' ');
   if (['Scheduled', 'In Progress', 'Installation Confirmed'].includes(normalized)) return 'Installation Confirmed';
@@ -105,6 +120,8 @@ export default function TechnicianTasks() {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [selectedTask, setSelectedTask] = useState<ScheduledTask | null>(null);
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [pendingStatus, setPendingStatus] = useState<{ value: string; label: string } | null>(null);
+  const [hasStatusSelection, setHasStatusSelection] = useState(false);
   const [isSavingStatus, setIsSavingStatus] = useState(false);
   const [statusError, setStatusError] = useState('');
   const [selectedDate, setSelectedDate] = useState(() => toDateKey(new Date()));
@@ -137,7 +154,7 @@ export default function TechnicianTasks() {
             type: item.type === 'Installation' ? 'Date' : item.type.replace(/_/g, ' '),
           isInstallation: true,
             time: item.time || 'Time not set',
-            date: item.date.slice(0, 10),
+            date: item.date?.slice(0, 10) || '',
             status: getTaskStatus(item.status),
             rawStatus: item.status,
             requestType: item.type.replace(/_/g, ' '),
@@ -202,9 +219,31 @@ export default function TechnicianTasks() {
   function openTask(task: ScheduledTask) {
     setSelectedTask(task);
     setSelectedStatus(task.isInstallation
-      ? installationStatusOptions.find(([, label]) => label === getInstallationDisplayStatus(task.rawStatus))?.[0] || installationStatusOptions[0][0]
+      ? installationStatusOptions.find(([, label]) => label === getInstallationDisplayStatus(task.rawStatus))?.[0] || ''
       : task.rawStatus === 'Open' ? 'In Progress' : task.rawStatus.replace(/_/g, ' '));
     setStatusError('');
+    setHasStatusSelection(false);
+  }
+
+  function selectStatus(value: string, label: string) {
+    if (value === selectedStatus) {
+      setSelectedStatus(value);
+      setHasStatusSelection(true);
+      return;
+    }
+    if (label.includes('Closed') || label.includes('Rescheduled')) {
+      setPendingStatus({ value, label });
+      return;
+    }
+    setSelectedStatus(value);
+    setHasStatusSelection(true);
+  }
+
+  function confirmPendingStatus() {
+    if (!pendingStatus) return;
+    setSelectedStatus(pendingStatus.value);
+    setHasStatusSelection(true);
+    setPendingStatus(null);
   }
 
   async function saveTaskStatus() {
@@ -218,7 +257,12 @@ export default function TechnicianTasks() {
       const response = await fetch(endpoint, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: selectedStatus }),
+        body: JSON.stringify({
+          status: selectedStatus,
+          ...(selectedStatus === 'Installation_Rescheduled' || selectedStatus === 'Closed'
+            ? { technicianId: null, visitDate: null, visitTime: null, date: null, time: null, technicianName: null }
+            : {}),
+        }),
       });
       if (!response.ok) {
         const result = await response.json().catch(() => null);
@@ -298,15 +342,15 @@ export default function TechnicianTasks() {
 
       {selectedTask && (
         <div className="fixed inset-0 z-50 bg-slate-950/40" onMouseDown={() => setSelectedTask(null)}>
-          <section role="dialog" aria-modal="true" aria-labelledby="selected-task-title" className="absolute inset-y-0 right-0 w-full max-w-[720px] overflow-y-auto bg-[#eef4fb] shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
-            <header className="flex items-center justify-between bg-[#2447b6] px-5 py-5 text-white sm:px-7">
+          <section role="dialog" aria-modal="true" aria-labelledby="selected-task-title" className="absolute inset-y-0 right-0 flex w-full max-w-[720px] flex-col overflow-hidden bg-[#eef4fb] shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
+            <header className="flex shrink-0 items-center justify-between bg-[#2447b6] px-5 py-5 text-white sm:px-7">
               <div className="flex items-center gap-3">
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-white/15">{selectedTask.isInstallation ? <CalendarDays size={21} /> : <Wrench size={21} />}</span>
                 <div><p className="text-xs font-bold uppercase tracking-widest text-blue-100">Status</p><h2 id="selected-task-title" className="text-xl font-bold">{selectedTask.isInstallation ? getInstallationDisplayStatus(selectedTask.rawStatus) : getDisplayStatus(selectedTask.rawStatus)}</h2></div>
               </div>
               <button type="button" aria-label="Close task details" onClick={() => setSelectedTask(null)} className="rounded-full bg-white/15 p-2.5 transition-colors hover:bg-white/25"><X size={20} /></button>
             </header>
-            <div className="space-y-5 p-5 sm:p-7">
+            <div className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto space-y-5 p-5 sm:p-7">
               <div className="flex items-center justify-between rounded-xl bg-white/75 px-5 py-4"><span className="text-xs font-bold uppercase tracking-wider text-slate-500">Work order number</span><strong className="text-lg font-bold text-slate-900">{selectedTask.id}</strong></div>
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <h3 className="text-xl font-bold text-slate-900">Work order details</h3>
@@ -329,16 +373,27 @@ export default function TechnicianTasks() {
                 <h3 className="text-lg font-bold text-slate-900">Update Status</h3>
                 <div className="mt-4 grid gap-2">
                   {(selectedTask.isInstallation ? installationStatusOptions : repairStatusOptions).map(([value, label]) => (
-                    <button type="button" key={value} onClick={() => setSelectedStatus(value)} className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${selectedStatus === value ? 'border-blue-200 bg-blue-50 text-[#2166f3]' : 'border-transparent bg-slate-50 text-slate-400 hover:bg-slate-100'}`}>
+                    <button type="button" key={value} disabled={isTaskClosed(selectedTask) && value === (selectedTask.isInstallation ? 'Installation_Rescheduled' : 'Closed')} onClick={() => selectStatus(value, label)} className={`rounded-xl border px-4 py-3 text-sm font-semibold transition-colors ${selectedStatus === value ? 'border-[#2447b6] bg-[#2447b6] text-white shadow-sm' : 'border-transparent bg-slate-50 text-slate-400 hover:bg-slate-100'} disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-slate-50`}>
                       {selectedStatus === value && <span className="mr-2">✓</span>}{label}
                     </button>
                   ))}
                 </div>
                 {statusError && <p role="alert" className="mt-3 text-sm text-red-600">{statusError}</p>}
-                <button type="button" disabled={isSavingStatus} onClick={saveTaskStatus} className="mt-4 w-full rounded-xl bg-[#2447b6] px-4 py-3 text-sm font-bold text-white disabled:opacity-60">{isSavingStatus ? 'Saving...' : 'Save Status'}</button>
+                <button type="button" disabled={isSavingStatus || !selectedStatus || !hasStatusSelection || selectedStatus === getCurrentStatusValue(selectedTask!)} onClick={saveTaskStatus} className="mt-4 w-full rounded-xl bg-[#2447b6] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-[#1d3ea5] disabled:cursor-not-allowed disabled:opacity-60">{isSavingStatus ? 'Saving...' : 'Save Status'}</button>
               </div>
             </div>
           </section>
+        </div>
+      )}
+      {pendingStatus && (
+        <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/45 p-5" onMouseDown={() => setPendingStatus(null)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="confirm-status-title" onMouseDown={(event) => event.stopPropagation()} className="w-full max-w-xs rounded-3xl bg-white p-5 text-center shadow-2xl">
+            <div className="mx-auto grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#2166f3]"><CircleAlert size={20} /></div>
+            <h2 id="confirm-status-title" className="mt-4 text-base font-bold text-slate-950">Confirm Status Update</h2>
+            <p className="mt-2 text-xs leading-5 text-slate-500">{pendingStatus.label.includes('Rescheduled') ? `Are you sure you want to reschedule this ${selectedTask?.isInstallation ? 'installation' : 'repair'}?` : `Are you sure you want to mark this ${selectedTask?.isInstallation ? 'installation' : 'repair'} as complete?`}</p>
+            <button type="button" onClick={confirmPendingStatus} className="mt-5 w-full rounded-xl bg-[#2447b6] px-4 py-3 text-xs font-bold text-white">Yes</button>
+            <button type="button" onClick={() => setPendingStatus(null)} className="mt-2 w-full rounded-xl bg-slate-100 px-4 py-3 text-xs font-semibold text-slate-600">Cancel</button>
+          </div>
         </div>
       )}
     </PortalShell>

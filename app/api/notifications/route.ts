@@ -43,8 +43,8 @@ export async function GET() {
 			prisma.notification.deleteMany({ where: { forRole: 'admin', type: 'system' } }),
 			...completedInstallations.map((installation) => prisma.notification.upsert({
 				where: { id: `admin-technician-installation-${installation.id}` },
-				create: { id: `admin-technician-installation-${installation.id}`, forRole: 'admin', type: 'installation', title: 'Technician Update', body: `${installation.technician.name} successfully completed the installation for ${subscriberById.get(installation.subscriberId) || 'a subscriber'}.`, timestamp: notificationTimestamp },
-				update: { title: 'Technician Update', body: `${installation.technician.name} successfully completed the installation for ${subscriberById.get(installation.subscriberId) || 'a subscriber'}.` },
+				create: { id: `admin-technician-installation-${installation.id}`, forRole: 'admin', type: 'installation', title: 'Technician Update', body: `${installation.technician?.name || 'A technician'} successfully completed the installation for ${subscriberById.get(installation.subscriberId) || 'a subscriber'}.`, timestamp: notificationTimestamp },
+				update: { title: 'Technician Update', body: `${installation.technician?.name || 'A technician'} successfully completed the installation for ${subscriberById.get(installation.subscriberId) || 'a subscriber'}.` },
 			})),
 			...completedRepairs.map((ticket) => prisma.notification.upsert({
 				where: { id: `admin-technician-repair-${ticket.id}` },
@@ -78,7 +78,7 @@ export async function GET() {
 		const technicianNotifications = [
 			...installations.flatMap((installation) => {
 				const subscriber = subscriberById.get(installation.subscriberId);
-				if (!subscriber) return [];
+				if (!subscriber || !installation.date || !installation.time) return [];
 				const visitDate = installation.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
 				const normalizedStatus = installation.status.replace(/_/g, ' ');
 				const isCompleted = ['Completed', 'Installation Closed'].includes(normalizedStatus);
@@ -137,7 +137,7 @@ export async function GET() {
 	}
 
 	const [installations, tickets] = await Promise.all([
-		prisma.installation.findMany({ where: { subscriberId: user.subscriberId }, include: { technician: true }, orderBy: { date: 'desc' } }),
+		prisma.installation.findMany({ where: { subscriberId: user.subscriberId, date: { not: null }, time: { not: null } }, include: { technician: true }, orderBy: { date: 'desc' } }),
 		prisma.ticket.findMany({ where: { subscriberId: user.subscriberId, visitDate: { not: null } }, include: { technician: true }, orderBy: { visitDate: 'desc' } }),
 	]);
 	const reminderNotifications = [
@@ -147,7 +147,7 @@ export async function GET() {
 			forUserId: user.subscriberId,
 			type: 'installation' as const,
 			title: 'Installation Scheduled',
-			body: `Technician ${installation.technician?.name || 'will'} will visit on ${installation.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} at ${installation.time} for ${installation.type.toLowerCase()}.`,
+			body: `Technician ${installation.technician?.name || 'will'} will visit on ${installation.date!.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} at ${installation.time} for ${installation.type.toLowerCase()}.`,
 			timestamp: notificationTimestamp,
 			read: true,
 		})),

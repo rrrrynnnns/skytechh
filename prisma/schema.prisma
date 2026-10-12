@@ -151,11 +151,11 @@ model Bill {
 model Installation {
   id           String             @id
   subscriberId String
-  technicianId String
-  technician   Technician         @relation(fields: [technicianId], references: [id])
+  technicianId String?
+  technician   Technician?        @relation(fields: [technicianId], references: [id])
   address      String
-  date         DateTime
-  time         String
+  date         DateTime?
+  time         String?
   type         InstallationType
   status       InstallationStatus
   notes        String?
