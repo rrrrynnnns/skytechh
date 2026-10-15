@@ -6,16 +6,19 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 		const { id } = await context.params;
 		const body = await request.json();
 		const requestedStatus = body.status?.replaceAll(' ', '_');
-		const status = requestedStatus === 'Installation_Rescheduled' ? 'Cancelled' : requestedStatus;
-		const currentInstallation = await prisma.installation.findUnique({ where: { id }, select: { technicianId: true } });
+		const status = requestedStatus;
+		const currentInstallation = await prisma.installation.findUnique({ where: { id }, select: { technicianId: true, date: true, time: true } });
 		const selectedTechnician = body.technicianId
 			? await prisma.technician.findUnique({ where: { id: body.technicianId }, select: { id: true } })
 			: body.technicianName
 				? await prisma.technician.findFirst({ where: { name: { equals: body.technicianName, mode: 'insensitive' } }, select: { id: true } })
 				: null;
-		const isRescheduled = status === 'Cancelled';
+		const isRescheduled = status === 'Installation_Rescheduled' || status === 'Cancelled';
 		const technicianId = selectedTechnician?.id || currentInstallation?.technicianId;
 		if (!technicianId && !isRescheduled) return NextResponse.json({ data: null, error: 'A valid technician is required.' }, { status: 400 });
+		const persistedTechnicianId = technicianId;
+		const persistedDate = body.date ? new Date(`${body.date}T12:00:00.000Z`) : currentInstallation?.date;
+		const persistedTime = body.time ? normalizeScheduleTime(body.time) : currentInstallation?.time;
 		if (technicianId && body.date && body.time) {
 			const { start, end } = getScheduleDayRange(body.date);
 			const normalizedTime = normalizeScheduleTime(body.time);
@@ -28,8 +31,8 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 			}
 		}
 		if (status) await prisma.$executeRaw`UPDATE "Installation" SET "status" = CAST(${status} AS "InstallationStatus") WHERE "id" = ${id}`;
-		const installation = await prisma.installation.update({ where: { id }, data: { technicianId: isRescheduled ? null : technicianId, address: body.address, type: body.type, date: isRescheduled ? null : body.date ? new Date(body.date) : undefined, time: isRescheduled ? null : normalizeScheduleTime(body.time), notes: body.notes } });
-		return NextResponse.json(status ? await prisma.installation.findUnique({ where: { id } }) : installation);
+		const installation = await prisma.installation.update({ where: { id }, data: { technicianId: persistedTechnicianId, address: body.address, type: body.type, date: persistedDate, time: persistedTime, notes: body.notes } });
+		return NextResponse.json({ data: status ? await prisma.installation.findUnique({ where: { id } }) : installation, error: null });
 	} catch (error) {
 		return NextResponse.json({ data: null, error: error instanceof Error ? error.message : 'Unable to update installation.' }, { status: 500 });
 	}

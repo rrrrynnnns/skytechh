@@ -14,11 +14,25 @@ const actions = [
   { label: 'Get Help', href: '/subscriber/help', Icon: CircleHelp },
 ];
 
-type RequestHistoryItem = { id: string; type: string; subject: string; status: string; createdAt: string; visitDate?: string | null; visitTime?: string | null; technicianName?: string | null; subscriberName?: string | null; subscriberAddress?: string | null; description?: string | null; details?: string | null };
+type RequestHistoryItem = { id: string; type: string; subject: string; status: string; createdAt: string; updatedAt?: string | null; visitDate?: string | null; visitTime?: string | null; technicianName?: string | null; subscriberName?: string | null; subscriberAddress?: string | null; description?: string | null; details?: string | null };
+
+function formatInstallationStatus(status: string) {
+  const normalized = status.replace(/_/g, ' ');
+  if (['Scheduled', 'In Progress', 'Installation Confirmed'].includes(normalized)) return 'Installation Confirmed';
+  if (['Completed', 'Installation Completed', 'Installation Closed'].includes(normalized)) return 'Installation Closed';
+  if (['Cancelled', 'Canceled', 'Installation Rescheduled'].includes(normalized)) return 'Installation Rescheduled';
+  return normalized;
+}
 
 function formatMoney(value: number | null | undefined) {
   if (value == null || Number.isNaN(value)) return '₱0.00';
   return `₱${value.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function getRequestUpdateTime(request: RequestHistoryItem) {
+  const updatedAt = request.updatedAt ? new Date(request.updatedAt).getTime() : Number.NaN;
+  const createdAt = new Date(request.createdAt).getTime();
+  return Number.isNaN(updatedAt) ? createdAt : updatedAt;
 }
 
 export default function SubscriberAccount() {
@@ -59,13 +73,19 @@ export default function SubscriberAccount() {
       })
       .catch(() => undefined);
 
-    Promise.all([fetch('/api/tickets'), fetch('/api/installations')])
+    const loadRequests = () => Promise.all([
+      fetch('/api/tickets', { cache: 'no-store' }),
+      fetch('/api/installations', { cache: 'no-store' }),
+    ])
       .then(async ([ticketResponse, installationResponse]) => {
         const ticketsResult = ticketResponse.ok ? await ticketResponse.json() : { data: [] };
         const installationsResult = installationResponse.ok ? await installationResponse.json() : { data: [] };
         const tickets = Array.isArray(ticketsResult.data)
           ? ticketsResult.data.map((ticket: RequestHistoryItem & { technician?: { name?: string | null } | null; subscriber?: { name?: string | null; address?: string | null } | null }) => ({
               ...ticket,
+            type: 'Repair',
+            status: formatTicketStatus(ticket.status),
+              createdAt: ticket.createdAt || new Date().toISOString(),
               technicianName: ticket.technician?.name || null,
               subscriberName: ticket.subscriber?.name || null,
               subscriberAddress: ticket.subscriber?.address || null,
@@ -76,13 +96,7 @@ export default function SubscriberAccount() {
               id: installation.id,
               type: 'Installation',
               subject: installation.type,
-              status: ['Completed', 'Installation Completed', 'Installation_Closed', 'Installation Closed'].includes(installation.status)
-                ? 'Installation Closed'
-                : installation.status === 'Scheduled'
-                  ? 'Installation Confirmed'
-                  : ['Cancelled', 'Canceled'].includes(installation.status)
-                    ? 'Installation Rescheduled'
-                    : installation.status,
+              status: formatInstallationStatus(installation.status),
               createdAt: installation.date,
               visitDate: installation.date,
               visitTime: installation.time,
@@ -93,12 +107,15 @@ export default function SubscriberAccount() {
             }))
           : [];
         setRequests(
-          [...tickets, ...installations].sort(
-            (a: RequestHistoryItem, b: RequestHistoryItem) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          ),
+          [...tickets, ...installations].sort((a: RequestHistoryItem, b: RequestHistoryItem) => {
+            return getRequestUpdateTime(b) - getRequestUpdateTime(a);
+          }),
         );
       })
       .catch(() => undefined);
+    loadRequests();
+    window.addEventListener('focus', loadRequests);
+    return () => window.removeEventListener('focus', loadRequests);
   }, []);
 
   const fullName = account?.name || 'Loading account...';
@@ -122,10 +139,34 @@ export default function SubscriberAccount() {
     if (!request.visitDate) return 'Not scheduled yet';
     const date = new Date(`${request.visitDate.slice(0, 10)}T00:00:00`);
     if (Number.isNaN(date.getTime())) return 'Not scheduled yet';
+    return [date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), request.visitTime].filter(Boolean).join(', ');
+  }
+
+  function formatRequestCardDate(request: RequestHistoryItem) {
+    if (!request.visitDate) return 'Not scheduled yet';
+    const date = new Date(`${request.visitDate.slice(0, 10)}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return 'Not scheduled yet';
     return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   }
 
-  const visibleRequests = requests.slice(0, 3);
+  const latestInstallation = requests.find((request) => request.type === 'Installation');
+  const latestRepair = requests.find((request) => request.type !== 'Installation');
+  const prioritizedRequests = Array.from(
+    new Map(
+      [latestInstallation, latestRepair, ...requests]
+        .filter((request): request is RequestHistoryItem => Boolean(request))
+        .map((request) => [`${request.type}-${request.id}`, request]),
+    ).values(),
+  );
+  const requiredRequests = [latestInstallation, latestRepair]
+    .filter((request): request is RequestHistoryItem => Boolean(request));
+  const requiredKeys = new Set(requiredRequests.map((request) => `${request.type}-${request.id}`));
+  const additionalRequests = prioritizedRequests
+    .filter((request) => !requiredKeys.has(`${request.type}-${request.id}`))
+    .sort((a, b) => getRequestUpdateTime(b) - getRequestUpdateTime(a))
+    .slice(0, Math.max(0, 3 - requiredRequests.length));
+  const visibleRequests = [...requiredRequests, ...additionalRequests]
+    .sort((a, b) => getRequestUpdateTime(b) - getRequestUpdateTime(a));
   const showAllRequests = requests.length >= 3;
 
   return <PortalShell role="subscriber">
@@ -153,11 +194,29 @@ export default function SubscriberAccount() {
         <h2 className="text-lg font-bold">My Request History</h2>
         {showAllRequests ? <Link href="/subscriber/my-tickets" className="text-sm font-semibold text-[#2447b6]">View all</Link> : null}
       </div>
-      <div className="mt-4 grid gap-3">{visibleRequests.length ? visibleRequests.map((request) => {
-        const status = formatTicketStatus(request.status);
-        const statusClass = 'max-w-none shrink-0 justify-center whitespace-nowrap px-2 text-[9px] leading-3 sm:px-2.5 sm:text-xs sm:leading-normal';
-        return <button type="button" onClick={() => setSelectedRequest(request)} className="flex min-w-0 w-full items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors hover:bg-slate-50 sm:gap-4 sm:p-5" key={`${request.type}-${request.id}`}><div className="flex min-w-0 items-center gap-3 sm:gap-4"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#2166f3] sm:h-11 sm:w-11">{request.type === 'Installation' ? <CalendarDays size={19} /> : <Wrench size={19} />}</span><div className="min-w-0"><p className="truncate text-lg font-bold text-slate-800 sm:text-xl">{request.id}</p><p className="mt-1 text-sm leading-tight text-slate-600 sm:leading-normal">{formatRequestVisitDateTime(request)}</p></div></div><Badge value={status} className={statusClass} /></button>;
-      }) : <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">No requests yet.</div>}</div>
+      <div className="mt-4 grid gap-3">{visibleRequests.length ? visibleRequests.map((request) => (
+        <button
+          type="button"
+          onClick={() => setSelectedRequest(request)}
+          className="flex min-w-0 items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-colors duration-100 hover:bg-[#f8fafc] sm:gap-4 sm:p-5"
+          key={`${request.type}-${request.id}`}
+        >
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#2166f3] sm:h-11 sm:w-11">
+              {request.type === 'Installation' ? <CalendarDays size={19} /> : <Wrench size={19} />}
+            </span>
+            <div className="min-w-0">
+              <h2 className="truncate text-lg font-bold text-slate-800 sm:text-xl">{request.id}</h2>
+              <p className="mt-1 text-sm leading-tight text-slate-600 sm:leading-normal">{formatRequestCardDate(request)}</p>
+            </div>
+          </div>
+          <Badge
+            value={formatTicketStatus(request.status)}
+            compact={request.type === 'Installation'}
+            className="max-w-[7.5rem] shrink-0 justify-center whitespace-normal break-words px-2 text-center text-[10px] leading-3 sm:max-w-none sm:whitespace-nowrap sm:px-2.5 sm:text-xs sm:leading-normal"
+          />
+        </button>
+      )) : <div className="flex min-h-32 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-5 text-sm text-slate-500">No request yet.</div>}</div>
     </div>
     {selectedRequest ? <div className="fixed inset-0 z-50 bg-slate-950/30" onMouseDown={() => setSelectedRequest(null)}>
       <section className="absolute inset-y-0 right-0 w-full max-w-245 overflow-y-auto bg-[#edf3ff] shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
@@ -173,17 +232,41 @@ export default function SubscriberAccount() {
             <div className="mb-5 flex items-center justify-between gap-4 rounded-xl bg-white/70 px-4 py-3"><p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">Work order number</p><p className="text-lg font-bold text-slate-900">{selectedRequest.id}</p></div>
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h3 className="text-2xl font-bold text-slate-800">Work order details</h3>
-              <p className="mt-5 text-sm text-slate-500">Technician visit date and time</p>
-              <p className="mt-1 text-lg font-semibold text-slate-800">{formatRequestVisitDateTime(selectedRequest)}</p>
-              <p className="mt-4 text-sm text-slate-500">Technician</p>
-              <p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.technicianName || 'Not assigned yet'}</p>
+              <div className="mt-5 space-y-4">
+                <div>
+                  <p className="text-sm text-slate-500">Technician visit date and time</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-800">{formatRequestVisitDateTime(selectedRequest)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Technician</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.technicianName || 'Not assigned yet'}</p>
+                </div>
+              </div>
             </div>
             <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h3 className="text-2xl font-bold text-slate-800">Request details</h3>
-              <p className="mt-5 text-sm text-slate-500">Name</p><p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.subscriberName || displayName}</p>
-              <p className="mt-4 text-sm text-slate-500">Address</p><p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.subscriberAddress || 'No address provided'}</p>
-              <p className="mt-4 text-sm text-slate-500">{selectedRequest.type === 'Installation' ? 'Service Type' : 'Concern'}</p><p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.type === 'Installation' ? 'Installation' : selectedRequest.subject}</p>
-              {selectedRequest.type !== 'Installation' ? <><p className="mt-4 text-sm text-slate-500">Details</p><p className="mt-1 whitespace-pre-line text-base leading-7 text-slate-700">{selectedRequest.details || selectedRequest.description || 'No additional details provided.'}</p></> : null}
+              <div className="mt-5 space-y-4">
+                <div>
+                  <p className="text-sm text-slate-500">Name</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.subscriberName || displayName}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">Address</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.subscriberAddress || 'No address provided'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500">{selectedRequest.type === 'Installation' ? 'Service Type' : 'Concern'}</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.type === 'Installation' ? 'Installation' : selectedRequest.subject}</p>
+                </div>
+                {selectedRequest.type !== 'Installation' && <div>
+                  <p className="text-sm text-slate-500">Description</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-800">{selectedRequest.type.replace(/_/g, ' ')}</p>
+                </div>}
+                {selectedRequest.type !== 'Installation' && <div>
+                  <p className="text-sm text-slate-500">Details</p>
+                  <p className="mt-1 whitespace-pre-line text-base leading-7 text-slate-700">{selectedRequest.details || selectedRequest.description || 'No additional details provided.'}</p>
+                </div>}
+              </div>
             </div>
           </div>
         </div>

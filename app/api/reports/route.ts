@@ -6,9 +6,9 @@ const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 export async function GET() {
   const now = new Date();
 
-  const [bills, subscribers, technicians, tickets, installations, notifications] = await Promise.all([
+  const [bills, subscriberRecords, technicians, tickets, installations, notifications] = await Promise.all([
     prisma.bill.findMany(),
-    prisma.subscriber.count({ where: { status: 'Active' } }),
+    prisma.subscriber.findMany({ where: { status: 'Active' }, select: { connectionDate: true } }),
     prisma.technician.count({ where: { status: 'Active' } }),
     prisma.ticket.count({ where: { status: { not: 'Closed' } } }),
     prisma.installation.findMany({
@@ -53,16 +53,16 @@ export async function GET() {
     };
   });
 
-  const growthTrend = revenueTrend.length
-    ? revenueTrend.map((entry, index) => {
-        const base = revenueTrend[0]?.value || 1;
-        const normalized = base === 0 ? 0 : Math.max(0, (entry.value / base) * 12);
-        return Number(normalized.toFixed(1));
-      })
-    : [0, 0, 0, 0, 0, 0];
+  const growthTrend = revenueTrend.map((_, index) => {
+    const monthDate = new Date(now.getFullYear(), now.getMonth() - (5 - index), 1);
+    const nextMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1);
+    return subscriberRecords.filter((subscriber) =>
+      subscriber.connectionDate < nextMonth,
+    ).length;
+  });
 
   return NextResponse.json({
-    activeSubscribers: subscribers,
+    activeSubscribers: subscriberRecords.length,
     activeTechnicians: technicians,
     openTickets: tickets,
     revenueCollected: collected,

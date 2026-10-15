@@ -1,9 +1,9 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Router } from 'lucide-react';
 import { Spinner } from '@/app/components/Spinner';
 
 export default function LoginPage() {
@@ -34,7 +34,7 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-6 py-12">
       <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white px-6 py-8 shadow-sm sm:px-9 sm:py-10">
         <div className="flex flex-col items-center text-center">
-          <span className="grid h-14 w-14 place-items-center rounded-2xl bg-[#2447b6] text-white"><Router size={26} /></span>
+          <Link href="/" aria-label="Back to Sky-Tech landing page" className="grid h-14 w-14 place-items-center rounded-2xl bg-[#2447b6] text-white transition hover:bg-[#1d3b99]"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2.5 8.5a15.5 15.5 0 0 1 19 0" /><path d="M5.5 12a10.7 10.7 0 0 1 13 0" /><path d="M8.8 15.5a5.8 5.8 0 0 1 6.4 0" /><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none" /></svg></Link>
           <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-900">Welcome back</h1>
           <p className="mt-2 text-sm text-slate-500">Sign in to your account.</p>
         </div>

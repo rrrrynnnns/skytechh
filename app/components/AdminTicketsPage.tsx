@@ -193,22 +193,29 @@ export function AdminTicketsPage() {
 
   async function saveTicket() {
     if (!selectedTicket) return;
+    const nextStatus = status === 'Open' && visitDate && timeSlot && technicianId ? 'In Progress' : status;
     try {
-      await fetch(`/api/tickets/${selectedTicket[0]}/status`, {
+      const response = await fetch(`/api/tickets/${selectedTicket[0]}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, adminNote, technicianId, visitDate, visitTime: timeSlot }),
+        body: JSON.stringify({ status: nextStatus, adminNote, technicianId, visitDate, visitTime: timeSlot }),
       });
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+        window.alert(result?.error || 'Unable to save ticket changes.');
+        return;
+      }
     } finally {
-      setTickets((current) =>
-        current.map((ticket) =>
-          ticket[0] === selectedTicket[0]
-            ? [ticket[0], ticket[1], ticket[2], ticket[3], ticket[4], status, ticket[6], ticket[7], ticket[8], visitDate || null, timeSlot || null, technicianId || null]
-            : ticket,
-        ),
-      );
-      setSelectedTicket(null);
+      if (nextStatus !== status) setStatus(nextStatus);
     }
+    setTickets((current) =>
+      current.map((ticket) =>
+        ticket[0] === selectedTicket[0]
+          ? [ticket[0], ticket[1], ticket[2], ticket[3], ticket[4], nextStatus, ticket[6], ticket[7], ticket[8], visitDate || null, timeSlot || null, technicianId || null]
+          : ticket,
+      ),
+    );
+    setSelectedTicket(null);
   }
 
   return (
@@ -246,7 +253,7 @@ export function AdminTicketsPage() {
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} aria-label="Filter support tickets" className="admin-filter-dropdown status-filter-select appearance-none rounded-lg border border-slate-200 bg-white py-2.5 pl-3 pr-10 text-sm font-semibold text-slate-600 outline-none focus:border-[#3b4fd8]">
           <option value="All">All</option>
           <option value="Open">Submitted</option>
-          <option value="In Progress">Repair Confirmed</option>
+          {status !== 'Resolved' && status !== 'Closed' && <option value="In Progress">Repair Confirmed</option>}
           <option value="Resolved">Repair Closed</option>
           <option value="Closed">Repair Rescheduled</option>
         </select>
@@ -307,14 +314,21 @@ export function AdminTicketsPage() {
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Technician visit date and time</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <input min={getMinimumVisitDate()} type="date" value={visitDate} onChange={(event) => { setVisitDate(event.target.value); setScheduleChanged(true); }} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]" />
+                    <input min={getMinimumVisitDate()} type="date" value={visitDate} onChange={(event) => { setVisitDate(event.target.value); setScheduleChanged(true); }} disabled={status === 'Resolved' || status === 'In Progress'} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" />
                   </div>
-                  <select value={normalizeTimeSlot(timeSlot)} onChange={(event) => { setTimeSlot(event.target.value); setScheduleChanged(true); }} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]"><option value="">— Time slot —</option><option>9:00 AM – 12:00 NN</option><option>1:00 PM – 4:00 PM</option></select>
+                  <select value={normalizeTimeSlot(timeSlot)} onChange={(event) => { setTimeSlot(event.target.value); setScheduleChanged(true); }} disabled={status === 'Resolved' || status === 'In Progress'} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"><option value="">— Time slot —</option><option>9:00 AM – 12:00 NN</option><option>1:00 PM – 4:00 PM</option></select>
                 </div>
               </div>
 
-              <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Technician {scheduleChanged && visitDate && timeSlot && <span className="font-normal normal-case text-[#2447b6]">({availableTechnicianCount} available on this date and time)</span>}<select disabled={!scheduleChanged && Boolean(selectedTicket[9] && selectedTicket[10] && selectedTicket[11])} value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"><option value="">— Choose available technician —</option>{(scheduleChanged ? technicians.filter(isTechnicianAvailable) : technicians).map((technician) => <option value={technician.id} key={technician.id}>{formatPersonName(technician.name)}</option>)}</select></label>
-              <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Status<select value={status} onChange={(event) => selectTicketStatus(event.target.value)} className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal text-slate-700 outline-none focus:border-[#3b4fd8]"><option value="In Progress">Repair Confirmed</option><option value="Resolved">Repair Closed</option><option value="Closed">Repair Rescheduled</option></select></label>
+              <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Technician {scheduleChanged && visitDate && timeSlot && <span className="font-normal normal-case text-[#2447b6]">({availableTechnicianCount} available on this date and time)</span>}<select disabled={!scheduleChanged && Boolean(selectedTicket[9] && selectedTicket[10] && selectedTicket[11])} value={technicianId} onChange={(event) => setTechnicianId(event.target.value)} className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"><option value="">— Choose available technician —</option>{(visitDate && timeSlot ? (scheduleChanged ? technicians.filter(isTechnicianAvailable) : technicians) : []).map((technician) => <option value={technician.id} key={technician.id}>{formatPersonName(technician.name)}</option>)}</select></label>
+              <label className="block text-xs font-bold uppercase tracking-wide text-slate-500">Status<select value={status} onChange={(event) => selectTicketStatus(event.target.value)} className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal text-slate-700 outline-none focus:border-[#3b4fd8]">
+                {status === 'Open' && <option value="Open" hidden>Submitted</option>}
+                {!['Resolved', 'Closed', 'Repair Closed', 'Repair Rescheduled'].includes(status) && (
+                  <option value="In Progress">Repair Confirmed</option>
+                )}
+                {status !== 'Open' && <option value="Resolved">Repair Closed</option>}
+                {status !== 'Open' && <option value="Closed">Repair Rescheduled</option>}
+              </select></label>
               </div>
             </div>
 

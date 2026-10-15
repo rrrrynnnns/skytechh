@@ -20,6 +20,17 @@ function formatRescheduledTime(time: string) {
 		.trim();
 }
 
+type GeneratedNotification = {
+	id: string;
+	forRole: 'technician';
+	forUserId: string | null;
+	type: 'assignment' | 'update';
+	title: string;
+	body: string;
+	timestamp: Date;
+	read: boolean;
+};
+
 export async function GET() {
 	const access = await requireRole(['admin', 'technician', 'subscriber']);
 	if (access.response) return access.response;
@@ -73,24 +84,65 @@ export async function GET() {
 			prisma.installation.findMany({ where: { technicianId: user.technicianId }, orderBy: { date: 'desc' } }),
 			prisma.ticket.findMany({ where: { technicianId: user.technicianId, visitDate: { not: null } }, include: { subscriber: true }, orderBy: { visitDate: 'desc' } }),
 		]);
+		const [allInstallations, allTickets] = await Promise.all([
+			prisma.installation.findMany({ select: { id: true, technicianId: true } }),
+			prisma.ticket.findMany({ select: { id: true, technicianId: true } }),
+		]);
+		const staleNotificationIds = [
+			...allInstallations
+				.filter((installation) => installation.technicianId !== user.technicianId)
+				.flatMap((installation) => [
+					`assignment-installation-${installation.id}`,
+					`update-installation-${installation.id}`,
+				]),
+			...allTickets
+				.filter((ticket) => ticket.technicianId !== user.technicianId)
+				.flatMap((ticket) => [
+					`assignment-repair-${ticket.id}`,
+					`update-repair-${ticket.id}`,
+				]),
+		];
+		if (staleNotificationIds.length) {
+			await prisma.notification.deleteMany({
+				where: { forRole: 'technician', id: { in: staleNotificationIds } },
+			});
+		}
+		const staleNotificationIdSet = new Set(staleNotificationIds);
 		const installationSubscribers = await prisma.subscriber.findMany({ where: { id: { in: installations.map((installation) => installation.subscriberId) } } });
 		const subscriberById = new Map(installationSubscribers.map((subscriber) => [subscriber.id, subscriber]));
-		const technicianNotifications = [
+		const technicianNotifications: GeneratedNotification[] = [
 			...installations.flatMap((installation) => {
 				const subscriber = subscriberById.get(installation.subscriberId);
-				if (!subscriber || !installation.date || !installation.time) return [];
-				const visitDate = installation.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+				if (!subscriber) return [];
 				const normalizedStatus = installation.status.replace(/_/g, ' ');
 				const isCompleted = ['Completed', 'Installation Closed'].includes(normalizedStatus);
 				const isRescheduled = ['Cancelled', 'Installation Rescheduled'].includes(normalizedStatus);
-				const update = isCompleted
-					  ? { id: `update-installation-${installation.id}`, forRole: 'technician' as const, forUserId: user.technicianId, type: 'update' as const, title: 'Task Completed', body: `Installation for ${subscriber.name} has been marked as completed. Great work!`, timestamp: installation.date, read: true }
-					: isRescheduled
-						? { id: `update-installation-${installation.id}`, forRole: 'technician' as const, forUserId: user.technicianId, type: 'update' as const, title: 'Schedule Updated', body: `Installation for ${subscriber.name} has been rescheduled to ${formatRescheduledDate(installation.date)} at ${formatRescheduledTime(installation.time)}.`, timestamp: installation.date, read: true }
+				if (isRescheduled) {
+					const rescheduledDate = installation.date
+						? formatRescheduledDate(installation.date)
 						: null;
+					const rescheduledSchedule = rescheduledDate && installation.time
+						? ` to ${rescheduledDate} at ${installation.time}`
+						: ' and is awaiting a new schedule';
+					return [{
+						id: `update-installation-${installation.id}`,
+						forRole: 'technician' as const,
+						forUserId: user.technicianId || null,
+						type: 'update' as const,
+						title: 'Schedule Updated',
+						body: `Installation for ${subscriber.name} has been rescheduled${rescheduledSchedule}.`,
+						timestamp: notificationTimestamp,
+						read: false,
+					}];
+				}
+				if (!installation.date || !installation.time) return [];
+				const visitDate = installation.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+				const update = isCompleted
+					  ? { id: `update-installation-${installation.id}`, forRole: 'technician' as const, forUserId: user.technicianId || null, type: 'update' as const, title: 'Task Completed', body: `Installation for ${subscriber.name} has been marked as completed. Great work!`, timestamp: installation.date, read: true }
+					: null;
 				return [
-					  { id: `assignment-installation-${installation.id}`, forRole: 'technician' as const, forUserId: user.technicianId, type: 'assignment' as const, title: 'New Task Assigned', body: `Installation scheduled for ${subscriber.name} on ${visitDate} at ${installation.time}.`, timestamp: installation.date, read: true },
-					  ...(update ? [{ ...update, read: isRescheduled ? false : true }] : []),
+					  { id: `assignment-installation-${installation.id}`, forRole: 'technician' as const, forUserId: user.technicianId || null, type: 'assignment' as const, title: 'New Task Assigned', body: `Installation scheduled for ${subscriber.name} on ${visitDate} at ${installation.time}.`, timestamp: installation.date, read: false },
+					  ...(update ? [{ ...update, read: false }] : []),
 				];
 			}),
 			...tickets.flatMap((ticket) => {
@@ -99,13 +151,13 @@ export async function GET() {
 				const isCompleted = ['Resolved'].includes(normalizedStatus);
 				const isRescheduled = ['Closed'].includes(normalizedStatus);
 				const update = isCompleted
-					  ? { id: `update-repair-${ticket.id}`, forRole: 'technician' as const, forUserId: user.technicianId, type: 'update' as const, title: 'Task Completed', body: `Repair for ${ticket.subscriber.name} has been marked as completed. Great work!`, timestamp: ticket.updatedAt, read: true }
+					  ? { id: `update-repair-${ticket.id}`, forRole: 'technician' as const, forUserId: user.technicianId || null, type: 'update' as const, title: 'Task Completed', body: `Repair for ${ticket.subscriber.name} has been marked as completed. Great work!`, timestamp: ticket.updatedAt, read: true }
 					: isRescheduled
-						? { id: `update-repair-${ticket.id}`, forRole: 'technician' as const, forUserId: user.technicianId, type: 'update' as const, title: 'Schedule Updated', body: `Repair for ${ticket.subscriber.name} has been rescheduled to ${formatRescheduledDate(ticket.visitDate!)} at ${formatRescheduledTime(ticket.visitTime || 'the scheduled time')}.`, timestamp: ticket.updatedAt, read: true }
+						? { id: `update-repair-${ticket.id}`, forRole: 'technician' as const, forUserId: user.technicianId || null, type: 'update' as const, title: 'Schedule Updated', body: `Repair for ${ticket.subscriber.name} has been rescheduled to ${formatRescheduledDate(ticket.visitDate!)} at ${formatRescheduledTime(ticket.visitTime || 'the scheduled time')}.`, timestamp: ticket.updatedAt, read: true }
 						: null;
 				return [
-					  { id: `assignment-repair-${ticket.id}`, forRole: 'technician' as const, forUserId: user.technicianId, type: 'assignment' as const, title: 'New Task Assigned', body: `Repair scheduled for ${ticket.subscriber.name} on ${visitDate} at ${ticket.visitTime || 'the scheduled time'}.`, timestamp: ticket.visitDate!, read: true },
-					  ...(update ? [{ ...update, read: isRescheduled ? false : true }] : []),
+					  { id: `assignment-repair-${ticket.id}`, forRole: 'technician' as const, forUserId: user.technicianId || null, type: 'assignment' as const, title: 'New Task Assigned', body: `Repair scheduled for ${ticket.subscriber.name} on ${visitDate} at ${ticket.visitTime || 'the scheduled time'}.`, timestamp: ticket.visitDate!, read: false },
+					  ...(update ? [{ ...update, read: false }] : []),
 				];
 			}),
 		];
@@ -123,7 +175,11 @@ export async function GET() {
 			select: { id: true, read: true },
 		});
 		const readStateById = new Map(persistedTechnicianNotifications.map((notification) => [notification.id, notification.read]));
-		const notificationsById = new Map(data.map((notification) => [notification.id, notification]));
+		const notificationsById = new Map(
+			data
+				.filter((notification) => !staleNotificationIdSet.has(notification.id))
+				.map((notification) => [notification.id, notification]),
+		);
 		technicianNotifications.forEach((notification) => {
 			notificationsById.set(notification.id, {
 				...notification,
@@ -137,20 +193,36 @@ export async function GET() {
 	}
 
 	const [installations, tickets] = await Promise.all([
-		prisma.installation.findMany({ where: { subscriberId: user.subscriberId, date: { not: null }, time: { not: null } }, include: { technician: true }, orderBy: { date: 'desc' } }),
+		prisma.installation.findMany({ where: { subscriberId: user.subscriberId }, orderBy: { date: 'desc' } }),
 		prisma.ticket.findMany({ where: { subscriberId: user.subscriberId, visitDate: { not: null } }, include: { technician: true }, orderBy: { visitDate: 'desc' } }),
 	]);
 	const reminderNotifications = [
-		...installations.map((installation) => ({
-			id: `installation-reminder-${installation.id}`,
-			forRole: 'subscriber' as const,
-			forUserId: user.subscriberId,
-			type: 'installation' as const,
-			title: 'Installation Scheduled',
-			body: `Technician ${installation.technician?.name || 'will'} will visit on ${installation.date!.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} at ${installation.time} for ${installation.type.toLowerCase()}.`,
-			timestamp: notificationTimestamp,
-			read: true,
-		})),
+		...installations.flatMap((installation) => {
+			const normalizedStatus = installation.status.replace(/_/g, ' ');
+			if (['Cancelled', 'Installation Rescheduled'].includes(normalizedStatus)) {
+				return [{
+					id: `installation-reminder-${installation.id}`,
+					forRole: 'subscriber' as const,
+					forUserId: user.subscriberId,
+					type: 'installation' as const,
+					title: 'Installation Rescheduled',
+					body: 'Your installation has been rescheduled and is awaiting a new schedule.',
+					timestamp: notificationTimestamp,
+					read: false,
+				}];
+			}
+			if (!installation.date || !installation.time) return [];
+			return [{
+				id: `installation-reminder-${installation.id}`,
+				forRole: 'subscriber' as const,
+				forUserId: user.subscriberId,
+				type: 'installation' as const,
+				title: 'Installation Scheduled',
+				body: `Your technician will visit on ${installation.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} at ${installation.time} for ${installation.type.toLowerCase()}.`,
+				timestamp: notificationTimestamp,
+				read: false,
+			}];
+		}),
 		...tickets.map((ticket) => ({
 			id: `repair-reminder-${ticket.id}`,
 			forRole: 'subscriber' as const,
@@ -159,9 +231,25 @@ export async function GET() {
 			title: 'Repair Scheduled',
 			body: `Technician ${ticket.technician?.name || 'will'} will visit on ${ticket.visitDate!.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} at ${ticket.visitTime || 'the scheduled time'} for your repair request.`,
 			timestamp: notificationTimestamp,
-			read: true,
+			read: false,
 		})),
 	];
-	return NextResponse.json({ data: sortNotifications([...data, ...reminderNotifications]), error: null });
+	await Promise.all(reminderNotifications.map((notification) => prisma.notification.upsert({
+		where: { id: notification.id },
+		create: notification,
+		update: { title: notification.title, body: notification.body },
+	})));
+	const persistedReminderNotifications = await prisma.notification.findMany({
+		where: { id: { in: reminderNotifications.map((notification) => notification.id) } },
+	});
+	const remindersById = new Map(persistedReminderNotifications.map((notification) => [notification.id, notification]));
+	const notificationsById = new Map(data.map((notification) => [notification.id, notification]));
+	reminderNotifications.forEach((notification) => {
+		notificationsById.set(notification.id, remindersById.get(notification.id) || notification);
+	});
+	return NextResponse.json({
+		data: sortNotifications(Array.from(notificationsById.values())),
+		error: null,
+	});
 }
 export async function POST(request: Request) { const body = await request.json(); if (!body.forRole || !body.type || !body.title || !body.body) return NextResponse.json({ data: null, error: 'Role, type, title, and body are required.' }, { status: 400 }); const notification = await prisma.notification.create({ data: { forRole: body.forRole, forUserId: body.forUserId || null, type: body.type, title: body.title, body: body.body } }); return NextResponse.json({ data: notification, error: null }, { status: 201 }); }

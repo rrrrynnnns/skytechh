@@ -30,21 +30,33 @@ export async function POST(request: Request) {
 		if (!address) return NextResponse.json({ data: null, error: 'The selected subscriber does not have an address.' }, { status: 400 });
 		const { start, end } = getScheduleDayRange(body.date);
 		const normalizedTime = normalizeScheduleTime(body.time);
-		const [installations, tickets] = await Promise.all([
-			prisma.installation.findMany({ where: { technicianId: technician.id, date: { gte: start, lt: end } }, select: { time: true } }),
-			prisma.ticket.findMany({ where: { technicianId: technician.id, visitDate: { gte: start, lt: end } }, select: { visitTime: true } }),
-		]);
-		if (
-			installations.some((item) => normalizeScheduleTime(item.time) === normalizedTime) ||
-			tickets.some((item) => normalizeScheduleTime(item.visitTime) === normalizedTime)
-		) {
-			return NextResponse.json({ data: null, error: 'This technician already has a schedule at that date and time.' }, { status: 409 });
-		}
-		const existingInstallations = await prisma.installation.findMany({ select: { id: true } });
-		const highestId = existingInstallations.reduce((highest, installation) => { const numericId = /^\d{7}$/.test(installation.id) ? Number(installation.id) : 1000000; return Math.max(highest, numericId); }, 1000000);
-		const installation = await prisma.installation.create({ data: { id: String(highestId + 1), subscriberId: subscriber.id, technicianId: technician.id, address, date: new Date(body.date), time: normalizedTime, type: body.type, status: body.status || 'Scheduled', notes: body.notes || null } });
+		const installation = await prisma.$transaction(async (transaction) => {
+			const existingSubscriberInstallation = await transaction.installation.findFirst({ where: { subscriberId: subscriber.id }, select: { id: true } });
+			if (existingSubscriberInstallation) {
+				throw new Error('This subscriber already has an installation.');
+			}
+			const [installations, tickets] = await Promise.all([
+				transaction.installation.findMany({ where: { technicianId: technician.id, date: { gte: start, lt: end } }, select: { time: true } }),
+				transaction.ticket.findMany({ where: { technicianId: technician.id, visitDate: { gte: start, lt: end } }, select: { visitTime: true } }),
+			]);
+			if (
+				installations.some((item) => normalizeScheduleTime(item.time) === normalizedTime) ||
+				tickets.some((item) => normalizeScheduleTime(item.visitTime) === normalizedTime)
+			) {
+				throw new Error('This technician already has a schedule at that date and time.');
+			}
+			const existingInstallations = await transaction.installation.findMany({ select: { id: true } });
+			const highestId = existingInstallations.reduce((highest, installation) => { const numericId = /^\d{7}$/.test(installation.id) ? Number(installation.id) : 1000000; return Math.max(highest, numericId); }, 1000000);
+			return transaction.installation.create({ data: { id: String(highestId + 1), subscriberId: subscriber.id, technicianId: technician.id, address, date: new Date(body.date), time: normalizedTime, type: body.type, status: body.status || 'Scheduled', notes: body.notes || null } });
+		}, { isolationLevel: 'Serializable' });
 		return NextResponse.json({ data: installation, error: null }, { status: 201 });
 	} catch (error) {
+		if (error instanceof Error && error.message === 'This technician already has a schedule at that date and time.') {
+			return NextResponse.json({ data: null, error: error.message }, { status: 409 });
+		}
+		if (error instanceof Error && error.message === 'This subscriber already has an installation.') {
+			return NextResponse.json({ data: null, error: error.message }, { status: 409 });
+		}
 		return NextResponse.json({ data: null, error: error instanceof Error ? error.message : 'Unable to create installation.' }, { status: 500 });
 	}
 }

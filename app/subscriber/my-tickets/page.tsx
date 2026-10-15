@@ -70,6 +70,14 @@ function isHistoryRequest(ticket: Ticket) {
   return ticket.status === 'Resolved';
 }
 
+function formatInstallationStatus(status: string) {
+  const normalized = status.replace(/_/g, ' ');
+  if (['Scheduled', 'In Progress', 'Installation Confirmed'].includes(normalized)) return 'Installation Confirmed';
+  if (['Completed', 'Installation Completed', 'Installation Closed'].includes(normalized)) return 'Installation Closed';
+  if (['Cancelled', 'Canceled', 'Installation Rescheduled'].includes(normalized)) return 'Installation Rescheduled';
+  return normalized;
+}
+
 export default function MyTicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [tab, setTab] = useState<'active' | 'history'>('active');
@@ -98,20 +106,8 @@ export default function MyTicketsPage() {
               type: 'Installation',
               subject: installation.type,
               description: installation.type,
-              status: ['Completed', 'Installation Completed', 'Installation_Closed', 'Installation Closed'].includes(installation.status)
-                ? 'Installation Closed'
-                : installation.status === 'Scheduled'
-                  ? 'Installation Confirmed'
-                  : ['Cancelled', 'Canceled'].includes(installation.status)
-                    ? 'Installation Rescheduled'
-                    : installation.status,
-              displayStatus: installation.status === 'Scheduled'
-                ? 'Installation Confirmed'
-                : ['Completed', 'Installation Completed', 'Installation_Closed', 'Installation Closed'].includes(installation.status)
-                  ? 'Installation Closed'
-                : ['Cancelled', 'Canceled'].includes(installation.status)
-                  ? 'Installation Rescheduled'
-                  : installation.status.replace(/_/g, ' '),
+              status: formatInstallationStatus(installation.status),
+              displayStatus: formatInstallationStatus(installation.status),
               createdAt: installation.date,
               technicianName: installation.technician?.name || null,
               subscriberName: installation.subscriber?.name || null,

@@ -15,5 +15,5 @@ export async function GET() {
   const plans = Array.isArray(systemSettings?.plans) ? systemSettings.plans as Array<{ name?: string; speedMbps?: number; price?: number }> : [];
   const planName = subscriber.plan.replace(/_/g, ' ');
   const planDetails = plans.find((plan) => plan.name?.replace(/\s+/g, '').toLowerCase() === planName.replace(/\s+/g, '').toLowerCase());
-  return NextResponse.json({ data: { ...subscriber, planName, speedMbps: Number(planDetails?.speedMbps || planName.match(/[0-9]+/)?.[0] || 0), monthlyPrice: Number(planDetails?.price || 0) }, error: null });
+  return NextResponse.json({ data: { ...subscriber, planName, speedMbps: Number(planDetails?.speedMbps || planName.match(/[0-9]+/)?.[0] || 0), monthlyPrice: Number(planDetails?.price || 0), cutoffDay: 9, billingDay: Number(systemSettings?.billingDay ?? 30) }, error: null });
 }

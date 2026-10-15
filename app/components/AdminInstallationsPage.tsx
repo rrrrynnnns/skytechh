@@ -15,7 +15,7 @@ type Installation = readonly [
   string,
   string,
 ];
-type Filter = "All" | "Scheduled" | "In Progress" | "Completed" | "Cancelled";
+type Filter = "All" | "Scheduled" | "In Progress" | "Completed" | "Cancelled" | "Installation_Rescheduled";
 type Technician = { id: string; name: string; status: string };
 type TicketSchedule = { technicianId: string | null; date: string | null; time: string | null };
 
@@ -76,6 +76,7 @@ export function AdminInstallationsPage() {
   const [installationTechnician, setInstallationTechnician] = useState('');
   const [scheduleChanged, setScheduleChanged] = useState(false);
   const [ticketSchedules, setTicketSchedules] = useState<TicketSchedule[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   function closeScheduleModal() {
     setIsAdding(false);
     setEditingInstallation(null);
@@ -192,10 +193,14 @@ export function AdminInstallationsPage() {
     const availableSubscribers = subscribers.length
       ? subscribers
       : ["Maria Santos", "Omar Hassan", "David Kim", "Sofia Reyes"];
+    const subscribersWithInstallations = new Set(
+      installations.map((installation) => installation[1].trim().toLowerCase()),
+    );
     return availableSubscribers.filter((subscriber) =>
+      !subscribersWithInstallations.has(subscriber.trim().toLowerCase()) &&
       subscriber.toLowerCase().includes(subscriberQuery.toLowerCase()),
     );
-  }, [subscriberQuery, subscribers]);
+  }, [installations, subscriberQuery, subscribers]);
 
   useEffect(() => {
     fetch("/api/technicians")
@@ -203,25 +208,32 @@ export function AdminInstallationsPage() {
       .then((result) => {
         if (Array.isArray(result.data)) {
           setTechnicians(
-            result.data.filter((item: Technician) => item.status === "Active"),
+            result.data,
           );
         }
       })
       .catch(() => setTechnicians([]));
   }, []);
 
-  const visibleInstallations = installations
-    .filter(
-      (item) =>
-        (filter === "All" || item[7] === filter) &&
-        item.join(" ").toLowerCase().includes(query.toLowerCase()),
-    )
-    .map(
-      (item) =>
-        item.map((value, index) =>
-          index === 1 || index === 2 ? formatPersonName(value) : value,
-        ) as unknown as Installation,
-    );
+  const visibleInstallations = Array.from(
+    new Map(
+      installations
+        .filter(
+          (item) =>
+            (filter === "All" || item[7] === filter || (filter === "Installation_Rescheduled" && item[7] === "Installation Rescheduled")) &&
+            item.join(" ").toLowerCase().includes(query.toLowerCase()),
+        )
+        .map((item) => [
+          `${item[1]}-${item[2]}-${item[4]}-${normalizeTimeSlot(item[5])}-${item[6]}`,
+          item,
+        ]),
+    ).values(),
+  ).map(
+    (item) =>
+      item.map((value, index) =>
+        index === 1 || index === 2 ? formatPersonName(value) : value,
+      ) as unknown as Installation,
+  );
 
   useEffect(() => {
     const table = document.querySelector("table.table-fixed");
@@ -247,6 +259,8 @@ export function AdminInstallationsPage() {
 
   async function addSchedule(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (isSaving) return;
+    setIsSaving(true);
     const form = new FormData(event.currentTarget);
     const subscriber = String(form.get("subscriber") || "").trim();
     const technician = installationTechnician || String(form.get("technician") || "").trim();
@@ -254,8 +268,11 @@ export function AdminInstallationsPage() {
     const time = String(form.get("time") || "").trim();
     const type = editingInstallation?.[6] || "Installation";
     const status = String(form.get("status") || "Scheduled");
-    if (!subscriber || !technician || !date || !time) {
-      window.alert("Please select a subscriber, visit date, time slot, and technician.");
+    if ((!editingInstallation && !subscriber) || !technician || !date || !time) {
+      window.alert(editingInstallation
+        ? "Please select a visit date, time slot, and technician."
+        : "Please select a subscriber, visit date, time slot, and technician.");
+      setIsSaving(false);
       return;
     }
     if (editingInstallation) {
@@ -277,26 +294,33 @@ export function AdminInstallationsPage() {
       if (!response.ok) {
         const result = await response.json().catch(() => null);
         window.alert(result?.error || "Unable to save installation changes.");
+        setIsSaving(false);
         return;
       }
+      const result = await response.json();
       setInstallations((current) =>
         current.map((item) =>
           item[0] === editingInstallation[0]
-            ? [
-                item[0],
-                subscriber,
-                technician,
-                String(form.get("address") || item[3]),
-                date,
-                time,
-                type,
-                status,
-              ]
+            ? (() => {
+                const savedInstallation = result.data;
+                const savedStatus = String(savedInstallation?.status || status).replaceAll("_", " ");
+                return [
+                  item[0],
+                  item[1],
+                  technician,
+                  savedInstallation?.address || String(form.get("address") || item[3]),
+                  savedInstallation?.date?.slice(0, 10) || date,
+                  savedInstallation?.time || time,
+                  savedInstallation?.type || type,
+                  savedStatus,
+                ];
+              })()
             : item,
         ),
       );
       setEditingInstallation(null);
       setIsAdding(false);
+      setIsSaving(false);
       return;
     }
     const response = await fetch("/api/installations", {
@@ -314,6 +338,7 @@ export function AdminInstallationsPage() {
     if (!response.ok) {
       const result = await response.json().catch(() => null);
       window.alert(result?.error || "Unable to save installation.");
+      setIsSaving(false);
       return;
     }
     const result = await response.json();
@@ -332,6 +357,7 @@ export function AdminInstallationsPage() {
       ...current,
     ]);
     setIsAdding(false);
+    setIsSaving(false);
   }
 
   useEffect(() => {
@@ -375,7 +401,7 @@ export function AdminInstallationsPage() {
           installation[7] === "Completed" || installation[7] === "Installation Closed"
             ? "Completed"
             : installation[7] === "Cancelled" || installation[7] === "Installation Rescheduled"
-              ? "Cancelled"
+              ? "Installation_Rescheduled"
               : "Scheduled",
         );
         setIsAdding(true);
@@ -489,7 +515,7 @@ export function AdminInstallationsPage() {
           <option value="All">All</option>
           <option value="Scheduled">Installation Confirmed</option>
           <option value="Completed">Installation Closed</option>
-          <option value="Cancelled">Installation Rescheduled</option>
+          <option value="Installation_Rescheduled">Installation Rescheduled</option>
         </select>
         <ChevronDown className="pointer-events-none absolute right-3 top-3.5 text-slate-400" size={16} />
         </label>
@@ -590,8 +616,8 @@ export function AdminInstallationsPage() {
                 <div className="border-t border-slate-100 px-6 pb-7 pt-6 sm:px-8">
                   <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Technician visit date and time</p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <input name="date" type="date" min={getMinimumVisitDate()} value={installationDate} onChange={(event) => { setInstallationDate(event.target.value); setScheduleChanged(true); }} required className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]" />
-                    <select name="time" value={normalizeTimeSlot(installationTime)} onChange={(event) => { setInstallationTime(event.target.value); setScheduleChanged(true); }} required className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]">
+                    <input name="date" type="date" min={getMinimumVisitDate()} value={installationDate} onChange={(event) => { setInstallationDate(event.target.value); setScheduleChanged(true); }} disabled={installationStatus === "Completed" || installationStatus === "Scheduled"} required className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" />
+                    <select name="time" value={normalizeTimeSlot(installationTime)} onChange={(event) => { setInstallationTime(event.target.value); setScheduleChanged(true); }} disabled={installationStatus === "Completed" || installationStatus === "Scheduled"} required className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500">
                       <option value="">— Time slot —</option>
                       <option value="9:00 AM – 12:00 NN">9:00 AM – 12:00 NN</option>
                       <option value="1:00 PM – 4:00 PM">1:00 PM – 4:00 PM</option>
@@ -599,10 +625,22 @@ export function AdminInstallationsPage() {
                   </div>
                   <label className="mt-6 block text-xs font-bold uppercase tracking-wide text-slate-500">
                     Technician {scheduleChanged && installationDate && installationTime && <span className="font-normal normal-case text-[#2447b6]">({availableTechnicianCount} available on this date and time)</span>}
-                    <select name="technician" disabled={!scheduleChanged && Boolean(editingInstallation?.[2] && editingInstallation?.[4] && editingInstallation?.[5])} value={installationTechnician} onChange={(event) => setInstallationTechnician(event.target.value)} required className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500">
+                    <select name="technician" disabled={!scheduleChanged && Boolean(editingInstallation?.[2] && editingInstallation?.[4] && editingInstallation?.[5])} value={installationDate && installationTime ? installationTechnician : ""} onChange={(event) => setInstallationTechnician(event.target.value)} required className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500">
                       <option value="">— Choose available technician —</option>
-                      {(scheduleChanged ? technicians.filter(isTechnicianAvailable) : technicians).map((technician) => (
-                        <option value={technician.name} key={technician.id}>
+                      {(installationDate && installationTime
+                        ? (scheduleChanged
+                          ? technicians.filter((technician) =>
+                              isTechnicianAvailable(technician) &&
+                              (technician.status === "Active" ||
+                                formatPersonName(technician.name) === installationTechnician),
+                            )
+                          : technicians.filter((technician) =>
+                              technician.status === "Active" ||
+                              formatPersonName(technician.name) === installationTechnician,
+                            ))
+                        : []
+                      ).map((technician) => (
+                        <option value={formatPersonName(technician.name)} key={technician.id}>
                           {formatPersonName(technician.name)}
                         </option>
                       ))}
@@ -616,17 +654,14 @@ export function AdminInstallationsPage() {
                       onChange={(event) => {
                         const value = event.target.value;
                         setInstallationStatus(value);
-                        if (value === "Cancelled" && editingInstallation?.[7] !== "Cancelled" && editingInstallation?.[7] !== "Installation Rescheduled") {
-                          setInstallationDate("");
-                          setInstallationTime("");
-                          setInstallationTechnician("");
-                        }
                       }}
                       className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal text-slate-700 outline-none focus:border-[#3b4fd8]"
                     >
-                      <option value="Scheduled">Installation Confirmed</option>
+                      {!['Completed', 'Cancelled', 'Installation_Rescheduled', 'Installation Closed', 'Installation Rescheduled'].includes(installationStatus) && (
+                        <option value="Scheduled">Installation Confirmed</option>
+                      )}
                       <option value="Completed">Installation Closed</option>
-                      <option value="Cancelled">Installation Rescheduled</option>
+                      <option value="Installation_Rescheduled">Installation Rescheduled</option>
                     </select>
                   </label>
                 </div>
@@ -683,10 +718,13 @@ export function AdminInstallationsPage() {
               </div>
               <label className="mt-6 block text-xs font-bold uppercase tracking-wide text-slate-500">
                 Technician {scheduleChanged && installationDate && installationTime && <span className="font-normal normal-case text-[#2447b6]">({availableTechnicianCount} available on this date and time)</span>}
-                <select name="technician" disabled={!scheduleChanged && Boolean(editingInstallation?.[2] && editingInstallation?.[4] && editingInstallation?.[5])} value={installationTechnician} onChange={(event) => setInstallationTechnician(event.target.value)} required className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500">
-                  <option value="" disabled>— Choose available technician —</option>
-                  {(scheduleChanged ? technicians.filter(isTechnicianAvailable) : technicians).map((technician) => (
-                    <option value={technician.name} key={technician.id}>
+                <select name="technician" disabled={!scheduleChanged && Boolean(editingInstallation?.[2] && editingInstallation?.[4] && editingInstallation?.[5])} value={installationDate && installationTime ? installationTechnician : ""} onChange={(event) => setInstallationTechnician(event.target.value)} required className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-normal normal-case tracking-normal outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500">
+                  <option value="">— Choose available technician —</option>
+                  {(installationDate && installationTime
+                    ? technicians.filter((technician) => isTechnicianAvailable(technician) && technician.status === "Active")
+                    : []
+                  ).map((technician) => (
+                    <option value={formatPersonName(technician.name)} key={technician.id}>
                       {formatPersonName(technician.name)}
                     </option>
                   ))}
@@ -705,6 +743,7 @@ export function AdminInstallationsPage() {
               </button>
               <button
                 type="submit"
+                disabled={isSaving}
                 className="rounded-xl bg-[#2563eb] px-4 py-2.5 text-sm font-semibold text-white"
               >
                 Add Schedule

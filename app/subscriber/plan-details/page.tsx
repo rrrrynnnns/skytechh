@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { PortalShell } from '@/app/components/PortalShell';
 
-type Account = { planName: string; monthlyPrice: number };
+type Account = { planName: string; monthlyPrice: number; cutoffDay: number; billingDay: number };
 
 export default function PlanDetailsPage() {
   const [account, setAccount] = useState<Account | null>(null);
@@ -18,8 +18,8 @@ export default function PlanDetailsPage() {
 
   const details = [
     { label: 'Your current plan', value: account?.planName || 'Loading plan...' },
-    { label: 'Cut-off date', value: 'Every 9th of the month', note: 'The cut-off date is the last day of your billing cycle.' },
-    { label: 'Bill due date', value: 'Every 30th of the month' },
+    { label: 'Cut-off date', value: `Every ${account?.cutoffDay || 9}th of the month`, note: 'The cut-off date is the last day of your billing cycle.' },
+    { label: 'Bill due date', value: `Every ${account?.billingDay || 30}th of the month` },
     { label: 'Monthly fee', value: account ? `₱${account.monthlyPrice.toLocaleString()}.00 per month` : 'Loading...' },
   ];
 
