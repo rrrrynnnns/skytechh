@@ -22,6 +22,126 @@ body {
   font-family: var(--font-inter), sans-serif;
 }
 
+.admin-dark-mode body {
+  background: #0f172a;
+}
+
+.admin-dark-mode.portal-shell,
+.admin-dark-mode .portal-shell {
+  background: #0f172a !important;
+  color: #e2e8f0;
+}
+
+.admin-dark-mode .portal-shell aside,
+.admin-dark-mode .portal-shell header,
+.admin-dark-mode .portal-shell .bg-white {
+  background-color: #17233b !important;
+  border-color: #2d3b56 !important;
+}
+
+.admin-dark-mode .portal-shell .bg-slate-50,
+.admin-dark-mode .portal-shell .bg-\[\#f8fafc\],
+.admin-dark-mode .portal-shell .bg-\[\#f7faff\],
+.admin-dark-mode .portal-shell .hover\:bg-slate-50:hover,
+.admin-dark-mode .portal-shell .hover\:bg-\[\#f1f5f9\]:hover {
+  background-color: #111c31 !important;
+}
+
+.admin-dark-mode .portal-shell .border-slate-100,
+.admin-dark-mode .portal-shell .border-slate-200 {
+  border-color: #2d3b56 !important;
+}
+
+.admin-dark-mode .portal-shell .text-slate-950,
+.admin-dark-mode .portal-shell .text-slate-900,
+.admin-dark-mode .portal-shell .text-slate-800,
+.admin-dark-mode .portal-shell .text-slate-700 {
+  color: #f1f5f9 !important;
+}
+
+.admin-dark-mode .portal-shell .text-slate-600,
+.admin-dark-mode .portal-shell .text-slate-500 {
+  color: #a9b8cf !important;
+}
+
+.admin-dark-mode .portal-shell .text-slate-400 {
+  color: #8191aa !important;
+}
+
+.admin-dark-mode .portal-shell input,
+.admin-dark-mode .portal-shell select,
+.admin-dark-mode .portal-shell textarea {
+  background-color: #111c31 !important;
+  border-color: #3a4a68 !important;
+  color: #f1f5f9 !important;
+}
+
+.admin-dark-mode .portal-shell input::placeholder,
+.admin-dark-mode .portal-shell textarea::placeholder {
+  color: #8191aa !important;
+}
+
+.admin-dark-mode .portal-shell .border-red-200 {
+  border-color: #7f303d !important;
+}
+
+.admin-dark-mode .portal-shell .bg-red-50 {
+  background-color: #3a1e2a !important;
+}
+
+.admin-dark-mode .portal-shell .bg-blue-50,
+.admin-dark-mode .portal-shell .bg-emerald-50,
+.admin-dark-mode .portal-shell .bg-amber-50 {
+  background-color: #1d3150 !important;
+}
+
+.admin-dark-mode .portal-shell .text-blue-600,
+.admin-dark-mode .portal-shell .text-emerald-600,
+.admin-dark-mode .portal-shell .text-amber-600 {
+  color: #93c5fd !important;
+}
+
+.admin-dark-mode .portal-shell .border-blue-200,
+.admin-dark-mode .portal-shell .border-emerald-200,
+.admin-dark-mode .portal-shell .border-amber-200 {
+  border-color: #38547b !important;
+}
+
+.admin-dark-mode .portal-shell table thead {
+  background-color: #111c31 !important;
+}
+
+.admin-dark-mode .portal-shell tr,
+.admin-dark-mode .portal-shell td,
+.admin-dark-mode .portal-shell th {
+  border-color: #2d3b56 !important;
+}
+
+.admin-dark-mode .portal-shell tbody tr:hover {
+  background-color: #1d2b45 !important;
+}
+
+.admin-dark-mode .portal-shell .notification-popover,
+.admin-dark-mode .portal-shell [role="dialog"] {
+  background-color: #17233b !important;
+  border-color: #3a4a68 !important;
+}
+
+.admin-dark-mode .portal-shell .notification-popover .bg-white,
+.admin-dark-mode .portal-shell [role="dialog"] .bg-white {
+  background-color: #17233b !important;
+}
+
+.admin-dark-mode .portal-shell .shadow-sm,
+.admin-dark-mode .portal-shell .shadow-2xl {
+  --tw-shadow-color: rgb(0 0 0 / 0.35) !important;
+}
+
+.admin-dark-mode .portal-shell .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+.admin-dark-mode .portal-shell .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #2d3b56 !important;
+}
+
 button {
   transition: all 150ms ease;
 }
@@ -330,6 +450,25 @@ textarea {
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+.password-mask {
+  -webkit-text-security: disc;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: #0f172a;
+  caret-color: #0f172a;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 input:focus,
 select:focus,
 textarea:focus {
@@ -595,6 +734,84 @@ aside nav a[class*="bg-blue-50"] {
 .portal-scrollbar-hidden::-webkit-scrollbar,
 .portal-scrollbar-hidden *::-webkit-scrollbar {
   display: none;
+}
+
+html.admin-dark-mode .portal-shell main form > section:last-of-type,
+html.admin-dark-mode .portal-shell main form > section:last-of-type *,
+html.admin-dark-mode .portal-shell main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child,
+html.admin-dark-mode .portal-shell main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child > div,
+html.admin-dark-mode .portal-shell div.mt-7.overflow-hidden:has(table[class*="1050px"]) > div:last-child {
+  background-color: #17233b !important;
+}
+
+html.admin-dark-mode .portal-shell .internet-plan-grid:not(:first-child) > div:last-child,
+html.admin-dark-mode .portal-shell .internet-plan-grid > .plan-actions {
+  background-color: #17233b !important;
+}
+
+html.admin-dark-mode .portal-shell .internet-plan-grid > .plan-actions button,
+html.admin-dark-mode .portal-shell .internet-plan-grid .plan-value {
+  background-color: #111c31 !important;
+  border-color: #3a4a68 !important;
+  color: #f1f5f9 !important;
+}
+
+html.admin-dark-mode .portal-shell .internet-plan-grid > .plan-actions button:hover {
+  background-color: #1d2b45 !important;
+}
+
+html.admin-dark-mode .portal-shell table tbody tr:hover,
+html.admin-dark-mode .portal-shell table tbody tr:hover > td {
+  background-color: #1d2b45 !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-filter-tabs button,
+html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child > div:nth-child(2) button,
+html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .subscriber-filter-tab {
+  background-color: #111c31 !important;
+  border-color: #3a4a68 !important;
+  color: #a9b8cf !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-filter-tabs button:hover,
+html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child > div:nth-child(2) button:hover,
+html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .subscriber-filter-tab:hover {
+  background-color: #1d2b45 !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-filter-tabs button.active,
+html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child > div:nth-child(2) button.active,
+html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .subscriber-filter-tab.active {
+  background-color: #2447b6 !important;
+  border-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+html.admin-dark-mode .portal-shell input:-webkit-autofill,
+html.admin-dark-mode .portal-shell input:-webkit-autofill:hover,
+html.admin-dark-mode .portal-shell input:-webkit-autofill:focus,
+html.admin-dark-mode .portal-shell input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #111c31 inset !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  caret-color: #f1f5f9 !important;
+}
+
+html.admin-dark-mode .portal-shell .border-emerald-200.bg-emerald-50.text-emerald-600 {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #059669 !important;
+}
+
+html.admin-dark-mode .portal-shell .border-amber-200.bg-amber-50.text-amber-600 {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #d97706 !important;
+}
+
+html.admin-dark-mode .portal-shell .border-red-200.bg-red-50.text-red-600 {
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #dc2626 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/app/lib/prisma';
+import { DEMO_ACCOUNTS } from '@/app/lib/demo-accounts';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -19,14 +20,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         console.warn('Prisma is unavailable; using local demo login.', error instanceof Error ? error.message : error);
       }
 
-      const demos = {
-        'admin@skytech.net': { id: 'USR-ADMIN', name: 'Sky-Tech Admin', role: 'admin' },
-        'tech@skytech.net': { id: 'USR-TECH', name: 'Luis Dela Cruz', role: 'technician', technicianId: '100001' },
-        'user1@skytech.net': { id: 'USR-SUB', name: 'Alex Rivera', role: 'subscriber', subscriberId: '100000001' },
-      } as const;
-      const demo = demos[email as keyof typeof demos];
-      const demoPasswords = { 'admin@skytech.net': 'admin123', 'tech@skytech.net': 'tech123', 'user1@skytech.net': 'user123' };
-      return demo && password === demoPasswords[email as keyof typeof demoPasswords] ? { ...demo, email } : null;
+      const demo = Object.values(DEMO_ACCOUNTS).find((account) => account.email === email);
+      return demo && password === demo.password ? demo : null;
     },
   })],
   callbacks: {
