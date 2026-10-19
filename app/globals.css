@@ -22,6 +22,24 @@ body {
   font-family: var(--font-inter), sans-serif;
 }
 
+.admin-dark-mode .admin-form-modal-scroll-area {
+  scrollbar-color: #64748b #111c31;
+}
+
+.admin-dark-mode .admin-form-modal-scroll-area::-webkit-scrollbar-track {
+  background: #111c31;
+}
+
+.admin-dark-mode .admin-form-modal-scroll-area::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border: 2px solid #111c31;
+  border-radius: 9999px;
+}
+
+.admin-dark-mode .admin-form-modal-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 .admin-dark-mode body {
   background: #0f172a;
 }
@@ -276,7 +294,7 @@ main form > section:last-of-type td:last-child svg {
 }
 
 main form > section:last-of-type,
-main form > section:last-of-type * {
+main form > section:last-of-type *:not(.admin-add-plan-button):not(.admin-add-plan-button *) {
   background-color: #ffffff !important;
 }
 
@@ -453,6 +471,43 @@ textarea {
 input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
   display: none;
+}
+
+html.admin-dark-mode .portal-shell .admin-date-picker > button {
+  background-color: #111c31 !important;
+  border-color: #3a4a68 !important;
+  color: #f1f5f9 !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-date-picker-calendar {
+  background-color: #17233b !important;
+  border-color: #2d3b56 !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-date-picker-calendar p,
+html.admin-dark-mode .portal-shell .admin-date-picker-calendar button {
+  color: #f1f5f9 !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-date-picker-calendar button:hover {
+  background-color: #2447b6 !important;
+  color: #ffffff !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-date-picker-calendar button:disabled {
+  background-color: transparent !important;
+  color: #64748b !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-date-picker-calendar button.admin-date-picker-available:hover {
+  background-color: #2447b6 !important;
+  color: #ffffff !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-date-picker-calendar button.admin-date-picker-selected,
+html.admin-dark-mode .portal-shell .admin-date-picker-calendar button.admin-date-picker-selected:hover {
+  background-color: #3b4fd8 !important;
+  color: #ffffff !important;
 }
 
 .password-mask {
@@ -737,7 +792,7 @@ aside nav a[class*="bg-blue-50"] {
 }
 
 html.admin-dark-mode .portal-shell main form > section:last-of-type,
-html.admin-dark-mode .portal-shell main form > section:last-of-type *,
+html.admin-dark-mode .portal-shell main form > section:last-of-type *:not(.admin-add-plan-button):not(.admin-add-plan-button *),
 html.admin-dark-mode .portal-shell main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child,
 html.admin-dark-mode .portal-shell main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child > div,
 html.admin-dark-mode .portal-shell div.mt-7.overflow-hidden:has(table[class*="1050px"]) > div:last-child {
@@ -1040,6 +1095,71 @@ html.admin-dark-mode .portal-shell .notification-center button[class~="border-sl
   color: #cbd5e1 !important;
 }
 
+.portal-shell:not(.admin-dark-mode) .admin-archive-toggle:hover {
+  background-color: #eff6ff !important;
+  border-color: #3b82f6 !important;
+  color: #2563eb !important;
+}
+
+.portal-shell.admin-dark-mode .admin-archive-toggle {
+  background-color: #17233b !important;
+  border-color: #3a4a68 !important;
+  color: #cbd5e1 !important;
+}
+
+.portal-shell.admin-dark-mode .admin-archive-toggle:hover {
+  background-color: #1d2b45 !important;
+  border-color: #3b82f6 !important;
+  color: #bfdbfe !important;
+}
+
+.portal-shell .admin-add-plan-button {
+  background-color: #3b4fd8 !important;
+  color: #ffffff !important;
+}
+
+.portal-shell .admin-add-plan-button:hover {
+  background-color: #2d3fc7 !important;
+  color: #ffffff !important;
+}
+
+.portal-shell.admin-dark-mode .admin-add-plan-button {
+  background-color: #3b4fd8 !important;
+  color: #ffffff !important;
+}
+
+.portal-shell.admin-dark-mode .admin-add-plan-button:hover {
+  background-color: #2d3fc7 !important;
+  color: #ffffff !important;
+}
+
+html .portal-shell button.admin-add-plan-button {
+  background: #3b4fd8 !important;
+  background-color: #3b4fd8 !important;
+  color: #ffffff !important;
+}
+
+html .portal-shell button.admin-add-plan-button:hover {
+  background: #2d3fc7 !important;
+  background-color: #2d3fc7 !important;
+  color: #ffffff !important;
+}
+
+html .portal-shell button.admin-add-plan-button svg {
+  display: block !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+html.admin-dark-mode .portal-shell main form > section:last-of-type button.admin-add-plan-button,
+html.admin-dark-mode .portal-shell main form > section:last-of-type button.admin-add-plan-button:hover {
+  background: #3b4fd8 !important;
+  background-color: #3b4fd8 !important;
+  color: #ffffff !important;
+}
+
 .portal-shell.admin-dark-mode .notification-icon {
   background-color: #1d3150 !important;
   border-color: #38547b !important;
@@ -1048,6 +1168,129 @@ html.admin-dark-mode .portal-shell .notification-center button[class~="border-sl
 .portal-shell.admin-dark-mode .notification-page-heading {
   background: transparent !important;
   background-color: transparent !important;
+}
+
+body .portal-shell.admin-dark-mode .subscriber-table-shell,
+body .portal-shell.admin-dark-mode .subscriber-table-shell > div:last-child,
+body .portal-shell.admin-dark-mode .subscriber-table-shell table,
+body .portal-shell.admin-dark-mode .subscriber-table-shell thead {
+  background-color: #17233b !important;
+  border-color: #2d3b56 !important;
+}
+
+body .portal-shell.admin-dark-mode .subscriber-table-shell > div:first-child {
+  background-color: #0f172a !important;
+  border-color: transparent !important;
+}
+
+body .portal-shell.admin-dark-mode .subscriber-table-shell input,
+body .portal-shell.admin-dark-mode .subscriber-table-shell select,
+body .portal-shell.admin-dark-mode .subscriber-table-shell button {
+  background-color: #111c31 !important;
+  border-color: #3a4a68 !important;
+  color: #cbd5e1 !important;
+}
+
+body .portal-shell.admin-dark-mode .subscriber-table-shell button:hover {
+  background-color: #1d2b45 !important;
+}
+
+body .portal-shell.admin-dark-mode .subscriber-table-shell .subscriber-row-actions button {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  padding: 0 !important;
+}
+
+body .portal-shell.admin-dark-mode .subscriber-table-shell .subscriber-row-actions button:hover {
+  background-color: transparent !important;
+}
+
+body .portal-shell.admin-dark-mode .subscriber-table-shell .live-record-counter {
+  color: #a9b8cf !important;
+}
+
+body .portal-shell.admin-dark-mode .subscriber-table-shell input::placeholder {
+  color: #8191aa !important;
+}
+
+body .portal-shell.admin-dark-mode .subscriber-table-shell .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+html.admin-dark-mode body .portal-shell .subscriber-table-shell tbody tr:hover,
+html.admin-dark-mode body .portal-shell .subscriber-table-shell tbody tr:hover > td {
+  background-color: #1d2b45 !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-form-modal-scroll-area {
+  scrollbar-color: #64748b #111c31;
+}
+
+html.admin-dark-mode .portal-shell .admin-form-modal-scroll-area::-webkit-scrollbar-track {
+  background: #111c31;
+}
+
+html.admin-dark-mode .portal-shell .admin-form-modal-scroll-area::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border: 2px solid #111c31;
+  border-radius: 9999px;
+}
+
+html.admin-dark-mode .portal-shell .admin-form-modal-scroll-area::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+html.admin-dark-mode .portal-shell select {
+  color-scheme: dark;
+}
+
+html.admin-dark-mode .portal-shell select option {
+  background-color: #17233b;
+  color: #f1f5f9;
+}
+
+html.admin-dark-mode .portal-shell select option:checked,
+html.admin-dark-mode .portal-shell select option:hover {
+  background-color: #294bc4;
+  color: #ffffff;
+}
+
+html.admin-dark-mode,
+html.admin-dark-mode body,
+html.admin-dark-mode .portal-shell,
+html.admin-dark-mode .portal-shell * {
+  scrollbar-color: #64748b #111c31;
+}
+
+html.admin-dark-mode::-webkit-scrollbar-track,
+html.admin-dark-mode body::-webkit-scrollbar-track {
+  background: #111c31;
+}
+
+html.admin-dark-mode::-webkit-scrollbar-thumb,
+html.admin-dark-mode body::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border: 2px solid #111c31;
+  border-radius: 9999px;
+}
+
+html.admin-dark-mode::-webkit-scrollbar-thumb:hover,
+html.admin-dark-mode body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+html.admin-dark-mode .portal-shell *::-webkit-scrollbar-track {
+  background: #111c31;
+}
+
+html.admin-dark-mode .portal-shell *::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border: 2px solid #111c31;
+  border-radius: 9999px;
+}
+
+html.admin-dark-mode .portal-shell *::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 html.admin-dark-mode .portal-shell .notification-center .notification-filter:not([class*="bg-[#294bc4]"]) {
@@ -1060,4 +1303,49 @@ html.admin-dark-mode .portal-shell .notification-center .notification-filter:not
   background-color: #1d2b45 !important;
   border-color: #3b82f6 !important;
   color: #bfdbfe !important;
+}
+
+html.admin-dark-mode .portal-shell .subscriber-action-link {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  padding: 0 !important;
+  color: inherit;
+}
+
+html.admin-dark-mode .portal-shell .subscriber-action-link:hover {
+  background: transparent !important;
+}
+
+html.admin-dark-mode .portal-shell .subscriber-edit-link {
+  color: #2563eb !important;
+}
+
+html.admin-dark-mode .portal-shell .subscriber-edit-link:hover {
+  color: #2563eb !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-status-pill.bg-emerald-50 {
+  background-color: #173c37 !important;
+  color: #10b981 !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-status-pill.bg-amber-50 {
+  background-color: #3b3020 !important;
+  color: #f59e0b !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-status-pill.bg-red-50 {
+  background-color: #45222a !important;
+  color: #fb7185 !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-status-pill.bg-blue-50 {
+  background-color: #1d3150 !important;
+  color: #2166f3 !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-status-pill.bg-slate-50 {
+  background-color: #26344d !important;
+  color: #cbd5e1 !important;
 }

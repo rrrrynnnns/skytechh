@@ -37,7 +37,9 @@ export function Login({ onBooking }: LoginProps) {
   const [selectedRole, setSelectedRole] = useState<DemoRole | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [recoveryMessage, setRecoveryMessage] = useState(false);
+  const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoverySent, setRecoverySent] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   function selectRole(role: DemoRole) {
@@ -82,18 +84,41 @@ export function Login({ onBooking }: LoginProps) {
             <form onSubmit={submit} className="mt-8 space-y-5">
               <label htmlFor="email" className="block text-sm font-bold text-slate-700">Email address<div className={`mt-2 flex h-12 items-center overflow-hidden rounded-xl border bg-white px-3 transition focus-within:ring-2 focus-within:ring-blue-100 ${error ? 'border-red-300' : 'border-slate-200 focus-within:border-[#2452c7]'}`}><span className="shrink-0 text-slate-400"><Icon name="mail" /></span><input id="email" name="email" type="email" value={email} onChange={(event) => { setEmail(event.target.value); setSelectedRole(null); }} required autoComplete="email" placeholder="you@skytech.net" className="min-w-0 flex-1 appearance-none !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !ring-0 !shadow-none placeholder:text-slate-400 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none" /></div></label>
               <label htmlFor="password" className="block text-sm font-bold text-slate-700">Password<div className={`mt-2 flex h-12 items-center overflow-hidden rounded-xl border bg-white px-3 transition focus-within:ring-2 focus-within:ring-blue-100 ${error ? 'border-red-300' : 'border-slate-200 focus-within:border-[#2452c7]'}`}><span className="shrink-0 text-slate-400"><Icon name="lock" /></span><input id="password" name="password" type="text" value={password} onChange={(event) => { setPassword(event.target.value); setSelectedRole(null); }} required autoComplete="current-password" placeholder="Enter your password" className={`min-w-0 flex-1 appearance-none !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !ring-0 !shadow-none placeholder:text-slate-400 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none ${showPassword ? '' : 'password-mask'}`} /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="shrink-0 !border-0 !bg-transparent !p-1 !shadow-none text-slate-400 transition hover:text-[#2452c7] focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none"><Icon name={showPassword ? 'eyeOff' : 'eye'} /></button></div></label>
-              <div className="flex justify-end"><button type="button" onClick={() => setRecoveryMessage(true)} className="text-sm font-bold text-[#2452c7] hover:underline">Forgot password?</button></div>
-              {recoveryMessage && <p className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700">Password recovery is not available in this demo.</p>}
+              <div className="flex justify-end"><button type="button" onClick={() => { setRecoveryEmail(email); setRecoverySent(false); setIsRecoveryOpen(true); }} className="text-sm font-bold text-[#2452c7] hover:underline">Forgot password?</button></div>
               {error && <div role="alert" className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700"><Icon name="alert" size={18} /> <span>{error}</span></div>}
               <button type="submit" disabled={isSigningIn} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2452c7] px-5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d43aa] focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60">{isSigningIn ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />Signing in...</> : 'Sign in'}</button>
             </form>
             <div className="my-7 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[.16em] text-slate-400"><span className="h-px flex-1 bg-slate-200" />Quick demo access<span className="h-px flex-1 bg-slate-200" /></div>
             <div className="grid grid-cols-3 gap-2">{roles.map((role) => <button key={role.id} type="button" onClick={() => selectRole(role.id)} className={`flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-xl border px-1 text-center text-[11px] font-bold transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200 ${selectedRole === role.id ? 'border-[#2452c7] bg-blue-50 text-[#2452c7]' : 'border-slate-200 bg-white text-slate-500'}`}><span className={role.color === 'amber' ? 'text-amber-500' : role.color === 'emerald' ? 'text-emerald-500' : 'text-[#2452c7]'}><Icon name={role.icon} size={20} /></span>{role.label}</button>)}</div>
-            <p className="mt-7 text-center text-sm text-slate-500">New to Sky-Tech? <button type="button" onClick={onBooking} className="font-bold text-[#2452c7] hover:underline">Book a connection</button></p>
+            <p className="mt-7 text-center text-sm text-slate-500">New to Sky-Tech? <button type="button" onClick={onBooking} className="font-bold text-[#2452c7] hover:underline">Book now</button></p>
           </section>
         </div>
         <footer className="pb-2 text-center text-xs font-semibold text-blue-100/45">© 2026 Sky-Tech ISP. Secure account access.</footer>
       </div>
+      {isRecoveryOpen && <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-labelledby="recovery-title">
+        <div className="w-full max-w-[460px] overflow-hidden rounded-3xl bg-white shadow-2xl">
+          {!recoverySent && <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5 sm:px-7">
+            <div className="flex items-start gap-4">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-[#2452c7]"><Icon name="mail" size={21} /></span>
+              <div><h2 id="recovery-title" className="text-lg font-black tracking-tight text-[#172238]">Reset your password</h2><p className="mt-1 text-sm text-slate-500">We&apos;ll send you a secure recovery link.</p></div>
+            </div>
+            <button type="button" onClick={() => setIsRecoveryOpen(false)} aria-label="Close password reset dialog" className="text-3xl font-light leading-none text-slate-400 hover:text-slate-600">&times;</button>
+          </div>}
+          {recoverySent ? <div className="px-6 py-7 text-center sm:px-7">
+            <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><Icon name="mail" size={26} /></span>
+            <h2 id="recovery-title" className="mt-5 text-xl font-black tracking-tight text-[#172238]">Check your inbox</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">If an account exists for <strong className="font-bold text-slate-700">{recoveryEmail}</strong>, you&apos;ll receive a password reset link shortly.</p>
+            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-left text-sm leading-6 text-[#2452c7]">Didn&apos;t receive it? Check your spam folder or wait a minute before trying again.</div>
+            <button type="button" onClick={() => setIsRecoveryOpen(false)} className="mt-5 h-14 w-full rounded-2xl bg-[#2d59ca] text-sm font-bold text-white shadow-xl shadow-blue-200 transition hover:bg-[#244db8]">Back to sign in</button>
+            <button type="button" onClick={() => setRecoverySent(false)} className="mt-4 block w-full text-center text-sm font-bold text-slate-500 hover:text-slate-700">Use a different email</button>
+          </div> : <form onSubmit={(event) => { event.preventDefault(); setRecoverySent(true); }} className="px-6 py-6 sm:px-7">
+            <p className="text-sm leading-6 text-slate-500">Enter the email connected to your Sky-Tech account. For your security, the reset link will expire after 30 minutes.</p>
+            <label htmlFor="recovery-email" className="mt-6 block text-sm font-bold text-slate-600">Account email<div className="mt-2 flex h-14 items-center rounded-2xl border-2 border-[#3b70ef] bg-white px-3 shadow-[0_0_0_4px_rgba(59,112,239,0.12)]"><span className="shrink-0 text-slate-400"><Icon name="mail" size={19} /></span><input id="recovery-email" type="email" value={recoveryEmail} onChange={(event) => setRecoveryEmail(event.target.value)} required autoFocus placeholder="you@skytech.net" className="min-w-0 flex-1 !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !shadow-none placeholder:text-slate-300 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none" /></div></label>
+            <button type="submit" className="mt-6 h-14 w-full rounded-2xl bg-[#2d59ca] text-sm font-bold text-white shadow-xl shadow-blue-200 transition hover:bg-[#244db8]">Send reset link</button>
+            <button type="button" onClick={() => setIsRecoveryOpen(false)} className="mt-4 block w-full text-center text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
+          </form>}
+        </div>
+      </div>}
     </main>
   );
 }

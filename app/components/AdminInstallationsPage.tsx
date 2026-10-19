@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Plus, Search, X } from "lucide-react";
 import { PortalShell } from "@/app/components/PortalShell";
+import { AdminDatePicker } from "@/app/components/AdminDatePicker";
 import { formatPersonName } from "@/app/lib/name";
 
 type Installation = readonly [
@@ -20,14 +21,14 @@ type Technician = { id: string; name: string; status: string };
 type TicketSchedule = { technicianId: string | null; date: string | null; time: string | null };
 
 const statusStyles: Record<string, string> = {
-  Scheduled: "border-emerald-200 bg-emerald-50 text-emerald-600",
-  "In Progress": "border-emerald-200 bg-emerald-50 text-emerald-600",
-  "Installation Confirmed": "border-emerald-200 bg-emerald-50 text-emerald-600",
-  Completed: "border-slate-200 bg-slate-50 text-slate-600",
-  "Installation Closed": "border-slate-200 bg-slate-50 text-slate-600",
-  Cancelled: "border-amber-200 bg-amber-50 text-amber-600",
-  "Installation Rescheduled": "border-amber-200 bg-amber-50 text-amber-600",
-  Installation_Rescheduled: "border-amber-200 bg-amber-50 text-amber-600",
+  Scheduled: "bg-emerald-50 text-emerald-500",
+  "In Progress": "bg-emerald-50 text-emerald-500",
+  "Installation Confirmed": "bg-emerald-50 text-emerald-500",
+  Completed: "bg-slate-50 text-slate-500",
+  "Installation Closed": "bg-slate-50 text-slate-500",
+  Cancelled: "bg-amber-50 text-amber-500",
+  "Installation Rescheduled": "bg-amber-50 text-amber-500",
+  Installation_Rescheduled: "bg-amber-50 text-amber-500",
 };
 
 const statusLabels: Record<string, string> = {
@@ -48,7 +49,26 @@ function getStatusLabel(status: string) {
 function getMinimumVisitDate() {
   const date = new Date();
   date.setDate(date.getDate() + 1);
-  return date.toISOString().slice(0, 10);
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function isSunday(value: string) {
+  return new Date(`${value}T00:00:00`).getDay() === 0;
+}
+
+function formatInstallationDate(value: string) {
+  if (!value) return "—";
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 function normalizeTimeSlot(value: string | null | undefined) {
@@ -77,6 +97,17 @@ export function AdminInstallationsPage() {
   const [scheduleChanged, setScheduleChanged] = useState(false);
   const [ticketSchedules, setTicketSchedules] = useState<TicketSchedule[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  function handleInstallationDateChange(value: string) {
+    if (value && isSunday(value)) {
+      window.alert("Installations cannot be scheduled on Sundays.");
+      setInstallationDate("");
+      setScheduleChanged(true);
+      return;
+    }
+    setInstallationDate(value);
+    setScheduleChanged(true);
+  }
+
   function closeScheduleModal() {
     setIsAdding(false);
     setEditingInstallation(null);
@@ -97,6 +128,33 @@ export function AdminInstallationsPage() {
     ticket.technicianId === technician.id &&
     ticket.date?.slice(0, 10) === installationDate &&
     normalizeTimeSlot(ticket.time) === normalizeTimeSlot(installationTime),
+  );
+  const unavailableInstallationDates = new Set(
+    technicians.length
+      ? Array.from({ length: 366 }, (_, dayOffset) => {
+          const date = new Date();
+          date.setDate(date.getDate() + dayOffset + 1);
+          return [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, "0"),
+            String(date.getDate()).padStart(2, "0"),
+          ].join("-");
+        }).filter((date) => !technicians.some((technician) =>
+          ["9:00 AM – 12:00 NN", "1:00 PM – 4:00 PM"].some((time) =>
+            !installations.some((installation) =>
+              installation[2] === formatPersonName(technician.name) &&
+              installation[4] === date &&
+              normalizeTimeSlot(installation[5]) === time &&
+              installation[0] !== editingInstallation?.[0],
+            ) &&
+            !ticketSchedules.some((ticket) =>
+              ticket.technicianId === technician.id &&
+              ticket.date?.slice(0, 10) === date &&
+              normalizeTimeSlot(ticket.time) === time,
+            ),
+          ),
+        ))
+      : [],
   );
   const availableTechnicianCount = technicians.filter(isTechnicianAvailable).length;
 
@@ -272,6 +330,16 @@ export function AdminInstallationsPage() {
       window.alert(editingInstallation
         ? "Please select a visit date, time slot, and technician."
         : "Please select a subscriber, visit date, time slot, and technician.");
+      setIsSaving(false);
+      return;
+    }
+    if (isSunday(date)) {
+      window.alert("Installations cannot be scheduled on Sundays.");
+      setIsSaving(false);
+      return;
+    }
+    if (date < getMinimumVisitDate()) {
+      window.alert("Please choose a future installation date.");
       setIsSaving(false);
       return;
     }
@@ -553,11 +621,11 @@ export function AdminInstallationsPage() {
                     {item[1]}
                   </td>
                   <td className="truncate px-4 py-5 text-slate-500 lg:px-5">{item[2]}</td>
-                  <td className="whitespace-nowrap px-4 py-5 text-slate-500 lg:px-5">{item[4]}</td>
+                  <td className="whitespace-nowrap px-4 py-5 text-slate-500 lg:px-5">{formatInstallationDate(item[4])}</td>
                   <td className="whitespace-nowrap px-4 py-5 text-slate-500 lg:px-5">{item[5]}</td>
                   <td className="whitespace-nowrap px-4 py-5 lg:px-5">
                     <span
-                      className={`rounded-lg border px-2 py-1 text-xs font-semibold ${statusStyles[item[7]]}`}
+                      className={`admin-status-pill rounded-full px-2.5 py-1 text-xs font-bold tracking-wide ${statusStyles[item[7]]}`}
                     >
                       {getStatusLabel(item[7])}
                     </span>
@@ -616,7 +684,7 @@ export function AdminInstallationsPage() {
                 <div className="border-t border-slate-100 px-6 pb-7 pt-6 sm:px-8">
                   <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Technician visit date and time</p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <input name="date" type="date" min={getMinimumVisitDate()} value={installationDate} onChange={(event) => { setInstallationDate(event.target.value); setScheduleChanged(true); }} disabled={installationStatus === "Completed" || installationStatus === "Scheduled"} required className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" />
+                    <AdminDatePicker name="date" minDate={getMinimumVisitDate()} value={installationDate} onChange={handleInstallationDateChange} unavailableDates={unavailableInstallationDates} disabled={installationStatus === "Completed" || installationStatus === "Scheduled"} />
                     <select name="time" value={normalizeTimeSlot(installationTime)} onChange={(event) => { setInstallationTime(event.target.value); setScheduleChanged(true); }} disabled={installationStatus === "Completed" || installationStatus === "Scheduled"} required className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500">
                       <option value="">— Time slot —</option>
                       <option value="9:00 AM – 12:00 NN">9:00 AM – 12:00 NN</option>
@@ -708,7 +776,7 @@ export function AdminInstallationsPage() {
               <div className="mt-6 border-t border-slate-100 pt-6">
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Technician visit date and time</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <input name="date" type="date" min={getMinimumVisitDate()} value={installationDate} onChange={(event) => { setInstallationDate(event.target.value); setScheduleChanged(true); }} required className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]" />
+                  <AdminDatePicker name="date" minDate={getMinimumVisitDate()} value={installationDate} onChange={handleInstallationDateChange} unavailableDates={unavailableInstallationDates} />
                   <select name="time" value={installationTime} onChange={(event) => { setInstallationTime(event.target.value); setScheduleChanged(true); }} required className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8]">
                     <option value="">— Time slot —</option>
                     <option value="9:00 AM – 12:00 NN">9:00 AM – 12:00 NN</option>

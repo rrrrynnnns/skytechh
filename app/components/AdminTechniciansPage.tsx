@@ -31,9 +31,9 @@ function splitName(name: string) {
 }
 
 const statusStyles: Record<string, string> = {
-  Active: 'border-emerald-200 bg-emerald-50 text-emerald-600',
-  'Off Duty': 'border-slate-200 bg-slate-50 text-slate-600',
-  'On Leave': 'border-amber-200 bg-amber-50 text-amber-600',
+  Active: 'bg-emerald-50 text-emerald-500',
+  'Off Duty': 'bg-slate-50 text-slate-500',
+  'On Leave': 'bg-amber-50 text-amber-500',
 };
 
 export function AdminTechniciansPage() {
@@ -207,7 +207,7 @@ export function AdminTechniciansPage() {
         </select>
         <ChevronDown className="pointer-events-none absolute right-3 top-3.5 text-slate-400" size={16} />
         </label>
-        <button type="button" onClick={() => setShowArchived((current) => !current)} className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600">{showArchived ? "Active" : "Archived"}</button>
+        <button type="button" onClick={() => setShowArchived((current) => !current)} className="admin-archive-toggle rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-all duration-200 ease-out">{showArchived ? "Active" : "Archived"}</button>
         <span className="ml-auto text-sm text-slate-400">{visibleTechnicians.length} records</span>
       </div>
 
@@ -232,7 +232,7 @@ export function AdminTechniciansPage() {
                   <td className="px-5 py-4 text-slate-700">{technician.contact || '—'}</td>
                   <td className="px-5 py-4">
                     <span
-                      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusStyles[technician.status] ?? 'border-slate-200 bg-slate-50 text-slate-600'}`}
+                      className={`admin-status-pill inline-flex rounded-full px-2.5 py-1 text-xs font-bold tracking-wide ${statusStyles[technician.status] ?? 'bg-slate-50 text-slate-500'}`}
                     >
                       {technician.status}
                     </span>

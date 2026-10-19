@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Activity, Bell, CalendarDays, Check, ChevronDown, FileText, LayoutDashboard, List, MessageSquare, Moon, Router, Settings, Sun, Ticket, Users, Wrench, X } from 'lucide-react';
+import { Activity, Bell, CalendarDays, Check, ChevronDown, ClipboardList, FileText, LayoutDashboard, List, MessageSquare, Moon, Router, Settings, Sun, Ticket, Users, Wrench, X } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 
 type Role = 'admin' | 'technician' | 'subscriber';
@@ -50,7 +50,7 @@ export function PortalShell({ role, children }: { role: Role; children: React.Re
     };
   }, [isDarkMode, role]);
   const links: NavLink[] = role === 'admin'
-    ? [['/admin/dashboard', 'Dashboard', LayoutDashboard], ['/admin/subscribers', 'Subscribers', Users], ['/admin/billing', 'Billing', FileText], ['/admin/installations', 'Installations', CalendarDays], ['/admin/technicians', 'Technicians', Wrench], ['/admin/tickets', 'Support', Ticket], ['/admin/reports', 'Reports', Activity], ['/admin/settings', 'Settings', Settings]]
+    ? [['/admin/dashboard', 'Dashboard', LayoutDashboard], ['/admin/subscribers', 'Subscribers', Users], ['/admin/billing', 'Billing', FileText], ['/admin/bookings', 'Bookings', ClipboardList], ['/admin/installations', 'Installations', CalendarDays], ['/admin/technicians', 'Technicians', Wrench], ['/admin/tickets', 'Support', Ticket], ['/admin/reports', 'Reports', Activity], ['/admin/settings', 'Settings', Settings]]
     : role === 'technician'
       ? [['/technician/my-tasks', 'Home', LayoutDashboard], ['/technician/tasks', 'My Tasks', Ticket], ['/technician/profile', 'Profile', Users]]
       : [['/subscriber/my-account', 'Home', LayoutDashboard], ['/subscriber/my-tickets', 'My Requests', Ticket], ['/subscriber/help', 'Help', MessageSquare], ['/subscriber/profile', 'Profile', Users]];

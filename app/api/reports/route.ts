@@ -6,7 +6,7 @@ const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 export async function GET() {
   const now = new Date();
 
-  const [bills, subscriberRecords, technicians, tickets, installations, notifications] = await Promise.all([
+  const [bills, subscriberRecords, technicians, tickets, installations, notifications, recentTickets] = await Promise.all([
     prisma.bill.findMany(),
     prisma.subscriber.findMany({ where: { status: 'Active' }, select: { connectionDate: true } }),
     prisma.technician.count({ where: { status: 'Active' } }),
@@ -17,7 +17,12 @@ export async function GET() {
     }),
     prisma.notification.findMany({
       orderBy: { timestamp: 'desc' },
-      take: 6,
+      take: 10,
+    }),
+    prisma.ticket.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      include: { subscriber: true },
     }),
   ]);
 
@@ -80,6 +85,7 @@ export async function GET() {
       subscriber: installation.subscriber?.name || 'Unknown subscriber',
       technician: installation.technician?.name || 'Unassigned technician',
       date: installation.date || undefined,
+      time: installation.time || undefined,
       status: installation.status,
     })),
     recentActivity: notifications.map((notification) => ({
@@ -88,6 +94,14 @@ export async function GET() {
       body: notification.body,
       date: notification.timestamp,
       tone: notification.type === 'billing' ? 'orange' : notification.type === 'system' ? 'blue' : 'green',
+    })),
+    recentSupportTickets: recentTickets.map((ticket) => ({
+      id: ticket.id,
+      subscriber: ticket.subscriber.name,
+      concern: ticket.type.replace(/_/g, ' '),
+      date: ticket.visitDate,
+      time: ticket.visitTime,
+      status: ticket.status,
     })),
     error: null,
   });

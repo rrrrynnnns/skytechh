@@ -538,7 +538,7 @@ export function AdminSubscribersPage() {
           Add Subscriber
         </button>
       </div>
-      <div className="mt-7 overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="subscriber-table-shell mt-7 overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 p-4">
           <div className="relative w-full max-w-xs">
             <Search
@@ -560,7 +560,7 @@ export function AdminSubscribersPage() {
           </select>
           <ChevronDown className="pointer-events-none absolute right-3 top-3.5 text-slate-400" size={16} />
           </label>
-          <button type="button" onClick={() => setShowArchived((current) => !current)} className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600">{showArchived ? "Active" : "Archived"}</button>
+          <button type="button" onClick={() => setShowArchived((current) => !current)} className="admin-archive-toggle rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition-all duration-200 ease-out">{showArchived ? "Active" : "Archived"}</button>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-[1050px] w-full text-left">
@@ -592,19 +592,19 @@ export function AdminSubscribersPage() {
                     <td className="px-5 py-4 text-slate-500">{plan}</td>
                     <td className="px-5 py-4">
                       <span
-                        className={`rounded-lg border px-2 py-1 text-xs font-semibold ${subscriberStatus === "Active" ? "border-emerald-200 bg-emerald-50 text-emerald-600" : "border-amber-200 bg-amber-50 text-amber-600"}`}
+                        className={`admin-status-pill rounded-full px-2.5 py-1 text-xs font-bold tracking-wide ${subscriberStatus === "Active" ? "bg-emerald-50 text-emerald-500" : "bg-amber-50 text-amber-500"}`}
                       >
                         {subscriberStatus}
                       </span>
                     </td>
                     <td className="px-5 py-4">
-                      <div className="flex gap-3 text-xs font-semibold">
+                      <div className="subscriber-row-actions flex gap-3 text-xs font-semibold">
                         {!subscribers.find((item) => item[0] === id)?.[13] ? <>
-                          <button className="text-[#2563eb]">Edit</button>
-                          <button className="text-slate-500">Archive</button>
+                          <button className="subscriber-action-link !text-[#2563eb]">Edit</button>
+                          <button className="subscriber-action-link text-slate-500">Archive</button>
                         </> : <>
-                          <button className="text-[#2563eb]">Unarchive</button>
-                          <button className="text-red-500">Delete</button>
+                          <button className="subscriber-action-link !text-[#2563eb]">Unarchive</button>
+                          <button className="subscriber-action-link text-red-500">Delete</button>
                         </>}
                       </div>
                     </td>
@@ -638,7 +638,7 @@ export function AdminSubscribersPage() {
                 <X size={20} />
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-scroll">
+            <div className="admin-form-modal-scroll-area min-h-0 flex-1 overflow-y-scroll">
               <div className="space-y-5 px-6 py-6">
               <h3 className="text-xs font-bold uppercase tracking-wide text-slate-400">
                 Personal Information

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { PortalShell } from '@/app/components/PortalShell';
+import { AdminDatePicker } from '@/app/components/AdminDatePicker';
 import { formatPersonName } from '@/app/lib/name';
 
 type Ticket = readonly [string, string, string, string, string, string, string, string, string, string | null, string | null, string | null];
@@ -28,7 +29,7 @@ function formatVisitDate(value: string | null) {
   if (!value) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 function formatVisitTime(value: string | null) {
@@ -38,7 +39,15 @@ function formatVisitTime(value: string | null) {
 function getMinimumVisitDate() {
   const date = new Date();
   date.setDate(date.getDate() + 1);
-  return date.toISOString().slice(0, 10);
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
+function isSunday(value: string) {
+  return new Date(`${value}T00:00:00`).getDay() === 0;
 }
 
 function normalizeTimeSlot(value: string | null | undefined) {
@@ -49,10 +58,10 @@ function normalizeTimeSlot(value: string | null | undefined) {
 }
 
 const statusStyles: Record<string, string> = {
-  Open: 'border-blue-200 bg-blue-50 text-blue-600',
-  'In Progress': 'border-emerald-200 bg-emerald-50 text-emerald-600',
-  Resolved: 'border-slate-200 bg-slate-50 text-slate-600',
-  Closed: 'border-amber-200 bg-amber-50 text-amber-600',
+  Open: 'bg-blue-50 text-blue-500',
+  'In Progress': 'bg-emerald-50 text-emerald-500',
+  Resolved: 'bg-slate-50 text-slate-500',
+  Closed: 'bg-amber-50 text-amber-500',
 };
 
 const statusLabels: Record<string, string> = {
@@ -79,6 +88,17 @@ export function AdminTicketsPage() {
   const [technicianId, setTechnicianId] = useState('');
   const [scheduleChanged, setScheduleChanged] = useState(false);
   const [installationSchedules, setInstallationSchedules] = useState<InstallationSchedule[]>([]);
+  function handleVisitDateChange(value: string) {
+    if (value && isSunday(value)) {
+      window.alert('Support tickets cannot be scheduled on Sundays.');
+      setVisitDate('');
+      setScheduleChanged(true);
+      return;
+    }
+    setVisitDate(value);
+    setScheduleChanged(true);
+  }
+
   const isTechnicianAvailable = (technician: Technician) => !tickets.some((ticket) =>
     ticket[11] === technician.id &&
     ticket[9]?.slice(0, 10) === visitDate &&
@@ -88,6 +108,33 @@ export function AdminTicketsPage() {
     installation.technicianId === technician.id &&
     installation.date.slice(0, 10) === visitDate &&
     normalizeTimeSlot(installation.time) === normalizeTimeSlot(timeSlot),
+  );
+  const unavailableTicketDates = new Set(
+    technicians.length
+      ? Array.from({ length: 366 }, (_, dayOffset) => {
+          const date = new Date();
+          date.setDate(date.getDate() + dayOffset + 1);
+          return [
+            date.getFullYear(),
+            String(date.getMonth() + 1).padStart(2, "0"),
+            String(date.getDate()).padStart(2, "0"),
+          ].join("-");
+        }).filter((date) => !technicians.some((technician) =>
+          ["9:00 AM – 12:00 NN", "1:00 PM – 4:00 PM"].some((time) =>
+            !tickets.some((ticket) =>
+              ticket[11] === technician.id &&
+              ticket[9]?.slice(0, 10) === date &&
+              normalizeTimeSlot(ticket[10]) === time &&
+              ticket[0] !== selectedTicket?.[0],
+            ) &&
+            !installationSchedules.some((installation) =>
+              installation.technicianId === technician.id &&
+              installation.date.slice(0, 10) === date &&
+              normalizeTimeSlot(installation.time) === time,
+            ),
+          ),
+        ))
+      : [],
   );
   const availableTechnicianCount = technicians.filter(isTechnicianAvailable).length;
   const counts = {
@@ -193,6 +240,14 @@ export function AdminTicketsPage() {
 
   async function saveTicket() {
     if (!selectedTicket) return;
+    if (visitDate && isSunday(visitDate)) {
+      window.alert('Support tickets cannot be scheduled on Sundays.');
+      return;
+    }
+    if (visitDate && visitDate < getMinimumVisitDate()) {
+      window.alert('Please choose a future support visit date.');
+      return;
+    }
     const nextStatus = status === 'Open' && visitDate && timeSlot && technicianId ? 'In Progress' : status;
     try {
       const response = await fetch(`/api/tickets/${selectedTicket[0]}/status`, {
@@ -280,7 +335,7 @@ export function AdminTicketsPage() {
                   <td className="px-5 py-4 text-slate-500">{formatVisitDate(ticket[9])}</td>
                   <td className="px-5 py-4 text-slate-500">{formatVisitTime(ticket[10])}</td>
                   <td className="px-5 py-4">
-                    <span className={`rounded-lg border px-2 py-1 text-xs font-semibold ${statusStyles[ticket[5]]}`}>{getStatusLabel(ticket[5])}</span>
+                    <span className={`admin-status-pill rounded-full px-2.5 py-1 text-xs font-bold tracking-wide ${statusStyles[ticket[5]]}`}>{getStatusLabel(ticket[5])}</span>
                   </td>
                   <td className="px-5 py-4"><button onClick={() => openManager(ticket)} className="text-xs font-semibold text-[#2563eb]">Manage</button></td>
                 </tr>
@@ -314,7 +369,7 @@ export function AdminTicketsPage() {
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Technician visit date and time</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div>
-                    <input min={getMinimumVisitDate()} type="date" value={visitDate} onChange={(event) => { setVisitDate(event.target.value); setScheduleChanged(true); }} disabled={status === 'Resolved' || status === 'In Progress'} className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500" />
+                    <AdminDatePicker minDate={getMinimumVisitDate()} value={visitDate} onChange={handleVisitDateChange} unavailableDates={unavailableTicketDates} disabled={status === 'Resolved' || status === 'In Progress'} />
                   </div>
                   <select value={normalizeTimeSlot(timeSlot)} onChange={(event) => { setTimeSlot(event.target.value); setScheduleChanged(true); }} disabled={status === 'Resolved' || status === 'In Progress'} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-[#3b4fd8] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"><option value="">— Time slot —</option><option>9:00 AM – 12:00 NN</option><option>1:00 PM – 4:00 PM</option></select>
                 </div>
