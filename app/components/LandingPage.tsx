@@ -66,8 +66,8 @@ export function LandingPage({ onLogin, onBook }: Props) {
         <header className="fixed left-0 right-0 top-0 z-50 border-b border-white/10 bg-[#071329]/90 backdrop-blur-md">
           <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-10" aria-label="Main navigation">
           <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-3 text-left" aria-label="Sky-Tech ISP home">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#2563eb] text-white shadow-lg shadow-blue-950/40"><Icon name="wifi" size={23} /></span>
-            <span className="text-lg font-extrabold tracking-tight">Sky-Tech <span className="text-blue-400">ISP</span></span>
+            <img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="h-11 w-11 rounded-full object-cover object-center" />
+            <span><span className="block text-lg font-black tracking-tight">Sky-Tech</span><span className="block text-[9px] font-bold uppercase tracking-[.18em] text-sky-400">Home Fiber · Sibagat</span></span>
           </button>
           <div className="hidden items-center gap-7 text-sm font-semibold text-blue-100/75 md:flex">
             <a href="#features" className="transition hover:text-white">Why Sky-Tech</a><a href="#plans" className="transition hover:text-white">Plans</a><a href="#coverage" className="transition hover:text-white">Coverage</a><a href="#support" className="transition hover:text-white">Support</a>

@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, Wifi } from 'lucide-react';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Spinner } from '@/app/components/Spinner';
 
 type LocationOption = { code: string; name: string; regionCode?: string; provinceCode?: string | false };
@@ -145,13 +145,11 @@ export default function BookingPage() {
     </svg>
     <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-7xl flex-col">
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-[#071329]/90 backdrop-blur-md">
-      <Link href="/" className="mx-auto flex w-full max-w-7xl items-center gap-3 px-6 py-4 text-white sm:px-8" aria-label="Return to Sky-Tech home">
-        <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#2452c7] text-white shadow-lg shadow-blue-950/40">
-          <Wifi size={23} />
-        </span>
+      <Link href="/" className="mx-auto flex w-full max-w-7xl items-center gap-3 px-6 py-3 text-white sm:px-8" aria-label="Return to Sky-Tech home">
+        <img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="h-11 w-11 rounded-full object-cover object-center" />
         <span>
-          <span className="block text-lg font-extrabold tracking-tight">Sky-Tech</span>
-          <span className="block text-[10px] font-bold uppercase tracking-[.2em] text-blue-300">ISP Portal</span>
+          <span className="block text-lg font-black tracking-tight">Sky-Tech</span>
+          <span className="block text-[9px] font-bold uppercase tracking-[.18em] text-sky-400">Home Fiber · Sibagat</span>
         </span>
       </Link>
     </header>
