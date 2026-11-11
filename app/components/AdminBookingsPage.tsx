@@ -28,9 +28,10 @@ const statusStyles: Record<BookingStatus, string> = {
 
 function splitBookingName(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
+  const firstNameParts = parts.length > 2 ? parts.slice(0, 2) : parts.slice(0, 1);
   return {
-    firstName: parts[0] || "",
-    middleName: parts.length > 2 ? parts.slice(1, -1).join(" ") : "",
+    firstName: firstNameParts.join(" "),
+    middleName: parts.length > 3 ? parts.slice(2, -1).join(" ") : "",
     lastName: parts.length > 1 ? parts[parts.length - 1] : "",
   };
 }

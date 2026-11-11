@@ -20,6 +20,35 @@ function formatRescheduledTime(time: string) {
 		.trim();
 }
 
+function getBillNotificationText(billingPeriod: string, amount: number, dueDate: Date) {
+	const [year, month] = billingPeriod.split('-').map(Number);
+	const periodStart = new Date(year, month - 1, 10);
+	const periodEnd = new Date(year, month, 9);
+	const periodLabel = `${periodStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} – ${periodEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+	const dueDateLabel = dueDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+	return `Your bill for the ${periodLabel} cycle has been generated. The total amount is ₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}, and it is due on ${dueDateLabel}.`;
+}
+
+function getBillGeneratedAt(billingPeriod: string) {
+	const [year, month] = billingPeriod.split('-').map(Number);
+	return new Date(Date.UTC(year, month - 1, 9, 16, 0, 0, 0));
+}
+
+function getPaymentNotificationText(billingPeriod: string, amount: number) {
+	const [year, month] = billingPeriod.split('-').map(Number);
+	const periodStart = new Date(year, month - 1, 10);
+	const periodEnd = new Date(year, month, 9);
+	const periodLabel = `${periodStart.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} – ${periodEnd.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}, ${year}`;
+	return `Thank you! Your payment of ₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })} for the ${periodLabel} billing cycle has been successfully processed.`;
+}
+
+function getBillDueDate(billingPeriod: string, fallback: Date) {
+	if (!/^\d{4}-\d{2}$/.test(billingPeriod)) return fallback;
+	const [year, month] = billingPeriod.split('-').map(Number);
+	const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+	return new Date(Date.UTC(year, month - 1, lastDay, 12, 0, 0, 0));
+}
+
 type GeneratedNotification = {
 	id: string;
 	forRole: 'technician';
@@ -71,9 +100,9 @@ export async function GET() {
 	}
 	const data = await prisma.notification.findMany({
 		where: user?.role === 'subscriber'
-			? { forRole: 'subscriber', OR: [{ forUserId: null }, { forUserId: user.subscriberId }] }
+			? { forRole: 'subscriber', type: { not: 'system' }, OR: [{ forUserId: null }, { forUserId: user.subscriberId }] }
 			: user?.role === 'technician'
-				? { forRole: 'technician', OR: [{ forUserId: null }, { forUserId: user.technicianId }] }
+				? { forRole: 'technician', type: { not: 'system' }, OR: [{ forUserId: null }, { forUserId: user.technicianId }] }
 				: { forRole: 'admin' },
 		orderBy: { timestamp: 'desc' },
 	});
@@ -165,14 +194,16 @@ export async function GET() {
 			where: { id: notification.id },
 			create: notification,
 			update: {
+				forRole: notification.forRole,
+				forUserId: notification.forUserId,
+				type: notification.type,
 				title: notification.title,
 				body: notification.body,
-				timestamp: notification.timestamp,
 			},
 		})));
 		const persistedTechnicianNotifications = await prisma.notification.findMany({
 			where: { id: { in: technicianNotifications.map((notification) => notification.id) } },
-			select: { id: true, read: true },
+			select: { id: true, forRole: true, forUserId: true, type: true, title: true, body: true, timestamp: true, read: true },
 		});
 		const readStateById = new Map(persistedTechnicianNotifications.map((notification) => [notification.id, notification.read]));
 		const notificationsById = new Map(
@@ -181,8 +212,10 @@ export async function GET() {
 				.map((notification) => [notification.id, notification]),
 		);
 		technicianNotifications.forEach((notification) => {
+			const persistedNotification = persistedTechnicianNotifications.find((item) => item.id === notification.id);
 			notificationsById.set(notification.id, {
 				...notification,
+				...(persistedNotification || {}),
 				read: readStateById.get(notification.id) ?? notification.read,
 			});
 		});
@@ -196,6 +229,61 @@ export async function GET() {
 		prisma.installation.findMany({ where: { subscriberId: user.subscriberId }, orderBy: { date: 'desc' } }),
 		prisma.ticket.findMany({ where: { subscriberId: user.subscriberId, visitDate: { not: null } }, include: { technician: true }, orderBy: { visitDate: 'desc' } }),
 	]);
+	const bills = await prisma.bill.findMany({
+		where: { subscriberId: user.subscriberId },
+		orderBy: { dueDate: 'desc' },
+	});
+	const visibleBills = bills.filter((bill) => {
+		const [year, month] = bill.billingPeriod.split('-').map(Number);
+		return new Date() >= new Date(year, month - 1, 10);
+	});
+	await Promise.all(visibleBills.map((bill) => prisma.notification.upsert({
+		where: { id: `bill-generated-${bill.id}` },
+		create: {
+			id: `bill-generated-${bill.id}`,
+			forRole: 'subscriber',
+			forUserId: user.subscriberId,
+			type: 'billing',
+			title: 'Bill Generated',
+			body: getBillNotificationText(bill.billingPeriod, bill.amount, getBillDueDate(bill.billingPeriod, bill.dueDate)),
+			timestamp: getBillGeneratedAt(bill.billingPeriod),
+		},
+		update: {
+			title: 'Bill Generated',
+			body: getBillNotificationText(bill.billingPeriod, bill.amount, getBillDueDate(bill.billingPeriod, bill.dueDate)),
+			timestamp: getBillGeneratedAt(bill.billingPeriod),
+		},
+	})));
+	const paidBills = bills.filter((bill) => bill.status === 'Paid');
+	await Promise.all(paidBills.map((bill) => prisma.notification.upsert({
+		where: { id: `payment-confirmed-${bill.id}` },
+		create: {
+			id: `payment-confirmed-${bill.id}`,
+			forRole: 'subscriber',
+			forUserId: user.subscriberId,
+			type: 'billing',
+			title: 'Payment Confirmed',
+			body: getPaymentNotificationText(bill.billingPeriod, bill.amount),
+		},
+		update: {
+			title: 'Payment Confirmed',
+			body: getPaymentNotificationText(bill.billingPeriod, bill.amount),
+		},
+	})));
+	await Promise.all(data
+		.filter((notification) => notification.title === 'Payment Confirmed')
+		.map(async (notification) => {
+			const match = notification.body.match(/Your ([A-Za-z]+) (\d{4}) payment of/);
+			if (!match) return;
+			const month = new Date(`${match[1]} 1, ${match[2]}`).getMonth() + 1;
+			const billingPeriod = `${match[2]}-${String(month).padStart(2, '0')}`;
+			const amountMatch = notification.body.match(/₱([\d,]+(?:\.\d{2})?)/);
+			if (!amountMatch) return;
+			const amount = Number(amountMatch[1].replace(/,/g, ''));
+			const body = getPaymentNotificationText(billingPeriod, amount);
+			const updated = await prisma.notification.update({ where: { id: notification.id }, data: { body } });
+			notification.body = updated.body;
+		}));
 	const reminderNotifications = [
 		...installations.flatMap((installation) => {
 			const normalizedStatus = installation.status.replace(/_/g, ' ');
@@ -243,7 +331,12 @@ export async function GET() {
 		where: { id: { in: reminderNotifications.map((notification) => notification.id) } },
 	});
 	const remindersById = new Map(persistedReminderNotifications.map((notification) => [notification.id, notification]));
-	const notificationsById = new Map(data.map((notification) => [notification.id, notification]));
+	const visibleBillNotificationIds = new Set(visibleBills.map((bill) => `bill-generated-${bill.id}`));
+	const paidBillNotificationIds = new Set(paidBills.map((bill) => `payment-confirmed-${bill.id}`));
+	const notificationsById = new Map(data
+		.filter((notification) => (!notification.id.startsWith('bill-generated-') || visibleBillNotificationIds.has(notification.id))
+			&& (!notification.id.startsWith('payment-confirmed-') || paidBillNotificationIds.has(notification.id)))
+		.map((notification) => [notification.id, notification]));
 	reminderNotifications.forEach((notification) => {
 		notificationsById.set(notification.id, remindersById.get(notification.id) || notification);
 	});

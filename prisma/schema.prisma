@@ -38,6 +38,7 @@ enum BillStatus {
   Paid
   Unpaid
   Overdue
+  Pending_Confirmation
 }
 
 enum InstallationType {
@@ -103,6 +104,15 @@ model User {
   technicianId String?
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
 model Subscriber {
   id             String           @id
   archived       Boolean          @default(false)
@@ -146,6 +156,9 @@ model Bill {
   status          BillStatus
   paymentMethod   String?
   referenceNumber String?
+  receiptImage    String?    @db.Text
+  paymentDate     DateTime?
+  postingDate     DateTime?
 }
 
 model Installation {

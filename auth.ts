@@ -9,10 +9,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [Credentials({
     credentials: { email: {}, password: {} },
     async authorize(credentials) {
-      const email = String(credentials?.email ?? '');
+      const email = String(credentials?.email ?? '').trim().toLowerCase();
       const password = String(credentials?.password ?? '');
       try {
-        const user = await prisma.user.findUnique({ where: { email } });
+        let user = await prisma.user.findUnique({ where: { email } });
+        if (!user) {
+          const subscriber = await prisma.subscriber.findFirst({ where: { email } });
+          if (subscriber) {
+            user = await prisma.user.findFirst({
+              where: { OR: [{ subscriberId: subscriber.id }, { id: `USR-${subscriber.id}` }] },
+            });
+            if (user && user.email !== email) {
+              user = await prisma.user.update({
+                where: { id: user.id },
+                data: { email },
+              });
+            }
+          }
+        }
         if (user && await bcrypt.compare(password, user.password)) {
           return { id: user.id, name: user.name, email: user.email, role: user.role, subscriberId: user.subscriberId, technicianId: user.technicianId };
         }

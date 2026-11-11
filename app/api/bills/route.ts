@@ -1,14 +1,14 @@
+import { Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { requireRole } from '@/app/lib/api';
 
-function getMonthlyDueDate(year: number, monthIndex: number, billingDay: number) {
+function getMonthlyDueDate(year: number, monthIndex: number) {
 	const lastDayOfMonth = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
-	const safeDay = Math.min(Math.max(1, billingDay), lastDayOfMonth);
-	return new Date(Date.UTC(year, monthIndex, safeDay, 12, 0, 0, 0));
+	return new Date(Date.UTC(year, monthIndex, lastDayOfMonth, 12, 0, 0, 0));
 }
 
-function getDueDateForBillingPeriod(billingPeriod: string | null | undefined, billingDay = 30) {
+function getDueDateForBillingPeriod(billingPeriod: string | null | undefined) {
 	if (!billingPeriod || !/^\d{4}-\d{2}$/.test(billingPeriod)) {
 		return null;
 	}
@@ -18,10 +18,24 @@ function getDueDateForBillingPeriod(billingPeriod: string | null | undefined, bi
 	if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || monthIndex < 0 || monthIndex > 11) {
 		return null;
 	}
-	return getMonthlyDueDate(year, monthIndex, billingDay);
+	return getMonthlyDueDate(year, monthIndex);
 }
 
 const cutoffDay = 9;
+
+function getBillNotificationText(billingPeriod: string, amount: number, dueDate: Date) {
+	const [year, month] = billingPeriod.split('-').map(Number);
+	const periodStart = new Date(year, month - 1, 10);
+	const periodEnd = new Date(year, month, 9);
+	const periodLabel = `${periodStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} – ${periodEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+	const dueDateLabel = dueDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+	return `Your bill for the ${periodLabel} cycle has been generated. The total amount is ₱${amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}, and it is due on ${dueDateLabel}.`;
+}
+
+function getBillGeneratedAt(billingPeriod: string) {
+	const [year, month] = billingPeriod.split('-').map(Number);
+	return new Date(Date.UTC(year, month - 1, 9, 16, 0, 0, 0));
+}
 
 export async function GET(request: Request) {
 	const access = await requireRole(['admin', 'subscriber']);
@@ -56,18 +70,50 @@ export async function GET(request: Request) {
 						plan: subscriber.plan,
 						billingPeriod: currentBillingPeriod,
 						amount: Number(plan.price),
-						dueDate: getMonthlyDueDate(currentDate.getFullYear(), currentDate.getMonth(), billingDay),
+						dueDate: getMonthlyDueDate(currentDate.getFullYear(), currentDate.getMonth()),
 						status: 'Unpaid',
+					},
+				});
+				await transaction.notification.upsert({
+					where: { id: `bill-generated-${`BILL-${subscriber.id}-${currentBillingPeriod}`}` },
+					create: {
+						id: `bill-generated-BILL-${subscriber.id}-${currentBillingPeriod}`,
+						forRole: 'subscriber',
+						forUserId: subscriber.id,
+						type: 'billing',
+						title: 'Bill Generated',
+						body: getBillNotificationText(currentBillingPeriod, Number(plan.price), getMonthlyDueDate(currentDate.getFullYear(), currentDate.getMonth())),
+						timestamp: getBillGeneratedAt(currentBillingPeriod),
+					},
+					update: {
+						title: 'Bill Generated',
+						body: getBillNotificationText(currentBillingPeriod, Number(plan.price), getMonthlyDueDate(currentDate.getFullYear(), currentDate.getMonth())),
+						timestamp: getBillGeneratedAt(currentBillingPeriod),
 					},
 				});
 			}
 		});
 	}
 
-	const bills = await prisma.bill.findMany({ where: { ...(subscriberId ? { subscriberId } : {}), ...(status && status !== 'All' ? { status: status as 'Paid' | 'Unpaid' | 'Overdue' } : {}) }, orderBy: { dueDate: 'desc' }, include: { subscriber: { select: { name: true } } } });
+	const subscriberFilter = subscriberId ? Prisma.sql`AND b."subscriberId" = ${subscriberId}` : Prisma.empty;
+	const statusFilter = status && status !== 'All' ? Prisma.sql`AND b."status"::text = ${status}` : Prisma.empty;
+	const rawBills = await prisma.$queryRaw<Array<{ id: string; subscriberId: string; plan: string; billingPeriod: string; amount: number; dueDate: Date; status: string; paymentMethod: string | null; referenceNumber: string | null; receiptImage: string | null; paymentDate: Date | null; postingDate: Date | null; subscriberName: string }>>`
+		SELECT b."id", b."subscriberId", b."plan"::text AS "plan", b."billingPeriod", b."amount", b."dueDate",
+			b."status"::text AS "status", b."paymentMethod", b."referenceNumber", b."receiptImage", b."paymentDate", b."postingDate", s."name" AS "subscriberName"
+		FROM "Bill" b
+		INNER JOIN "Subscriber" s ON s."id" = b."subscriberId"
+		WHERE 1 = 1
+			${subscriberFilter}
+			${statusFilter}
+		ORDER BY b."dueDate" DESC
+	`;
+	const bills = rawBills.map(({ subscriberName, ...bill }) => ({
+		...bill,
+		subscriber: { name: subscriberName },
+	}));
 	const normalizedBills = bills.map((bill) => ({
 		...bill,
-		dueDate: getDueDateForBillingPeriod(bill.billingPeriod, billingDay) ?? bill.dueDate,
+		dueDate: getDueDateForBillingPeriod(bill.billingPeriod) ?? bill.dueDate,
 	}));
 	if (!isSubscriber || !subscriberId) return NextResponse.json({ data: normalizedBills, billingDay, cutoffDay, error: null });
 
@@ -89,11 +135,28 @@ export async function GET(request: Request) {
 				plan: subscriber.plan,
 				billingPeriod: currentBillingPeriod,
 				amount: Number(currentPrice),
-				dueDate: getMonthlyDueDate(currentDate.getFullYear(), currentDate.getMonth(), billingDay),
+				dueDate: getMonthlyDueDate(currentDate.getFullYear(), currentDate.getMonth()),
 				status: 'Unpaid',
 			},
 		});
-		currentBills = [{ ...createdBill, subscriber: { name: subscriber.name } }];
+		await prisma.notification.upsert({
+			where: { id: `bill-generated-${createdBill.id}` },
+			create: {
+				id: `bill-generated-${createdBill.id}`,
+				forRole: 'subscriber',
+				forUserId: subscriber.id,
+				type: 'billing',
+				title: 'Bill Generated',
+				body: getBillNotificationText(createdBill.billingPeriod, createdBill.amount, createdBill.dueDate),
+				timestamp: getBillGeneratedAt(createdBill.billingPeriod),
+			},
+			update: {
+				title: 'Bill Generated',
+				body: getBillNotificationText(createdBill.billingPeriod, createdBill.amount, createdBill.dueDate),
+				timestamp: getBillGeneratedAt(createdBill.billingPeriod),
+			},
+		});
+		currentBills = [{ ...createdBill, receiptImage: null, subscriber: { name: subscriber.name } }];
 	} else if (currentPrice !== undefined) {
 		currentBills = currentBills.map((bill) => ({ ...bill, amount: Number(currentPrice) }));
 	}

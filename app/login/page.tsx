@@ -4,7 +4,7 @@ import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { DEMO_ACCOUNTS, type DemoRole } from '@/app/lib/demo-accounts';
+import { DEMO_ACCOUNTS } from '@/app/lib/demo-accounts';
 
 type LoginProps = {
   onBooking: () => void;
@@ -24,31 +24,18 @@ function Icon({ name, size = 19 }: { name: 'wifi' | 'mail' | 'lock' | 'eye' | 'e
   return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></svg>;
 }
 
-const roles: Array<{ id: DemoRole; label: string; icon: 'shield' | 'wrench' | 'user'; color: string }> = [
-  { id: 'admin', label: 'Administrator', icon: 'shield', color: 'blue' },
-  { id: 'technician', label: 'Technician', icon: 'wrench', color: 'amber' },
-  { id: 'subscriber', label: 'Subscriber', icon: 'user', color: 'emerald' },
-];
-
 export function Login({ onBooking }: LoginProps) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<DemoRole | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isRecoveryOpen, setIsRecoveryOpen] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [recoverySent, setRecoverySent] = useState(false);
+  const [recoveryError, setRecoveryError] = useState('');
+  const [isSendingRecovery, setIsSendingRecovery] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
-
-  function selectRole(role: DemoRole) {
-    const account = DEMO_ACCOUNTS[role];
-    setSelectedRole(role);
-    setEmail(account.email);
-    setPassword(account.password);
-    setError('');
-  }
 
   async function loginAs(nextEmail: string, nextPassword: string) {
     setError('');
@@ -69,6 +56,29 @@ export function Login({ onBooking }: LoginProps) {
     await loginAs(email, password);
   }
 
+  async function submitRecovery(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setRecoveryError('');
+    setIsSendingRecovery(true);
+    try {
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: recoveryEmail }),
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        setRecoveryError(result.error || 'Unable to send the reset link.');
+        return;
+      }
+      setRecoverySent(true);
+    } catch {
+      setRecoveryError('Unable to send the reset link. Please try again.');
+    } finally {
+      setIsSendingRecovery(false);
+    }
+  }
+
   return (
     <main className="relative flex min-h-screen overflow-hidden bg-[#071329] px-4 py-6 text-slate-900 sm:px-8 sm:py-8">
       <div className="pointer-events-none absolute inset-0 opacity-30" style={{ backgroundImage: 'linear-gradient(rgba(94,145,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(94,145,255,.08) 1px, transparent 1px)', backgroundSize: '54px 54px' }} />
@@ -77,19 +87,17 @@ export function Login({ onBooking }: LoginProps) {
       <svg className="pointer-events-none absolute inset-0 hidden h-full w-full opacity-50 lg:block" viewBox="0 0 1440 900" preserveAspectRatio="none" aria-hidden="true"><path d="M-40 720C230 560 290 820 530 650S840 210 1120 390s190 80 360-40" stroke="#2563eb" strokeOpacity=".25" strokeWidth="2" fill="none" /><path d="M-20 170C280 370 380 40 650 230s370 420 800 250" stroke="#7896e8" strokeOpacity=".18" strokeWidth="1.5" strokeDasharray="8 12" fill="none" /><circle cx="530" cy="650" r="5" fill="#60a5fa" /><circle cx="1120" cy="390" r="5" fill="#818cf8" /><circle cx="650" cy="230" r="4" fill="#60a5fa" /></svg>
 
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col">
-        <header className="flex items-center"><Link href="/landing-page" className="flex items-center gap-3 text-white" aria-label="Return to Sky-Tech landing page"><span className="grid h-10 w-10 place-items-center rounded-xl bg-[#2452c7] text-white shadow-lg shadow-blue-950/40"><Icon name="wifi" size={23} /></span><span><span className="block text-lg font-extrabold tracking-tight">Sky-Tech</span><span className="block text-[10px] font-bold uppercase tracking-[.2em] text-blue-300">ISP Portal</span></span></Link></header>
-        <div className="flex flex-1 items-center justify-center py-8 sm:py-12">
+        <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-[#071329]/90 backdrop-blur-md"><Link href="/landing-page" className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-4 text-white sm:px-8 lg:px-10" aria-label="Return to Sky-Tech landing page"><span className="grid h-10 w-10 place-items-center rounded-xl bg-[#2452c7] text-white shadow-lg shadow-blue-950/40"><Icon name="wifi" size={23} /></span><span><span className="block text-lg font-extrabold tracking-tight">Sky-Tech</span><span className="block text-[10px] font-bold uppercase tracking-[.2em] text-blue-300">ISP Portal</span></span></Link></header>
+        <div className="flex flex-1 items-center justify-center py-20 sm:py-24">
           <section className="w-full max-w-[460px] rounded-3xl border border-white/70 bg-white px-5 py-7 shadow-2xl shadow-black/30 sm:px-10 sm:py-9" aria-labelledby="login-title">
             <div className="text-center"><div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-[#2452c7] text-white shadow-lg shadow-blue-200"><Icon name="wifi" size={30} /></div><h1 id="login-title" className="mt-5 text-3xl font-black tracking-tight text-[#071329]">Welcome back</h1><p className="mt-2 text-sm text-slate-500">Sign in to manage your Sky-Tech account.</p></div>
             <form onSubmit={submit} className="mt-8 space-y-5">
-              <label htmlFor="email" className="block text-sm font-bold text-slate-700">Email address<div className={`mt-2 flex h-12 items-center overflow-hidden rounded-xl border bg-white px-3 transition focus-within:ring-2 focus-within:ring-blue-100 ${error ? 'border-red-300' : 'border-slate-200 focus-within:border-[#2452c7]'}`}><span className="shrink-0 text-slate-400"><Icon name="mail" /></span><input id="email" name="email" type="email" value={email} onChange={(event) => { setEmail(event.target.value); setSelectedRole(null); }} required autoComplete="email" placeholder="you@skytech.net" className="min-w-0 flex-1 appearance-none !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !ring-0 !shadow-none placeholder:text-slate-400 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none" /></div></label>
-              <label htmlFor="password" className="block text-sm font-bold text-slate-700">Password<div className={`mt-2 flex h-12 items-center overflow-hidden rounded-xl border bg-white px-3 transition focus-within:ring-2 focus-within:ring-blue-100 ${error ? 'border-red-300' : 'border-slate-200 focus-within:border-[#2452c7]'}`}><span className="shrink-0 text-slate-400"><Icon name="lock" /></span><input id="password" name="password" type="text" value={password} onChange={(event) => { setPassword(event.target.value); setSelectedRole(null); }} required autoComplete="current-password" placeholder="Enter your password" className={`min-w-0 flex-1 appearance-none !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !ring-0 !shadow-none placeholder:text-slate-400 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none ${showPassword ? '' : 'password-mask'}`} /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="shrink-0 !border-0 !bg-transparent !p-1 !shadow-none text-slate-400 transition hover:text-[#2452c7] focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none"><Icon name={showPassword ? 'eyeOff' : 'eye'} /></button></div></label>
+              <label htmlFor="email" className="block text-sm font-bold text-slate-700">Email address<div className={`mt-2 flex h-12 items-center overflow-hidden rounded-xl border bg-white px-3 transition focus-within:ring-2 focus-within:ring-blue-100 ${error ? 'border-red-300' : 'border-slate-200 focus-within:border-[#2452c7]'}`}><span className="shrink-0 text-slate-400"><Icon name="mail" /></span><input id="email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" placeholder="you@skytech.net" className="min-w-0 flex-1 appearance-none !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !ring-0 !shadow-none placeholder:text-slate-400 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none" /></div></label>
+              <label htmlFor="password" className="block text-sm font-bold text-slate-700">Password<div className={`mt-2 flex h-12 items-center overflow-hidden rounded-xl border bg-white px-3 transition focus-within:ring-2 focus-within:ring-blue-100 ${error ? 'border-red-300' : 'border-slate-200 focus-within:border-[#2452c7]'}`}><span className="shrink-0 text-slate-400"><Icon name="lock" /></span><input id="password" name="password" type="text" value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" placeholder="Enter your password" className={`min-w-0 flex-1 appearance-none !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !ring-0 !shadow-none placeholder:text-slate-400 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none ${showPassword ? '' : 'password-mask'}`} /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="shrink-0 !border-0 !bg-transparent !p-1 !shadow-none text-slate-400 transition hover:text-[#2452c7] focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none"><Icon name={showPassword ? 'eyeOff' : 'eye'} /></button></div></label>
               <div className="flex justify-end"><button type="button" onClick={() => { setRecoveryEmail(email); setRecoverySent(false); setIsRecoveryOpen(true); }} className="text-sm font-bold text-[#2452c7] hover:underline">Forgot password?</button></div>
               {error && <div role="alert" className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700"><Icon name="alert" size={18} /> <span>{error}</span></div>}
               <button type="submit" disabled={isSigningIn} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2452c7] px-5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-[#1d43aa] focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60">{isSigningIn ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />Signing in...</> : 'Sign in'}</button>
             </form>
-            <div className="my-7 flex items-center gap-3 text-[11px] font-bold uppercase tracking-[.16em] text-slate-400"><span className="h-px flex-1 bg-slate-200" />Quick demo access<span className="h-px flex-1 bg-slate-200" /></div>
-            <div className="grid grid-cols-3 gap-2">{roles.map((role) => <button key={role.id} type="button" onClick={() => selectRole(role.id)} className={`flex min-h-[72px] flex-col items-center justify-center gap-1 rounded-xl border px-1 text-center text-[11px] font-bold transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-200 ${selectedRole === role.id ? 'border-[#2452c7] bg-blue-50 text-[#2452c7]' : 'border-slate-200 bg-white text-slate-500'}`}><span className={role.color === 'amber' ? 'text-amber-500' : role.color === 'emerald' ? 'text-emerald-500' : 'text-[#2452c7]'}><Icon name={role.icon} size={20} /></span>{role.label}</button>)}</div>
             <p className="mt-7 text-center text-sm text-slate-500">New to Sky-Tech? <button type="button" onClick={onBooking} className="font-bold text-[#2452c7] hover:underline">Book now</button></p>
           </section>
         </div>
@@ -111,10 +119,11 @@ export function Login({ onBooking }: LoginProps) {
             <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-left text-sm leading-6 text-[#2452c7]">Didn&apos;t receive it? Check your spam folder or wait a minute before trying again.</div>
             <button type="button" onClick={() => setIsRecoveryOpen(false)} className="mt-5 h-14 w-full rounded-2xl bg-[#2d59ca] text-sm font-bold text-white shadow-xl shadow-blue-200 transition hover:bg-[#244db8]">Back to sign in</button>
             <button type="button" onClick={() => setRecoverySent(false)} className="mt-4 block w-full text-center text-sm font-bold text-slate-500 hover:text-slate-700">Use a different email</button>
-          </div> : <form onSubmit={(event) => { event.preventDefault(); setRecoverySent(true); }} className="px-6 py-6 sm:px-7">
+          </div> : <form onSubmit={submitRecovery} className="px-6 py-6 sm:px-7">
             <p className="text-sm leading-6 text-slate-500">Enter the email connected to your Sky-Tech account. For your security, the reset link will expire after 30 minutes.</p>
             <label htmlFor="recovery-email" className="mt-6 block text-sm font-bold text-slate-600">Account email<div className="mt-2 flex h-14 items-center rounded-2xl border-2 border-[#3b70ef] bg-white px-3 shadow-[0_0_0_4px_rgba(59,112,239,0.12)]"><span className="shrink-0 text-slate-400"><Icon name="mail" size={19} /></span><input id="recovery-email" type="email" value={recoveryEmail} onChange={(event) => setRecoveryEmail(event.target.value)} required autoFocus placeholder="you@skytech.net" className="min-w-0 flex-1 !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !shadow-none placeholder:text-slate-300 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none" /></div></label>
-            <button type="submit" className="mt-6 h-14 w-full rounded-2xl bg-[#2d59ca] text-sm font-bold text-white shadow-xl shadow-blue-200 transition hover:bg-[#244db8]">Send reset link</button>
+            {recoveryError && <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{recoveryError}</p>}
+            <button type="submit" disabled={isSendingRecovery} className="mt-6 h-14 w-full rounded-2xl bg-[#2d59ca] text-sm font-bold text-white shadow-xl shadow-blue-200 transition hover:bg-[#244db8] disabled:cursor-not-allowed disabled:opacity-60">{isSendingRecovery ? 'Sending...' : 'Send reset link'}</button>
             <button type="button" onClick={() => setIsRecoveryOpen(false)} className="mt-4 block w-full text-center text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
           </form>}
         </div>

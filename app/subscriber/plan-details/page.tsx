@@ -19,7 +19,7 @@ export default function PlanDetailsPage() {
   const details = [
     { label: 'Your current plan', value: account?.planName || 'Loading plan...' },
     { label: 'Cut-off date', value: `Every ${account?.cutoffDay || 9}th of the month`, note: 'The cut-off date is the last day of your billing cycle.' },
-    { label: 'Bill due date', value: `Every ${account?.billingDay || 30}th of the month` },
+    { label: 'Bill due date', value: 'Last day of every month' },
     { label: 'Monthly fee', value: account ? `₱${account.monthlyPrice.toLocaleString()}.00 per month` : 'Loading...' },
   ];
 

@@ -29,6 +29,7 @@ export default function TechnicianProfilePage() {
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetch('/api/technician/account')
@@ -81,7 +82,7 @@ export default function TechnicianProfilePage() {
 
   const displayName = formatPersonName(technician.name);
   const initials = displayName.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();
-  const inputClass = 'mt-2 w-full border-b border-slate-300 px-0 py-3 outline-none';
+  const inputClass = 'mt-2 w-full border-b border-slate-300 px-0 py-3 !border-x-0 !border-t-0 !rounded-none !bg-transparent !shadow-none outline-none focus:!border-x-0 focus:!border-t-0 focus:!border-[#2161e8] focus:!outline-none focus:!ring-0';
 
   async function changePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -110,13 +111,13 @@ export default function TechnicianProfilePage() {
         <form onSubmit={saveProfile} className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-5 py-7 sm:px-8 lg:px-10">
           <h1 className="text-3xl font-bold text-[#24417e]">Profile details</h1>
           <p className="mt-4 text-sm text-slate-500">Update your technician profile details anytime.</p>
-          <div className="mt-8 flex items-center gap-5">
+          <div className="mt-8 flex items-center justify-center gap-5 text-center">
             <span className="grid h-20 w-20 place-items-center rounded-full bg-[#2161e8] text-2xl font-bold text-white">{initials}</span>
             <div><p className="text-xl font-bold text-[#24417e]">{displayName}</p><p className="font-bold text-[#2161e8]">{technician.id}</p></div>
           </div>
           <div className="mt-10 grid gap-6">
-            <label className="text-sm text-slate-700">Email address<input required type="email" value={form.email} onChange={(event) => updateField('email', event.target.value)} className={inputClass} /></label>
-            <label className="text-sm text-slate-700">Primary contact number<input required value={form.contact} onChange={(event) => updateField('contact', event.target.value)} className={inputClass} /></label>
+            <label className="text-sm text-slate-700">Email address<input required type="email" value={form.email} readOnly tabIndex={-1} className={`${inputClass} cursor-not-allowed text-slate-500`} /></label>
+            <label className="text-sm text-slate-700">Contact number<input required value={form.contact} onChange={(event) => updateField('contact', event.target.value)} className={inputClass} /></label>
             <label className="text-sm text-slate-700">First name<input required value={form.firstName} onChange={(event) => updateField('firstName', event.target.value)} className={inputClass} /></label>
             <label className="text-sm text-slate-700">Middle name<input value={form.middleName} onChange={(event) => updateField('middleName', event.target.value)} className={inputClass} /></label>
             <label className="text-sm text-slate-700">Last name<input required value={form.lastName} onChange={(event) => updateField('lastName', event.target.value)} className={inputClass} /></label>
@@ -128,7 +129,7 @@ export default function TechnicianProfilePage() {
     </PortalShell>;
   }
 
-  if (isChangingPassword) return <PortalShell role="technician"><div className="flex h-[calc(100svh-4rem)] flex-col overflow-hidden bg-white"><header className="flex shrink-0 items-center gap-5 bg-[#eef3fb] px-5 py-4 text-[#33415c] sm:px-8 lg:px-10"><button type="button" onClick={() => { setIsChangingPassword(false); setError(''); }} aria-label="Back to profile" className="text-2xl">&lsaquo;</button><span className="text-sm font-semibold tracking-widest">PROFILE</span></header><form onSubmit={changePassword} className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-5 py-7 sm:px-8 lg:px-10"><span className="grid h-16 w-16 place-items-center rounded-2xl bg-blue-50 text-[#2161e8]"><LockKeyhole size={30} /></span><h1 className="mt-7 text-3xl font-bold text-[#24417e]">Change password</h1><p className="mt-4 text-sm text-slate-500">Create a strong password with at least 8 characters to keep your account secure.</p><div className="mt-10 grid gap-6">{[['currentPassword', 'Current password', 'Enter current password'], ['newPassword', 'New password', 'Enter new password'], ['confirmPassword', 'Confirm new password', 'Enter confirm new password']].map(([name, label, placeholder]) => <label key={name} className="text-sm text-slate-700">{label}<div className="relative"><input required minLength={name === 'currentPassword' ? undefined : 8} type="password" name={name} placeholder={placeholder} className={`${inputClass} pr-10`} /><span className="absolute right-0 top-3 text-slate-400">{name === 'currentPassword' ? <Eye size={18} /> : <EyeOff size={18} />}</span></div></label>)}</div>{error ? <p className="mt-5 text-sm text-red-600">{error}</p> : null}<button type="submit" className="mt-8 w-full rounded-2xl bg-[#2161e8] px-5 py-4 font-bold text-white">Change password</button></form></div></PortalShell>;
+  if (isChangingPassword) return <PortalShell role="technician"><div className="flex h-[calc(100svh-4rem)] flex-col overflow-hidden bg-white"><header className="flex shrink-0 items-center gap-5 bg-[#eef3fb] px-5 py-4 text-[#33415c] sm:px-8 lg:px-10"><button type="button" onClick={() => { setIsChangingPassword(false); setError(''); }} aria-label="Back to profile" className="text-2xl">&lsaquo;</button><span className="text-sm font-semibold tracking-widest">PROFILE</span></header><form onSubmit={changePassword} className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-5 py-7 sm:px-8 lg:px-10">  <div className="flex items-center gap-5"><span className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-blue-50 text-[#2161e8]"><LockKeyhole size={30} /></span><h1 className="text-3xl font-bold text-[#24417e]">Change password</h1></div><p className="mt-4 text-sm text-slate-500">Create a strong password with at least 8 characters to keep your account secure.</p><div className="mt-10 grid gap-6">{[['currentPassword', 'Current password', 'Enter current password'], ['newPassword', 'New password', 'Enter new password'], ['confirmPassword', 'Confirm new password', 'Enter confirm new password']].map(([name, label, placeholder]) => { const isVisible = visiblePasswords[name]; return <label key={name} className="text-sm text-slate-700">{label}<div className="relative"><input required minLength={name === 'currentPassword' ? undefined : 8} type={isVisible ? 'text' : 'password'} name={name} placeholder={placeholder} className={`${inputClass} !border-x-0 !border-t-0 !border-b !rounded-none !bg-transparent !shadow-none pr-10 focus:!border-x-0 focus:!border-t-0 focus:!border-[#2161e8] focus:!outline-none focus:!ring-0`} /><button type="button" onClick={() => setVisiblePasswords((current) => ({ ...current, [name]: !isVisible }))} aria-label={isVisible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`} className="absolute right-0 top-2 rounded p-1 text-slate-400 hover:text-[#2161e8]">{isVisible ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></label>; })}</div>{error ? <p className="mt-5 text-sm text-red-600">{error}</p> : null}<button type="submit" className="mt-8 w-full rounded-2xl bg-[#2161e8] px-5 py-4 font-bold text-white">Change password</button></form></div></PortalShell>;
 
   return <PortalShell role="technician">
     <div className="min-h-screen bg-white">

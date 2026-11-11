@@ -15,11 +15,11 @@ async function main() {
   await prisma.ticket.createMany({ data: Array.from({ length: 5 }, (_, index) => ({ id: String(10000001 + index), subscriberId: subscriber.id, type: index % 2 ? 'Slow_Internet_Connection' as const : 'No_Internet_Connection' as const, subject: 'Connection support request', description: 'Please help check my connection.', status: index === 0 ? 'Open' as const : 'In_Progress' as const, priority: index === 0 ? 'High' as const : 'Medium' as const })) });
   await prisma.notification.createMany({ data: [
     { forRole: 'subscriber' as const, forUserId: subscriber.id, type: 'billing' as const, title: 'Bill Generated', body: 'Your June 2026 bill is ready: ₱999.00. Due on June 30, 2026.', timestamp: new Date('2026-06-01T08:00:00Z'), read: false },
-    { forRole: 'subscriber' as const, forUserId: subscriber.id, type: 'billing' as const, title: 'Payment Confirmed', body: 'Your May 2026 payment of ₱999.00 has been received. Thank you!', timestamp: new Date('2026-05-28T08:00:00Z'), read: true },
+    { forRole: 'subscriber' as const, forUserId: subscriber.id, type: 'billing' as const, title: 'Payment Confirmed', body: 'Your May 10, 2026 - June 9, 2026 payment of ₱999.00 has been received. Thank you!', timestamp: new Date('2026-05-28T08:00:00Z'), read: true },
     { forRole: 'subscriber' as const, forUserId: subscriber.id, type: 'installation' as const, title: 'Installation Scheduled', body: 'Technician Marcus Chen will visit on June 13 at 09:00 for fiber installation.', timestamp: new Date('2026-06-10T08:00:00Z'), read: true },
     { forRole: 'subscriber' as const, forUserId: subscriber.id, type: 'task' as const, title: 'Repair Scheduled', body: 'Technician Marcus Chen will visit on June 18 at 13:00 for your repair request.', timestamp: new Date('2026-06-15T08:00:00Z'), read: true },
   ] });
-  await prisma.notification.createMany({ data: Array.from({ length: 12 }, (_, index) => ({ forRole: index % 3 === 0 ? 'admin' as const : index % 3 === 1 ? 'technician' as const : 'subscriber' as const, type: 'system' as const, title: 'Sky-Tech update', body: 'Your account has a new service update.' })) });
+  await prisma.notification.createMany({ data: Array.from({ length: 8 }, (_, index) => ({ forRole: index % 2 === 0 ? 'admin' as const : 'subscriber' as const, type: 'system' as const, title: 'Sky-Tech update', body: 'Your account has a new service update.' })) });
   await prisma.systemSettings.create({ data: { companyName: 'Sky-Tech ISP', companyEmail: 'support@skytech.net', phone: '+63 900 000 0000', address: 'Metro Manila', lateFeePercent: 5, gracePeriodDays: 5, billingDay: 30, plans } });
 }
 main().finally(() => prisma.$disconnect());

@@ -38,16 +38,24 @@ export default function TechnicianNotificationsPage() {
   const [activeFilter, setActiveFilter] = useState<Filter>('All');
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isMarkingRead, setIsMarkingRead] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/notifications').then(async (response) => { if (!response.ok) return; const result = await response.json(); if (Array.isArray(result.data)) setNotifications(result.data); }).catch(() => undefined);
+    fetch('/api/notifications', { cache: 'no-store' }).then(async (response) => {
+      const result = await response.json();
+      if (!response.ok || !Array.isArray(result.data)) throw new Error(result.error || 'Unable to load notifications.');
+      setNotifications(result.data);
+    }).catch(() => setError('Notifications could not be loaded. Please try again.'));
   }, []);
 
   async function markAllRead() {
     setIsMarkingRead(true);
     try {
       const response = await fetch('/api/notifications/read-all', { method: 'PUT' });
-      if (response.ok) setNotifications((items) => items.map((item) => ({ ...item, read: true })));
+      if (!response.ok) throw new Error('Unable to mark notifications as read.');
+      setNotifications((items) => items.map((item) => ({ ...item, read: true })));
+    } catch {
+      setError('Notifications could not be marked as read.');
     } finally {
       setIsMarkingRead(false);
     }
@@ -56,7 +64,13 @@ export default function TechnicianNotificationsPage() {
   async function markRead(item: NotificationItem) {
     if (item.read) return;
     setNotifications((items) => items.map((current) => current.id === item.id ? { ...current, read: true } : current));
-    await fetch(`/api/notifications/${item.id}/read`, { method: 'PUT' }).catch(() => undefined);
+    try {
+      const response = await fetch(`/api/notifications/${item.id}/read`, { method: 'PUT' });
+      if (!response.ok) throw new Error('Unable to mark notification as read.');
+    } catch {
+      setNotifications((items) => items.map((current) => current.id === item.id ? { ...current, read: false } : current));
+      setError('The notification could not be marked as read.');
+    }
   }
 
   const filtered = notifications.filter((item) => activeFilter === 'All' || notificationCategory(item) === activeFilter);
@@ -87,7 +101,7 @@ export default function TechnicianNotificationsPage() {
         </div>
 
         <main className="scrollbar-hidden min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8 lg:px-10">
-          <div className="mx-auto max-w-7xl"><div className="grid gap-3">
+          <div className="mx-auto max-w-7xl">{error && <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p>}<div className="grid gap-3">
             {filtered.map((item) => (
               <article key={item.id} onClick={() => markRead(item)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); markRead(item); } }} role="button" tabIndex={0} className={`flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-colors duration-100 hover:bg-[#f8fafc] sm:gap-4 sm:p-4 ${!item.read ? 'border-l-2 border-l-[#2166f3]' : ''}`}>
                 <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${notificationTone(item.type, item.title)}`}>{notificationIcon(item.type, item.title)}</span>

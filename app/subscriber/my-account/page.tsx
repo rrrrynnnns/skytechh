@@ -41,7 +41,7 @@ export default function SubscriberAccount() {
     const hour = new Date().getHours();
     return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   });
-  const [transactions, setTransactions] = useState<Array<{ id: string; amount: number; dueDate: string; status: string }>>([]);
+  const [transactions, setTransactions] = useState<Array<{ id: string; amount: number; dueDate: string; billingPeriod: string; status: string }>>([]);
   const [requests, setRequests] = useState<RequestHistoryItem[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<RequestHistoryItem | null>(null);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
@@ -61,10 +61,11 @@ export default function SubscriberAccount() {
         if (Array.isArray(result.data)) {
           setTransactions(
             result.data
-              .map((bill: { id?: string; amount?: number; dueDate?: string | null; status?: string }) => ({
+              .map((bill: { id?: string; amount?: number; dueDate?: string | null; billingPeriod?: string; status?: string }) => ({
                 id: String(bill.id || 'bill'),
                 amount: Number(bill.amount || 0),
                 dueDate: bill.dueDate || '',
+                billingPeriod: bill.billingPeriod || '',
                 status: bill.status || 'Unpaid',
               }))
               .sort((a: { dueDate: string }, b: { dueDate: string }) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime()),
@@ -126,12 +127,24 @@ export default function SubscriberAccount() {
   const price = account?.monthlyPrice != null ? formatMoney(account.monthlyPrice) : '';
   const visibleTransactions = transactions.slice(0, 3);
   const showAllTransactions = transactions.length > 3;
+  const billStatus = transactions[0]?.status === 'Pending_Confirmation' ? 'Pending' : transactions[0]?.status || 'Unpaid';
 
-  function formatHistoryDate(value: string) {
-    if (!value) return '';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+  function formatBillingCycleParts(value?: string, fallback?: string) {
+    if (!value || !/^\d{4}-\d{2}$/.test(value)) {
+      if (!fallback) return { start: '', end: '' };
+      const fallbackDate = new Date(fallback);
+      return Number.isNaN(fallbackDate.getTime())
+        ? { start: '', end: '' }
+        : { start: fallbackDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }), end: '' };
+    }
+    const [year, month] = value.split('-').map(Number);
+    if (!year || !month || month < 1 || month > 12) return { start: '', end: '' };
+    const start = new Date(year, month - 1, 10);
+    const end = new Date(year, month, 9);
+    return {
+      start: start.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      end: end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    };
   }
 
   function formatRequestVisitDateTime(request: RequestHistoryItem) {
@@ -173,7 +186,7 @@ export default function SubscriberAccount() {
     <div className="w-full bg-[#2447b6] px-4 pb-7 pt-7 text-white sm:px-8 lg:px-10">
       <div className="mx-auto w-full max-w-7xl">
         <div className="mb-6 flex items-center justify-between gap-2"><div className="flex min-w-0 items-center gap-3"><span className="grid h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#4770d6] text-lg font-bold">{firstName.slice(0, 2).toUpperCase()}</span><div className="min-w-0"><p className="text-sm text-blue-100">{greeting || 'Hello'}</p><h1 className="text-xl font-bold">{firstName}</h1></div></div><div className="flex shrink-0 items-center gap-2"><Link href="/subscriber/notifications" aria-label="Notifications" className="relative rounded-2xl bg-[#4770d6] p-3"><Bell size={20} />{unreadNotificationCount > 0 && <span className="absolute right-1 top-0 grid h-4 min-w-4 items-center justify-center rounded-full bg-[#ff3b50] px-1 text-[9px] font-bold">{unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}</span>}</Link><Link href="/shared/my-tasks" className="flex items-center gap-2 rounded-2xl bg-[#4770d6] px-4 py-3 text-sm font-semibold"><MessageSquare size={16} />Help</Link></div></div>
-        <section className="overflow-hidden rounded-3xl bg-white text-slate-950 shadow-sm"><div className="flex items-center justify-between border-b border-slate-100 px-4 py-5 sm:px-6"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-[#2166f3] text-white"><Wifi size={22} /></span><p className="text-xs font-bold uppercase tracking-widest text-slate-400">Sky-Tech Fiber</p></div><Badge value="Unpaid" /></div><div className="flex items-end justify-between gap-4 px-4 py-6 sm:px-6"><div><h2 className="text-xl font-bold">{displayName}</h2><p className="mt-1 text-sm text-slate-400">{subscriberId}</p></div><div className="text-right"><p className="text-2xl font-bold text-[#2447b6]">{price}</p><p className="text-xs text-slate-400">Amount to pay</p></div></div><div className="grid grid-cols-3 border-t border-slate-100 bg-[#f8faff] py-5"><div className="flex flex-col items-center justify-center gap-2 border-r border-slate-200"><div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#2166f3]"><Wifi size={20} /></div><strong className="text-lg font-bold text-slate-900">{account ? 'Unli' : 'Loading'}</strong><span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Data</span></div><div className="flex flex-col items-center justify-center gap-2 border-r border-slate-200"><div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#2166f3]"><Zap size={20} /></div><strong className="text-lg font-bold text-slate-900">{account?.speedMbps || ''} Mbps</strong><span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Speed</span></div><div className="flex flex-col items-center justify-center gap-2"><div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#2166f3] text-lg font-bold">₱</div><strong className="text-lg font-bold text-slate-900">{price}</strong><span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Monthly</span></div></div></section>
+        <section className="overflow-hidden rounded-3xl bg-white text-slate-950 shadow-sm"><div className="flex items-center justify-between border-b border-slate-100 px-4 py-5 sm:px-6"><div className="flex items-center gap-3"><span className="grid h-11 w-11 place-items-center rounded-xl bg-[#2166f3] text-white"><Wifi size={22} /></span><p className="text-xs font-bold uppercase tracking-widest text-slate-400">Sky-Tech Fiber</p></div><Badge value={billStatus} /></div><div className="flex items-end justify-between gap-4 px-4 py-6 sm:px-6"><div><h2 className="text-xl font-bold">{displayName}</h2><p className="mt-1 text-sm text-slate-400">{subscriberId}</p></div><div className="text-right">        <p className="text-2xl font-bold text-[#2447b6]">{billStatus === 'Paid' ? 'All set!' : price}</p><p className="text-xs text-slate-400">Amount to pay</p></div></div><div className="grid grid-cols-3 border-t border-slate-100 bg-[#f8faff] py-5"><div className="flex flex-col items-center justify-center gap-2 border-r border-slate-200"><div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#2166f3]"><Wifi size={20} /></div><strong className="text-base font-bold text-slate-900">{account ? 'Unli' : 'Loading'}</strong><span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Data</span></div><div className="flex flex-col items-center justify-center gap-2 border-r border-slate-200"><div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#2166f3]"><Zap size={20} /></div><strong className="text-base font-bold text-slate-900">{account?.speedMbps || ''} Mbps</strong><span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Speed</span></div><div className="flex flex-col items-center justify-center gap-2"><div className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#2166f3]"><CreditCard size={20} /></div><strong className="text-base font-bold text-slate-900">{price}</strong><span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Monthly</span></div></div></section>
       </div>
     </div>
     <div className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-8 lg:px-10">
@@ -187,7 +200,25 @@ export default function SubscriberAccount() {
         {showAllTransactions ? <Link href="/subscriber/my-transactions" className="text-sm font-semibold text-[#2447b6]">View all</Link> : null}
       </div>
       <div className="mt-4 space-y-3">
-        {visibleTransactions.length ? visibleTransactions.map((transaction) => <div key={transaction.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div className="flex items-center justify-between gap-4"><div className="flex items-center gap-4"><span className="relative inline-block text-[#2447b6]"><FileText size={34} /><span className={`absolute -bottom-1 -right-1 text-[11px] font-extrabold leading-none ${transaction.status === 'Paid' ? 'text-emerald-600' : 'text-amber-500'}`}>₱</span></span><div><p className="text-xs text-slate-400">{transaction.status === 'Paid' ? 'Amount paid' : 'Amount to Pay'}</p><p className="mt-1 text-2xl font-bold text-[#2447b6]">{formatMoney(transaction.amount)}</p></div></div><p className="text-sm text-slate-400">{formatHistoryDate(transaction.dueDate)}</p></div></div>) : <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">No transactions yet.</div>}
+        {visibleTransactions.length ? visibleTransactions.map((transaction) => {
+          const cycle = formatBillingCycleParts(transaction.billingPeriod, transaction.dueDate);
+          return <Link href={`/subscriber/my-transactions?bill=${encodeURIComponent(transaction.id)}`} key={transaction.id} className="block rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-[#2f68e6] hover:shadow-md">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <span className="relative inline-block text-[#2447b6]"><FileText size={35} /><span className={`absolute -bottom-1 -right-1 text-[11px] font-extrabold leading-none ${transaction.status === 'Paid' ? 'text-emerald-600' : 'text-amber-500'}`}>₱</span></span>
+                <div>
+                  <p className="text-xs text-slate-400">{transaction.status === 'Paid' ? 'Amount paid' : 'Amount to Pay'}</p>
+                  <p className="mt-1 text-2xl font-bold text-[#2447b6]">{formatMoney(transaction.amount)}</p>
+                </div>
+              </div>
+              <div className="text-left text-xs leading-4 text-slate-400 sm:text-right sm:text-sm sm:leading-5">
+                <p className="sm:hidden">{cycle.start}{cycle.end ? ' to' : ''}</p>
+                {cycle.end ? <p className="sm:hidden">{cycle.end}</p> : null}
+                <p className="hidden sm:block">{cycle.start}{cycle.end ? ` to ${cycle.end}` : ''}</p>
+              </div>
+            </div>
+          </Link>;
+        }) : <div className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-500">No transactions yet.</div>}
       </div>
 
       <div className="mt-7 flex items-center justify-between gap-4">

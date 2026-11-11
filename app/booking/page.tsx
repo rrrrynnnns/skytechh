@@ -14,6 +14,28 @@ function sortLocations(options: LocationOption[]) {
   return [...options].sort((first, second) => first.name.localeCompare(second.name, 'en', { sensitivity: 'base' }));
 }
 
+function LocationSelect({ name, value, options, placeholder, disabled, onChange }: {
+  name: string;
+  value: string;
+  options: LocationOption[];
+  placeholder: string;
+  disabled?: boolean;
+  onChange: (value: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return <div className="relative mt-2">
+    <input type="hidden" name={name} value={value} required disabled={disabled} />
+    <button type="button" disabled={disabled} onClick={() => setIsOpen((open) => !open)} aria-haspopup="listbox" aria-expanded={isOpen} className="flex h-[50px] w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-left font-normal outline-none transition focus:border-[#2452c7] disabled:bg-slate-50">
+      <span className={value ? 'truncate text-slate-900' : 'truncate text-slate-400'}>{value || placeholder}</span>
+      <span className="ml-3 shrink-0 text-slate-400" aria-hidden="true">▾</span>
+    </button>
+    {isOpen && !disabled && <div role="listbox" aria-label={placeholder} className="absolute inset-x-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+      {options.map((option) => <button key={option.code} type="button" role="option" aria-selected={value === option.name} onClick={() => { onChange(option.name); setIsOpen(false); }} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-normal text-slate-700 hover:bg-blue-50 hover:text-[#2452c7]">{option.name}</button>)}
+    </div>}
+  </div>;
+}
+
 export default function BookingPage() {
   const [sent, setSent] = useState(false);
   const [submittedBooking, setSubmittedBooking] = useState<SubmittedBooking | null>(null);
@@ -26,6 +48,8 @@ export default function BookingPage() {
   const [province, setProvince] = useState('');
   const [city, setCity] = useState('');
   const [barangay, setBarangay] = useState('');
+  const [plan, setPlan] = useState('');
+  const [isPlanOpen, setIsPlanOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -77,6 +101,10 @@ export default function BookingPage() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
+    if (!plan) {
+      setError('Please select an internet plan.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const data = Object.fromEntries(new FormData(event.currentTarget));
@@ -116,8 +144,8 @@ export default function BookingPage() {
       <circle cx="650" cy="230" r="4" fill="#60a5fa" />
     </svg>
     <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-7xl flex-col">
-    <header className="flex items-center">
-      <Link href="/" className="flex items-center gap-3 text-white" aria-label="Return to Sky-Tech home">
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-[#071329]/90 backdrop-blur-md">
+      <Link href="/" className="mx-auto flex w-full max-w-7xl items-center gap-3 px-6 py-4 text-white sm:px-8" aria-label="Return to Sky-Tech home">
         <span className="grid h-10 w-10 place-items-center rounded-xl bg-[#2452c7] text-white shadow-lg shadow-blue-950/40">
           <Wifi size={23} />
         </span>
@@ -127,7 +155,7 @@ export default function BookingPage() {
         </span>
       </Link>
     </header>
-    <div className="flex flex-1 flex-col items-center justify-center py-8 sm:py-12">
+    <div className="flex flex-1 flex-col items-center justify-center py-20 sm:py-24">
     <div className="w-full max-w-[460px]">
     {!sent && <Link href="/login" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-100 hover:text-white"><ArrowLeft size={16} /> Back to login</Link>}
     <div className="mt-3 w-full rounded-3xl border border-white/70 bg-white px-5 py-7 shadow-2xl shadow-black/30 sm:px-10 sm:py-9">
@@ -148,10 +176,19 @@ export default function BookingPage() {
           ['firstName', 'First Name *', true], ['middleName', 'Middle Name (Optional)', false],
           ['lastName', 'Last Name *', true], ['email', 'Email *', true], ['contact', 'Contact *', true],
         ].map(([name, label, required]) => <label key={String(name)} className="text-sm font-bold text-slate-700">{label}<input required={Boolean(required)} name={String(name)} type={name === 'email' ? 'email' : 'text'} className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-[#2452c7]" /></label>)}
-        <label className="text-sm font-bold text-slate-700">Plan<select name="plan" required disabled={!plans.length} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-[#2452c7] disabled:bg-slate-50"><option value="">{plans.length ? 'Select plan...' : 'No plans available'}</option>{plans.map((plan) => <option key={plan.name} value={plan.name.replace(/\s+/g, '_')}>{plan.name.replace(/_/g, ' ')}</option>)}</select></label>
-        <label className="text-sm font-bold text-slate-700">Province / State *<select name="province" required value={province} onChange={(event) => { setProvince(event.target.value); setCity(''); setBarangay(''); }} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-[#2452c7]"><option value="">Select province / state...</option>{provinces.map((item) => <option key={item.code}>{item.name}</option>)}</select></label>
-        <label className="text-sm font-bold text-slate-700">City / Municipality *<select name="city" required value={city} disabled={!province} onChange={(event) => { setCity(event.target.value); setBarangay(''); }} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-[#2452c7] disabled:bg-slate-50"><option value="">Select city / municipality...</option>{cities.map((item) => <option key={item.code}>{item.name}</option>)}</select></label>
-        <label className="text-sm font-bold text-slate-700">Barangay *<select name="barangay" required value={barangay} disabled={!city} onChange={(event) => setBarangay(event.target.value)} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-[#2452c7] disabled:bg-slate-50"><option value="">Select barangay...</option>{barangays.map((item) => <option key={item.code}>{item.name}</option>)}</select></label>
+        <label className="text-sm font-bold text-slate-700">Plan<div className="relative mt-2">
+          <input type="hidden" name="plan" value={plan.replace(/\s+/g, '_')} />
+          <button type="button" disabled={!plans.length} onClick={() => setIsPlanOpen((open) => !open)} aria-haspopup="listbox" aria-expanded={isPlanOpen} className="flex h-[50px] w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-left font-normal outline-none transition focus:border-[#2452c7] disabled:bg-slate-50">
+            <span className={plan ? 'truncate text-slate-900' : 'truncate text-slate-400'}>{plan || (plans.length ? 'Select plan...' : 'No plans available')}</span>
+            <span className="ml-3 shrink-0 text-slate-400" aria-hidden="true">▾</span>
+          </button>
+          {isPlanOpen && plans.length > 0 && <div role="listbox" aria-label="Internet plans" className="absolute inset-x-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+            {plans.map((option) => <button key={option.name} type="button" role="option" aria-selected={plan === option.name} onClick={() => { setPlan(option.name); setIsPlanOpen(false); }} className="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-normal text-slate-700 hover:bg-blue-50 hover:text-[#2452c7]">{option.name.replace(/_/g, ' ')}</button>)}
+          </div>}
+        </div></label>
+        <label className="text-sm font-bold text-slate-700">Province / State *<LocationSelect name="province" value={province} options={provinces} placeholder="Select province / state..." onChange={(value) => { setProvince(value); setCity(''); setBarangay(''); }} /></label>
+        <label className="text-sm font-bold text-slate-700">City / Municipality *<LocationSelect name="city" value={city} options={cities} placeholder="Select city / municipality..." disabled={!province} onChange={(value) => { setCity(value); setBarangay(''); }} /></label>
+        <label className="text-sm font-bold text-slate-700">Barangay *<LocationSelect name="barangay" value={barangay} options={barangays} placeholder="Select barangay..." disabled={!city} onChange={setBarangay} /></label>
         <label className="text-sm font-bold text-slate-700">House No. / Street *<input name="street" required className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-[#2452c7]" /></label>
         <label className="text-sm font-bold text-slate-700">ZIP Code<input name="zipCode" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-[#2452c7]" /></label>
         {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
