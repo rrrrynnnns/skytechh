@@ -149,7 +149,7 @@ export default function BookingPage() {
         <img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="h-11 w-11 rounded-full object-cover object-center" />
         <span>
           <span className="block text-lg font-black tracking-tight">Sky-Tech</span>
-          <span className="block text-[9px] font-bold uppercase tracking-[.18em] text-sky-400">Home Fiber · Sibagat</span>
+          <span className="block text-[9px] font-bold uppercase tracking-[.18em] text-sky-400">Home Fiber</span>
         </span>
       </Link>
     </header>

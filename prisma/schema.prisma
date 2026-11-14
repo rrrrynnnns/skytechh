@@ -240,3 +240,19 @@ model SystemSettings {
   billingDay      Int
   plans           Json
 }
+
+model SystemAuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actorName  String?
+  actorEmail String?
+  actorRole  Role
+  action     String
+  resource   String
+  resourceId String?
+  details    String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([resource])
+}
