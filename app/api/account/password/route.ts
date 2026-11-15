@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/app/lib/prisma';
 import { requireRole } from '@/app/lib/api';
+import { recordAuditLog } from '@/app/lib/audit-log';
 
 export async function PUT(request: Request) {
   const access = await requireRole(['subscriber', 'technician']);
@@ -25,6 +26,12 @@ export async function PUT(request: Request) {
   await prisma.user.update({
     where: { id: user.id },
     data: { password: await bcrypt.hash(newPassword, 12) },
+  });
+  await recordAuditLog(access.session?.user, {
+    action: 'Changed Password',
+    resource: 'Account',
+    resourceId: user.id,
+    details: 'Account password changed.',
   });
   return NextResponse.json({ data: { updated: true }, error: null });
 }

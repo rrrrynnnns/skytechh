@@ -89,6 +89,7 @@ enum NotifType {
   billing
   installation
   system
+  maintenance
   task
   assignment
   update
@@ -255,4 +256,28 @@ model SystemAuditLog {
 
   @@index([createdAt])
   @@index([resource])
+}
+
+model MaintenanceSettings {
+  id                  String   @id @default("singleton")
+  enabled             Boolean  @default(false)
+  category            String   @default("Network Maintenance")
+  impact              String   @default("Slow Internet")
+  title               String   @default("")
+  description         String   @default("") @db.Text
+  startsAt             DateTime?
+  restoresAt           DateTime?
+  updatedAt            DateTime @updatedAt
+}
+
+model MaintenanceAnnouncement {
+  id          String   @id @default(cuid())
+  category    String
+  impact      String
+  title       String
+  description String   @db.Text
+  startsAt    DateTime?
+  restoresAt  DateTime?
+  sentCount   Int      @default(0)
+  createdAt   DateTime @default(now())
 }

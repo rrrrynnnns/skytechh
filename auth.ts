@@ -39,6 +39,31 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   })],
   callbacks: {
+    async signIn({ user }) {
+      const identity = user as {
+        id?: string;
+        name?: string | null;
+        email?: string | null;
+        role?: 'admin' | 'technician' | 'subscriber';
+      };
+      if (identity.role) {
+        try {
+          await prisma.systemAuditLog.create({
+            data: {
+              actorId: identity.id || null,
+              actorName: identity.name || null,
+              actorEmail: identity.email || null,
+              actorRole: identity.role,
+              action: 'Logged in',
+              resource: 'Authentication',
+            },
+          });
+        } catch (error) {
+          console.error('Unable to record login audit log:', error);
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) { if (user) { const identity = user as { role?: string; subscriberId?: string; technicianId?: string }; token.role = identity.role; token.subscriberId = identity.subscriberId; token.technicianId = identity.technicianId; } return token; },
     async session({ session, token }) { if (session.user) { session.user.role = token.role as string; session.user.subscriberId = token.subscriberId; session.user.technicianId = token.technicianId; } return session; },
   },

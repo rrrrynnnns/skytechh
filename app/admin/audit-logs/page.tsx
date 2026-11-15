@@ -8,6 +8,7 @@ type AuditLog = {
   id: string;
   actorName: string | null;
   actorEmail: string | null;
+  actorRole: string;
   action: string;
   resource: string;
   resourceId: string | null;
@@ -52,8 +53,7 @@ export default function AuditLogsPage() {
   return (
     <PortalShell role="admin">
       <div className="max-w-6xl">
-        <p className="text-sm font-bold uppercase tracking-widest text-[#3b4fd8]">System Administration</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">System Audit Logs</h1>
+        <h1 className="text-3xl font-bold tracking-tight">System Audit Logs</h1>
         <p className="mt-2 text-slate-500">Review system-wide changes and actions across the admin portal.</p>
         {loading ? (
           <div className="mt-8 flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-8 text-sm text-slate-500">
@@ -70,12 +70,12 @@ export default function AuditLogsPage() {
         ) : (
           <section className="mt-8 overflow-hidden rounded-xl border border-slate-200 bg-white">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left text-sm">
+              <table className="w-full min-w-[680px] text-left text-sm">
                 <thead className="border-b border-slate-100 bg-slate-50 text-xs font-bold uppercase tracking-wide text-slate-400">
-                  <tr><th className="px-5 py-4">Date and time</th><th className="px-5 py-4">User</th><th className="px-5 py-4">Action</th><th className="px-5 py-4">Resource</th><th className="px-5 py-4">Details</th></tr>
+                  <tr><th className="px-5 py-4">Date and time</th><th className="px-5 py-4">Login</th><th className="px-5 py-4">Role</th><th className="px-5 py-4">Action</th><th className="px-5 py-4">Details</th></tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {logs.map((log) => <tr key={log.id} className="hover:bg-slate-50"><td className="whitespace-nowrap px-5 py-4 text-slate-500">{formatTimestamp(log.createdAt)}</td><td className="px-5 py-4 font-semibold text-slate-700">{log.actorName || log.actorEmail || 'System admin'}</td><td className="px-5 py-4 font-semibold text-[#3b4fd8]">{log.action}</td><td className="px-5 py-4 text-slate-600">{log.resource}{log.resourceId ? ` · ${log.resourceId}` : ''}</td><td className="px-5 py-4 text-slate-500">{log.details || '—'}</td></tr>)}
+                  {logs.map((log) => <tr key={log.id} className="hover:bg-slate-50"><td className="whitespace-nowrap px-5 py-4 text-slate-500">{formatTimestamp(log.createdAt)}</td><td className="px-5 py-4 font-semibold text-slate-700">{log.actorEmail || log.actorName || 'System admin'}</td><td className="px-5 py-4 capitalize text-slate-600">{log.actorRole}</td><td className="px-5 py-4 font-semibold text-slate-700">{log.action}</td><td className="px-5 py-4 text-slate-500">{log.details || '—'}</td></tr>)}
                 </tbody>
               </table>
             </div>

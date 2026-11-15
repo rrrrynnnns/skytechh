@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import { NextResponse } from 'next/server';
+import { after, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { sendPasswordResetEmail } from '@/app/lib/password-reset-email';
 
@@ -26,13 +26,19 @@ export async function POST(request: Request) {
     },
   });
 
-  try {
-    await sendPasswordResetEmail(email, rawToken);
-  } catch (error) {
+  if (!process.env.RESEND_API_KEY && !(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD)) {
     await prisma.passwordResetToken.deleteMany({ where: { tokenHash: hashToken(rawToken) } });
-    console.error('Password reset email could not be sent.', error);
     return NextResponse.json({ data: null, error: 'Password reset email is not configured. Contact an administrator.' }, { status: 503 });
   }
+
+  after(async () => {
+    try {
+      await sendPasswordResetEmail(email, rawToken);
+    } catch (error) {
+      await prisma.passwordResetToken.deleteMany({ where: { tokenHash: hashToken(rawToken) } });
+      console.error('Password reset email could not be sent.', error);
+    }
+  });
 
   return NextResponse.json(genericResponse);
 }

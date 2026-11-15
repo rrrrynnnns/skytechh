@@ -9,8 +9,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Sky-Tech ISP | Reliable connectivity",
+  title: "Sky-Tech Home Fiber",
   description: "Manage your Sky-Tech internet service in one place.",
+  icons: {
+    icon: "/sky-tech-favicon.png",
+    apple: "/sky-tech-favicon.png",
+  },
 };
 
 export const viewport: Viewport = {

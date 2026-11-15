@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { requireRole } from '@/app/lib/api';
+import { recordAuditLog } from '@/app/lib/audit-log';
 
 export async function GET() {
   const access = await requireRole(['technician']);
@@ -24,6 +25,12 @@ export async function PUT(request: Request) {
   const technician = await prisma.technician.update({
     where: { id: technicianId },
     data: { name: body.name, email: body.email, contact: body.contact },
+  });
+  await recordAuditLog(access.session?.user, {
+    action: 'Updated Profile',
+    resource: 'Technician Account',
+    resourceId: technician.id,
+    details: 'Name, email, or contact details updated.',
   });
   return NextResponse.json({ data: technician, error: null });
 }

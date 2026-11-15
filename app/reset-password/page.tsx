@@ -60,9 +60,9 @@ function ResetPasswordForm() {
         <label className="block text-sm font-bold text-slate-700">Confirm new password<div className="mt-2 flex h-12 items-center rounded-xl border border-slate-200 px-3 focus-within:border-[#2452c7]"><input type={showConfirmation ? 'text' : 'password'} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} minLength={8} required className="min-w-0 flex-1 !border-0 !bg-transparent px-0 !outline-none !ring-0 !shadow-none focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none" /><button type="button" onClick={() => setShowConfirmation((value) => !value)} aria-label={showConfirmation ? 'Hide confirmed password' : 'Show confirmed password'} className="ml-2 !border-0 !bg-transparent p-1 text-slate-400 !shadow-none !outline-none hover:text-[#2452c7] focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none">{showConfirmation ? <EyeOff size={19} /> : <Eye size={19} />}</button></div></label>
         {error && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</p>}
         {message && <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">{message}</p>}
-        <button type="submit" disabled={isSaving || Boolean(message)} className="h-12 w-full rounded-xl bg-[#2452c7] text-sm font-bold text-white disabled:opacity-60">{isSaving ? 'Saving...' : 'Reset password'}</button>
+        <button type="submit" disabled={isSaving || Boolean(message)} className="h-12 w-full rounded-xl bg-sky-600 text-sm font-bold text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? 'Saving...' : 'Reset password'}</button>
       </form>}
-      <Link href="/login" className="mt-6 block text-center text-sm font-bold text-[#2452c7] hover:underline">Back to sign in</Link>
+      <Link href="/login" className="mt-6 block text-center text-sm font-bold text-sky-600 hover:text-sky-500 hover:underline">Back to sign in</Link>
     </section>
   </main>;
 }

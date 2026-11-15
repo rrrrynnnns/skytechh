@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { apiError, requireRole } from '@/app/lib/api';
+import { recordAuditLog } from '@/app/lib/audit-log';
 
 function getPaymentNotificationText(billingPeriod: string, amount: number) {
 	const [year, month] = billingPeriod.split('-').map(Number);
@@ -61,6 +62,12 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 				},
 			});
 			return updated;
+		});
+		await recordAuditLog(access.session?.user, {
+			action: access.session?.user?.role === 'admin' ? 'Confirmed Payment' : 'Submitted Payment',
+			resource: 'Bill',
+			resourceId: id,
+			details: `${bill.paymentMethod || 'Payment method not specified'} payment ${access.session?.user?.role === 'admin' ? 'confirmed' : 'submitted for confirmation'}.`,
 		});
 		return NextResponse.json({ data: bill, error: null });
 	} catch (error) {

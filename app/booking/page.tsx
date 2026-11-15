@@ -145,7 +145,7 @@ export default function BookingPage() {
     </svg>
     <div className="relative z-10 mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-7xl flex-col">
     <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-[#071329]/90 backdrop-blur-md">
-      <Link href="/" className="mx-auto flex w-full max-w-7xl items-center gap-3 px-6 py-3 text-white sm:px-8" aria-label="Return to Sky-Tech home">
+      <Link href="/landing-page" className="mx-auto flex w-full max-w-7xl items-center gap-3 px-6 py-3 text-white sm:px-8" aria-label="Return to Sky-Tech home">
         <img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="h-11 w-11 rounded-full object-cover object-center" />
         <span>
           <span className="block text-lg font-black tracking-tight">Sky-Tech</span>
@@ -190,7 +190,7 @@ export default function BookingPage() {
         <label className="text-sm font-bold text-slate-700">House No. / Street *<input name="street" required className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-[#2452c7]" /></label>
         <label className="text-sm font-bold text-slate-700">ZIP Code<input name="zipCode" className="mt-2 w-full rounded-xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-[#2452c7]" /></label>
         {error && <p className="text-sm font-semibold text-red-600">{error}</p>}
-        <button disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-full bg-[#3b4fd8] px-5 py-3 font-bold text-white">{isSubmitting && <Spinner />}{isSubmitting ? 'Submitting...' : 'Submit booking request'}</button>
+        <button disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-full bg-sky-600 px-5 py-3 font-bold text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-60">{isSubmitting && <Spinner />}{isSubmitting ? 'Submitting...' : 'Submit booking request'}</button>
       </form></>}
     </div>
     </div>
