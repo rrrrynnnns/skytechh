@@ -1,11 +1,26 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Check, CircleDollarSign, FileText, MoreHorizontal, Users, Wrench } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Activity,
+  AlertCircle,
+  ArrowRight,
+  ArrowUpRight,
+  CalendarClock,
+  Check,
+  CircleDollarSign,
+  ClipboardList,
+  FileText,
+  LifeBuoy,
+  RefreshCw,
+  Users,
+  Wrench,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { PortalShell } from '@/app/components/PortalShell';
 import { formatPersonName } from '@/app/lib/name';
+import { RevenueCard, SubscriberGrowthCard } from '@/app/components/TrendCharts';
 
 type DashboardResponse = {
   activeSubscribers: number;
@@ -15,12 +30,66 @@ type DashboardResponse = {
   pendingBills: number;
   revenueTrend: { label: string; value: number }[];
   growthTrend: number[];
-  recentInstallations: { id: string; subscriber: string; technician: string; date: string; time?: string; status: string }[];
-  recentActivity: { id: string; text: string; body: string; date: string; tone: 'green' | 'orange' | 'blue' }[];
-  recentSupportTickets: { id: string; subscriber: string; concern: string; date?: string | null; time?: string | null; status: string }[];
+  recentInstallations: {
+    id: string;
+    subscriber: string;
+    technician: string;
+    date: string;
+    time?: string;
+    status: string;
+  }[];
+  recentActivity: {
+    id: string;
+    text: string;
+    body: string;
+    date: string;
+    tone: 'green' | 'orange' | 'blue';
+  }[];
+  recentSupportTickets: {
+    id: string;
+    subscriber: string;
+    concern: string;
+    date?: string | null;
+    time?: string | null;
+    status: string;
+  }[];
 };
 
-type Stat = { label: string; value: string; detail: string; Icon: LucideIcon; tone: 'positive' | 'neutral' | 'negative' };
+type StatAccent = 'blue' | 'violet' | 'emerald' | 'amber';
+type Stat = {
+  label: string;
+  value: string;
+  detail: string;
+  Icon: LucideIcon;
+  tone: 'positive' | 'neutral' | 'negative';
+  accent: StatAccent;
+  href: string;
+};
+
+const statAccents: Record<StatAccent, { tile: string; bar: string }> = {
+  blue: { tile: 'bg-blue-50 text-blue-600', bar: 'bg-blue-500' },
+  violet: { tile: 'bg-violet-50 text-violet-600', bar: 'bg-violet-500' },
+  emerald: { tile: 'bg-emerald-50 text-emerald-600', bar: 'bg-emerald-500' },
+  amber: { tile: 'bg-amber-50 text-amber-600', bar: 'bg-amber-500' },
+};
+
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function getInitials(name: string) {
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('') || 'S'
+  );
+}
 
 const installationStatusLabels: Record<string, string> = {
   Scheduled: 'Installation Confirmed',
@@ -33,11 +102,11 @@ const installationStatusLabels: Record<string, string> = {
   Installation_Rescheduled: 'Installation Rescheduled',
 };
 
-const installationStatusStyles: Record<string, string> = {
-  'Installation Confirmed': 'bg-emerald-50 text-emerald-500',
-  Completed: 'bg-slate-50 text-slate-500',
-  'Installation Closed': 'bg-slate-50 text-slate-500',
-  'Installation Rescheduled': 'bg-amber-50 text-amber-500',
+const installationStatusStyles: Record<string, { badge: string; dot: string }> = {
+  'Installation Confirmed': { badge: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500' },
+  Completed: { badge: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' },
+  'Installation Closed': { badge: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' },
+  'Installation Rescheduled': { badge: 'bg-amber-50 text-amber-700', dot: 'bg-amber-500' },
 };
 
 const ticketStatusLabels: Record<string, string> = {
@@ -47,11 +116,11 @@ const ticketStatusLabels: Record<string, string> = {
   Closed: 'Repair Rescheduled',
 };
 
-const ticketStatusStyles: Record<string, string> = {
-  Submitted: 'bg-blue-50 text-blue-500',
-  'Repair Confirmed': 'bg-emerald-50 text-emerald-500',
-  'Repair Closed': 'bg-slate-50 text-slate-500',
-  'Repair Rescheduled': 'bg-amber-50 text-amber-500',
+const ticketStatusStyles: Record<string, { badge: string; dot: string }> = {
+  Submitted: { badge: 'bg-blue-50 text-blue-700', dot: 'bg-blue-500' },
+  'Repair Confirmed': { badge: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500' },
+  'Repair Closed': { badge: 'bg-slate-100 text-slate-600', dot: 'bg-slate-400' },
+  'Repair Rescheduled': { badge: 'bg-amber-50 text-amber-700', dot: 'bg-amber-500' },
 };
 
 function getInstallationStatus(status: string) {
@@ -77,85 +146,533 @@ function formatInstallationTime(value: string | null | undefined) {
   return value || '—';
 }
 
-function ChartGrid({ children, labels, yLabels }: { children: React.ReactNode; labels: string[]; yLabels: string[] }) {
-  return <div className="relative mt-6 grid h-56 grid-cols-[2.75rem_minmax(0,1fr)] grid-rows-[minmax(0,1fr)_1.75rem]"><div className="flex flex-col justify-between pr-2 text-right text-xs text-slate-400">{yLabels.map((label, index) => <span className="-translate-y-1/2 first:translate-y-0 last:translate-y-0" key={`${label}-${index}`}>{label}</span>)}</div><div className="relative"><div className="absolute inset-0 flex flex-col justify-between">{yLabels.map((label, index) => <div className="border-t border-dashed border-slate-100" key={`${label}-grid-${index}`} />)}</div><div className="absolute inset-0">{children}</div></div><div className="col-start-2 flex justify-between pr-1 text-xs text-slate-400">{labels.map((label, index) => <span key={`${label}-${index}`}>{label}</span>)}</div></div>;
-}
-
-function formatAxisValue(value: number) {
-  if (value >= 1000) {
-    const thousands = value / 1000;
-    return `₱${Number.isInteger(thousands) ? thousands : thousands.toFixed(1)}k`;
-  }
-  return `₱${Math.round(value)}`;
-}
-
-function LineChart({ values, labels }: { values: number[]; labels: string[] }) {
-  const safeValues = values.length ? values : [0, 0, 0, 0, 0, 0];
-  const maxValue = Math.max(...safeValues, 1);
-  const points = safeValues.map((value, index) => `${index * 20},${100 - (value / maxValue) * 100}`).join(' ');
-  const yLabels = [maxValue, Math.ceil(maxValue * 0.75), Math.ceil(maxValue * 0.5), Math.ceil(maxValue * 0.25), 0].map(String);
-  return <ChartGrid labels={labels} yLabels={yLabels}><svg className="h-[calc(100%-28px)] w-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="growth-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#3b71ed" stopOpacity="0.18" /><stop offset="1" stopColor="#3b71ed" stopOpacity="0" /></linearGradient></defs><polygon points={`0,100 ${points} 100,100`} fill="url(#growth-fill)" /><polyline points={points} fill="none" stroke="#2f6bed" strokeLinecap="round" strokeLinejoin="round" strokeWidth="0.9" vectorEffect="non-scaling-stroke" />{safeValues.map((value, index) => <circle key={`${value}-${index}`} cx={index * 20} cy={100 - (value / maxValue) * 100} r="1.25" fill="#6d9af5" vectorEffect="non-scaling-stroke" />)}</svg></ChartGrid>;
-}
-
-function RevenueChart({ values, labels }: { values: number[]; labels: string[] }) {
-  const safeValues = values.length ? values : [0, 0, 0, 0, 0, 0];
-  const maxValue = Math.max(...safeValues, 1);
-  const yLabels = [maxValue, maxValue * 0.75, maxValue * 0.5, maxValue * 0.25, 0].map(formatAxisValue);
-  return <ChartGrid labels={labels} yLabels={yLabels}><div className="flex h-[calc(100%-28px)] items-end justify-between gap-4 px-2">{safeValues.map((value, index) => <div className="flex h-full flex-1 items-end justify-center" key={`${value}-${index}`}><div className={`w-7 rounded-t transition-all ${value ? 'bg-[#2f68e6] hover:bg-[#1f54ca]' : 'bg-slate-100'}`} style={{ height: `${value ? Math.max(4, (value / maxValue) * 100) : 4}%` }} title={`${labels[index]}: ₱${value.toLocaleString()}`} /></div>)}</div></ChartGrid>;
-}
-
 export default function AdminDashboard() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState('');
+
+  const loadDashboard = useCallback(async (isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    setError('');
+    try {
+      const response = await fetch('/api/reports');
+      if (!response.ok) throw new Error('Unable to load dashboard metrics.');
+      const result: DashboardResponse = await response.json();
+      setDashboard(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load dashboard metrics.');
+      if (!isRefresh) setDashboard(null);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
-    fetch('/api/reports')
-      .then(async (response) => {
-        if (!response.ok) throw new Error('Unable to load dashboard metrics.');
-        const result = await response.json();
-        setDashboard(result);
-      })
-      .catch(() => setDashboard(null))
-      .finally(() => setLoading(false));
-  }, []);
+    void loadDashboard(false);
+  }, [loadDashboard]);
 
   const stats = useMemo<Stat[]>(() => {
     if (!dashboard) {
       return [
-        { label: 'Active subscribers', value: '0', detail: '', Icon: Users, tone: 'neutral' },
-        { label: 'Active technicians', value: '0', detail: '', Icon: Wrench, tone: 'neutral' },
-        { label: 'Revenue collected', value: '₱0', detail: '', Icon: CircleDollarSign, tone: 'neutral' },
-        { label: 'Pending bills', value: '0', detail: '', Icon: FileText, tone: 'negative' },
+        { label: 'Active subscribers', value: '0', detail: 'Awaiting data', Icon: Users, tone: 'neutral', accent: 'blue', href: '/admin/subscribers' },
+        { label: 'Active technicians', value: '0', detail: 'Awaiting data', Icon: Wrench, tone: 'neutral', accent: 'violet', href: '/admin/technicians' },
+        { label: 'Revenue collected', value: '₱0', detail: 'Awaiting data', Icon: CircleDollarSign, tone: 'neutral', accent: 'emerald', href: '/admin/reports' },
+        { label: 'Pending bills', value: '0', detail: 'Awaiting data', Icon: FileText, tone: 'neutral', accent: 'amber', href: '/admin/billing' },
       ];
     }
 
     return [
-      { label: 'Active subscribers', value: String(dashboard.activeSubscribers), detail: dashboard.activeSubscribers > 0 ? 'Live count' : 'No active subscribers', Icon: Users, tone: 'positive' },
-      { label: 'Active technicians', value: String(dashboard.activeTechnicians), detail: dashboard.activeTechnicians > 0 ? 'Available now' : 'No active technicians', Icon: Wrench, tone: 'neutral' },
-      { label: 'Revenue collected', value: `₱${dashboard.revenueCollected.toLocaleString()}`, detail: dashboard.revenueCollected > 0 ? 'Across all paid bills' : 'No paid bills yet', Icon: CircleDollarSign, tone: 'positive' },
-      { label: 'Pending bills', value: String(dashboard.pendingBills), detail: dashboard.pendingBills > 0 ? `${dashboard.pendingBills} need attention` : 'All clear', Icon: FileText, tone: dashboard.pendingBills > 0 ? 'negative' : 'neutral' },
+      {
+        label: 'Active subscribers',
+        value: dashboard.activeSubscribers.toLocaleString(),
+        detail: dashboard.activeSubscribers > 0 ? 'Live count' : 'No active subscribers',
+        Icon: Users,
+        tone: 'positive',
+        accent: 'blue',
+        href: '/admin/subscribers',
+      },
+      {
+        label: 'Active technicians',
+        value: dashboard.activeTechnicians.toLocaleString(),
+        detail: dashboard.activeTechnicians > 0 ? 'Available now' : 'No active technicians',
+        Icon: Wrench,
+        tone: 'neutral',
+        accent: 'violet',
+        href: '/admin/technicians',
+      },
+      {
+        label: 'Revenue collected',
+        value: `₱${dashboard.revenueCollected.toLocaleString()}`,
+        detail: dashboard.revenueCollected > 0 ? 'Across all paid bills' : 'No paid bills yet',
+        Icon: CircleDollarSign,
+        tone: 'positive',
+        accent: 'emerald',
+        href: '/admin/reports',
+      },
+      {
+        label: 'Pending bills',
+        value: dashboard.pendingBills.toLocaleString(),
+        detail: dashboard.pendingBills > 0 ? `${dashboard.pendingBills} need attention` : 'All clear',
+        Icon: FileText,
+        tone: dashboard.pendingBills > 0 ? 'negative' : 'positive',
+        accent: 'amber',
+        href: '/admin/billing',
+      },
     ];
   }, [dashboard]);
 
-  const revenueValues = dashboard?.revenueTrend.map((entry) => entry.value) ?? [0, 0, 0, 0, 0, 0];
-  const growthValues = dashboard?.growthTrend ?? [0, 0, 0, 0, 0, 0];
   const chartLabels = dashboard?.revenueTrend.map((entry) => entry.label) ?? ['—', '—', '—', '—', '—', '—'];
-  const revenueTotal = revenueValues.reduce((total, value) => total + value, 0);
-  const growthChange = growthValues.length > 1 ? growthValues[growthValues.length - 1] - growthValues[0] : 0;
+  const revenueData = dashboard?.revenueTrend ?? chartLabels.map((label) => ({ label, value: 0 }));
+  const growthData = chartLabels.map((label, index) => ({ label, value: dashboard?.growthTrend?.[index] ?? 0 }));
 
   const installations = dashboard?.recentInstallations ?? [];
-  const activities = dashboard?.recentActivity.slice(0, 10).map((item) => ({
-    id: item.id,
-    Icon: item.tone === 'green' ? Check : item.tone === 'orange' ? CircleDollarSign : Users,
-    text: item.text || item.body,
-    date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    tone: item.tone,
-  })) ?? [];
+  const activities =
+    dashboard?.recentActivity.slice(0, 8).map((item) => ({
+      id: item.id,
+      Icon: item.tone === 'green' ? Check : item.tone === 'orange' ? CircleDollarSign : Users,
+      text: item.text || item.body,
+      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      tone: item.tone,
+    })) ?? [];
   const supportTickets = dashboard?.recentSupportTickets ?? [];
 
-  return <PortalShell role="admin"><div className="space-y-7">
-    <div className="flex items-start justify-between gap-6"><div><h1 className="text-2xl font-bold tracking-tight text-slate-950">Dashboard</h1><p className="mt-1 text-base text-slate-500">{loading ? 'Loading metrics...' : 'Welcome back, Admin'}</p></div><div className="hidden text-right sm:block"><p className="text-xs font-bold uppercase tracking-wider text-slate-400">Today</p><p className="mt-1 text-sm font-semibold text-slate-600">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p></div></div>
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{stats.map(({ label, value, detail, Icon, tone }) => <article key={label} className="rounded-xl border border-slate-200 bg-white px-6 py-5"><div className="flex items-start justify-between"><Icon size={19} className="text-slate-400" />{detail && <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone === 'negative' ? 'bg-red-50 text-red-500' : 'bg-emerald-50 text-emerald-600'}`}>{detail}</span>}</div><p className="mt-5 text-3xl font-bold tracking-tight text-slate-950">{value}</p><p className="mt-1 text-sm text-slate-500">{label}</p></article>)}</div>
-    <div className="grid gap-5 xl:grid-cols-2"><section className="rounded-xl border border-slate-200 bg-white p-6"><div className="flex items-start justify-between gap-4"><div><h2 className="font-bold text-slate-950">Monthly Revenue</h2><p className="mt-1 text-sm text-slate-400">Paid bills collected over the last 6 months</p></div><span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-600">₱{revenueTotal.toLocaleString()} total</span></div><RevenueChart values={revenueValues} labels={chartLabels} /></section><section className="rounded-xl border border-slate-200 bg-white p-6"><div className="flex items-start justify-between gap-4"><div><h2 className="font-bold text-slate-950">Subscriber Growth</h2><p className="mt-1 text-sm text-slate-400">Active subscribers by month</p></div><span className="shrink-0 rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600">{growthChange >= 0 ? '+' : ''}{growthChange} in 6 months</span></div><LineChart values={growthValues} labels={chartLabels} /></section></div>
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,2.2fr)_minmax(260px,.8fr)]"><div className="space-y-5"><section className="overflow-hidden rounded-xl border border-slate-200 bg-white"><div className="flex items-center justify-between border-b border-slate-100 px-6 py-5"><h2 className="font-bold">Recent Installations</h2><Link href="/admin/installations" className="text-sm font-semibold text-[#3b6ff0] transition-colors duration-150 hover:text-[#2d3fc7]">View all</Link></div><div className="overflow-x-auto"><table className="w-full min-w-175 text-left"><thead className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-400"><tr><th className="px-6 py-4 font-semibold">Subscriber</th><th className="px-6 py-4 font-semibold">Technician</th><th className="px-6 py-4 font-semibold">Date</th><th className="px-6 py-4 font-semibold">Time</th><th className="px-6 py-4 font-semibold">Status</th></tr></thead><tbody>{installations.length ? installations.map((installation) => { const dateTime = formatInstallationDateTime(installation.date); const status = getInstallationStatus(installation.status); return <tr className="border-b border-slate-100 last:border-0" key={installation.id}><td className="px-6 py-4 text-sm font-semibold">{formatPersonName(installation.subscriber)}</td><td className="px-6 py-4 text-sm text-slate-500">{formatPersonName(installation.technician)}</td><td className="px-6 py-4 text-sm text-slate-500">{dateTime.date}</td><td className="px-6 py-4 text-sm text-slate-500">{formatInstallationTime(installation.time)}</td><td className="px-6 py-4"><span className={`admin-status-pill rounded-full px-2.5 py-1 text-xs font-bold tracking-wide ${installationStatusStyles[status] ?? 'bg-slate-50 text-slate-500'}`}>{status}</span></td></tr>; }) : <tr><td colSpan={5} className="px-6 py-5 text-sm text-slate-500">No recent installations found.</td></tr>}</tbody></table></div></section><section className="overflow-hidden rounded-xl border border-slate-200 bg-white"><div className="flex items-center justify-between border-b border-slate-100 px-6 py-5"><h2 className="font-bold">Recent Support Tickets</h2><Link href="/admin/tickets" className="text-sm font-semibold text-[#3b6ff0] transition-colors duration-150 hover:text-[#2d3fc7]">View all</Link></div><div className="overflow-x-auto"><table className="w-full min-w-175 text-left"><thead className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-400"><tr><th className="px-6 py-4 font-semibold">Subscriber</th><th className="px-6 py-4 font-semibold">Concern</th><th className="px-6 py-4 font-semibold">Date</th><th className="px-6 py-4 font-semibold">Time</th><th className="px-6 py-4 font-semibold">Status</th></tr></thead><tbody>{supportTickets.length ? supportTickets.map((ticket) => { const status = ticketStatusLabels[ticket.status] || ticket.status; return <tr className="border-b border-slate-100 last:border-0" key={ticket.id}><td className="px-6 py-4 text-sm font-semibold">{formatPersonName(ticket.subscriber)}</td><td className="px-6 py-4 text-sm text-slate-500">{ticket.concern}</td><td className="px-6 py-4 text-sm text-slate-500">{formatSupportDate(ticket.date)}</td><td className="px-6 py-4 text-sm text-slate-500">{formatInstallationTime(ticket.time)}</td><td className="px-6 py-4"><span className={`admin-status-pill rounded-full px-2.5 py-1 text-xs font-bold tracking-wide ${ticketStatusStyles[status] ?? 'bg-slate-50 text-slate-500'}`}>{status}</span></td></tr>; }) : <tr><td colSpan={5} className="px-6 py-5 text-sm text-slate-500">No recent support tickets found.</td></tr>}</tbody></table></div></section></div><section className="rounded-xl border border-slate-200 bg-white"><div className="flex items-center justify-between border-b border-slate-100 px-6 py-5"><h2 className="font-bold">Recent Activity</h2><button aria-label="More activity" className="rounded-lg p-2 text-slate-400 transition-colors duration-150 hover:bg-[#f1f5f9]"><MoreHorizontal size={18} /></button></div><div className="space-y-1 p-4">{activities.length ? activities.map(({ id, Icon, text, date, tone }) => <div className="flex gap-3 rounded-lg px-1 py-2" key={id}><span className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${tone === 'green' ? 'bg-emerald-50 text-emerald-600' : tone === 'orange' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}><Icon size={16} /></span><div className="min-w-0 flex-1"><p className="text-sm font-medium text-slate-700">{text}</p><p className="mt-1 text-xs text-slate-400">{date}</p></div></div>) : <p className="px-1 py-6 text-sm text-slate-500">No recent activity.</p>}</div></section></div></div></PortalShell>;
+  return (
+    <PortalShell role="admin">
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400" suppressHydrationWarning>
+              {new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950" suppressHydrationWarning>
+              {getGreeting()}, Admin
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {loading
+                ? 'Loading live network metrics...'
+                : 'Here\u2019s what\u2019s happening across your network today.'}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void loadDashboard(true)}
+              disabled={refreshing || loading}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-60"
+            >
+              <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+            <Link
+              href="/admin/reports"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50"
+            >
+              <Activity size={16} />
+              View reports
+            </Link>
+            <Link
+              href="/admin/bookings"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#2166f3] px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-500/30 transition-colors hover:bg-[#1d57d6]"
+            >
+              <ClipboardList size={16} />
+              Review bookings
+            </Link>
+          </div>
+        </div>
+
+        {error && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <div className="flex items-center gap-2.5">
+              <AlertCircle size={16} className="shrink-0" />
+              <span>{error}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadDashboard(true)}
+              className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 shadow-xs transition-colors hover:bg-rose-100"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {stats.map(({ label, value, detail, Icon, tone, accent, href }) => (
+            <Link
+              key={label}
+              href={href}
+              className="admin-stat-card group relative overflow-hidden rounded-xl border border-slate-200 bg-white px-5 py-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/60"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-500">{label}</p>
+                  <p className="mt-2 text-3xl font-bold tracking-tight tabular-nums text-slate-950">
+                    {loading ? (
+                      <span className="inline-block h-8 w-24 animate-pulse rounded-md bg-slate-100 align-middle" />
+                    ) : (
+                      value
+                    )}
+                  </p>
+                </div>
+                <span className={`admin-stat-icon grid h-11 w-11 shrink-0 place-items-center rounded-xl ${statAccents[accent].tile}`}>
+                  <Icon size={20} />
+                </span>
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                {detail ? (
+                  <span
+                    className={`inline-flex items-center gap-1.5 text-xs font-semibold ${
+                      tone === 'negative'
+                        ? 'text-rose-600'
+                        : tone === 'positive'
+                          ? 'text-emerald-600'
+                          : 'text-slate-500'
+                    }`}
+                  >
+                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                    {detail}
+                  </span>
+                ) : (
+                  <span />
+                )}
+                <ArrowUpRight
+                  size={16}
+                  className="text-slate-300 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-[#2166f3]"
+                />
+              </div>
+              <span
+                className={`absolute inset-x-0 bottom-0 h-0.5 ${statAccents[accent].bar} opacity-0 transition-opacity group-hover:opacity-100`}
+              />
+            </Link>
+          ))}
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-2">
+          <RevenueCard data={revenueData} loading={loading} />
+          <SubscriberGrowthCard data={growthData} loading={loading} />
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,2.2fr)_minmax(280px,.85fr)]">
+          <div className="space-y-5">
+            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-6 py-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-blue-50 text-blue-600">
+                    <CalendarClock size={16} />
+                  </span>
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">Recent Installations</h2>
+                    <p className="text-xs text-slate-400">Latest scheduled and completed field deployments</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {!loading && (
+                    <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+                      {installations.length} shown
+                    </span>
+                  )}
+                  <Link
+                    href="/admin/installations"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#2166f3] transition-colors hover:text-[#1d57d6]"
+                  >
+                    View all
+                    <ArrowRight size={13} />
+                  </Link>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-175 text-left">
+                  <thead className="border-b border-slate-100 bg-slate-50/60 text-[11px] uppercase tracking-wider text-slate-400">
+                    <tr>
+                      <th className="px-6 py-3 font-semibold">Subscriber</th>
+                      <th className="px-6 py-3 font-semibold">Technician</th>
+                      <th className="px-6 py-3 font-semibold">Schedule</th>
+                      <th className="px-6 py-3 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      Array.from({ length: 3 }).map((_, index) => (
+                        <tr key={index} className="border-b border-slate-100 last:border-0">
+                          <td className="px-6 py-3.5">
+                            <div className="flex items-center gap-3">
+                              <span className="h-8 w-8 animate-pulse rounded-full bg-slate-100" />
+                              <span className="h-4 w-32 animate-pulse rounded bg-slate-100" />
+                            </div>
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <span className="inline-block h-4 w-24 animate-pulse rounded bg-slate-100" />
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <span className="inline-block h-4 w-28 animate-pulse rounded bg-slate-100" />
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <span className="inline-block h-6 w-28 animate-pulse rounded-full bg-slate-100" />
+                          </td>
+                        </tr>
+                      ))
+                    ) : installations.length ? (
+                      installations.map((installation) => {
+                        const dateTime = formatInstallationDateTime(installation.date);
+                        const status = getInstallationStatus(installation.status);
+                        const badgeStyle = installationStatusStyles[status] ?? {
+                          badge: 'bg-slate-100 text-slate-600',
+                          dot: 'bg-slate-400',
+                        };
+                        const subscriberName = formatPersonName(installation.subscriber);
+                        return (
+                          <tr
+                            className="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50/70"
+                            key={installation.id}
+                          >
+                            <td className="px-6 py-3.5">
+                              <div className="flex items-center gap-3">
+                                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-blue-50 text-xs font-bold text-blue-600">
+                                  {getInitials(subscriberName)}
+                                </span>
+                                <span className="text-sm font-semibold text-slate-900">{subscriberName}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-3.5 text-sm text-slate-600">
+                              {formatPersonName(installation.technician)}
+                            </td>
+                            <td className="px-6 py-3.5">
+                              <p className="text-sm font-medium text-slate-700">{dateTime.date}</p>
+                              <p className="text-xs text-slate-400">{formatInstallationTime(installation.time)}</p>
+                            </td>
+                            <td className="px-6 py-3.5">
+                              <span
+                                className={`admin-status-pill inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${badgeStyle.badge}`}
+                              >
+                                <span className={`h-1.5 w-1.5 rounded-full ${badgeStyle.dot}`} />
+                                {status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-8 text-center text-sm text-slate-500">
+                          No recent installations found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-6 py-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="grid h-8 w-8 place-items-center rounded-lg bg-violet-50 text-violet-600">
+                    <LifeBuoy size={16} />
+                  </span>
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">Recent Support Tickets</h2>
+                    <p className="text-xs text-slate-400">Latest subscriber repair &amp; service requests</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {!loading && dashboard && (
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                        dashboard.openTickets > 0
+                          ? 'bg-amber-50 text-amber-700'
+                          : 'bg-emerald-50 text-emerald-700'
+                      }`}
+                    >
+                      {dashboard.openTickets} open
+                    </span>
+                  )}
+                  <Link
+                    href="/admin/tickets"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[#2166f3] transition-colors hover:text-[#1d57d6]"
+                  >
+                    View all
+                    <ArrowRight size={13} />
+                  </Link>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-175 text-left">
+                  <thead className="border-b border-slate-100 bg-slate-50/60 text-[11px] uppercase tracking-wider text-slate-400">
+                    <tr>
+                      <th className="px-6 py-3 font-semibold">Subscriber</th>
+                      <th className="px-6 py-3 font-semibold">Concern</th>
+                      <th className="px-6 py-3 font-semibold">Schedule</th>
+                      <th className="px-6 py-3 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      Array.from({ length: 3 }).map((_, index) => (
+                        <tr key={index} className="border-b border-slate-100 last:border-0">
+                          <td className="px-6 py-3.5">
+                            <div className="flex items-center gap-3">
+                              <span className="h-8 w-8 animate-pulse rounded-full bg-slate-100" />
+                              <span className="h-4 w-32 animate-pulse rounded bg-slate-100" />
+                            </div>
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <span className="inline-block h-4 w-40 animate-pulse rounded bg-slate-100" />
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <span className="inline-block h-4 w-28 animate-pulse rounded bg-slate-100" />
+                          </td>
+                          <td className="px-6 py-3.5">
+                            <span className="inline-block h-6 w-24 animate-pulse rounded-full bg-slate-100" />
+                          </td>
+                        </tr>
+                      ))
+                    ) : supportTickets.length ? (
+                      supportTickets.map((ticket) => {
+                        const status = ticketStatusLabels[ticket.status] || ticket.status;
+                        const badgeStyle = ticketStatusStyles[status] ?? {
+                          badge: 'bg-slate-100 text-slate-600',
+                          dot: 'bg-slate-400',
+                        };
+                        const subscriberName = formatPersonName(ticket.subscriber);
+                        return (
+                          <tr
+                            className="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50/70"
+                            key={ticket.id}
+                          >
+                            <td className="px-6 py-3.5">
+                              <div className="flex items-center gap-3">
+                                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-violet-50 text-xs font-bold text-violet-600">
+                                  {getInitials(subscriberName)}
+                                </span>
+                                <span className="text-sm font-semibold text-slate-900">{subscriberName}</span>
+                              </div>
+                            </td>
+                            <td className="max-w-64 truncate px-6 py-3.5 text-sm text-slate-600">{ticket.concern}</td>
+                            <td className="px-6 py-3.5">
+                              <p className="text-sm font-medium text-slate-700">{formatSupportDate(ticket.date)}</p>
+                              <p className="text-xs text-slate-400">{formatInstallationTime(ticket.time)}</p>
+                            </td>
+                            <td className="px-6 py-3.5">
+                              <span
+                                className={`admin-status-pill inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${badgeStyle.badge}`}
+                              >
+                                <span className={`h-1.5 w-1.5 rounded-full ${badgeStyle.dot}`} />
+                                {status}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="px-6 py-8 text-center text-sm text-slate-500">
+                          No recent support tickets found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <div className="space-y-5">
+            <section className="rounded-xl border border-slate-200 bg-white p-5">
+              <h2 className="text-sm font-bold text-slate-900">Quick Operations</h2>
+              <p className="mt-0.5 text-xs text-slate-400">Jump directly to active queues</p>
+              <div className="mt-4 space-y-2">
+                <Link
+                  href="/admin/tickets"
+                  className="flex items-center justify-between rounded-lg border border-slate-100 px-3.5 py-2.5 text-sm transition-colors hover:border-slate-200 hover:bg-slate-50"
+                >
+                  <span className="font-medium text-slate-700">Open support tickets</span>
+                  <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-bold tabular-nums text-violet-700">
+                    {loading ? '—' : dashboard?.openTickets ?? 0}
+                  </span>
+                </Link>
+                <Link
+                  href="/admin/billing"
+                  className="flex items-center justify-between rounded-lg border border-slate-100 px-3.5 py-2.5 text-sm transition-colors hover:border-slate-200 hover:bg-slate-50"
+                >
+                  <span className="font-medium text-slate-700">Pending bills</span>
+                  <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold tabular-nums text-amber-700">
+                    {loading ? '—' : dashboard?.pendingBills ?? 0}
+                  </span>
+                </Link>
+                <Link
+                  href="/admin/bookings"
+                  className="flex items-center justify-between rounded-lg border border-slate-100 px-3.5 py-2.5 text-sm transition-colors hover:border-slate-200 hover:bg-slate-50"
+                >
+                  <span className="font-medium text-slate-700">Booking approvals</span>
+                  <ArrowRight size={14} className="text-slate-400" />
+                </Link>
+              </div>
+            </section>
+
+            <section className="rounded-xl border border-slate-200 bg-white">
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <div>
+                  <h2 className="text-sm font-bold text-slate-900">Recent Activity</h2>
+                  <p className="text-xs text-slate-400">Latest portal events</p>
+                </div>
+                <Link
+                  href="/admin/notifications"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#2166f3] transition-colors hover:text-[#1d57d6]"
+                >
+                  Alerts
+                  <ArrowRight size={13} />
+                </Link>
+              </div>
+              <div className="divide-y divide-slate-100 p-2">
+                {loading ? (
+                  Array.from({ length: 4 }).map((_, index) => (
+                    <div key={index} className="flex items-start gap-3 px-3 py-3">
+                      <span className="h-8 w-8 shrink-0 animate-pulse rounded-lg bg-slate-100" />
+                      <div className="flex-1 space-y-2">
+                        <span className="block h-3.5 w-full animate-pulse rounded bg-slate-100" />
+                        <span className="block h-3 w-20 animate-pulse rounded bg-slate-100" />
+                      </div>
+                    </div>
+                  ))
+                ) : activities.length ? (
+                  activities.map(({ id, Icon, text, date, tone }) => (
+                    <div className="flex gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-slate-50/70" key={id}>
+                      <span
+                        className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
+                          tone === 'green'
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : tone === 'orange'
+                              ? 'bg-amber-50 text-amber-600'
+                              : 'bg-blue-50 text-blue-600'
+                        }`}
+                      >
+                        <Icon size={15} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium leading-snug text-slate-700">{text}</p>
+                        <p className="mt-1 text-xs text-slate-400">{date}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="px-3 py-6 text-center text-sm text-slate-500">No recent activity.</p>
+                )}
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </PortalShell>
+  );
 }

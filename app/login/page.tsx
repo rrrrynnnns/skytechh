@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -9,6 +9,15 @@ import { DEMO_ACCOUNTS } from '@/app/lib/demo-accounts';
 type LoginProps = {
   onBooking: () => void;
   onBack?: () => void;
+};
+
+type MaintenanceNotice = {
+  category?: string;
+  impact?: string;
+  title?: string;
+  description?: string;
+  startsAt?: string | null;
+  restoresAt?: string | null;
 };
 
 function Icon({ name, size = 19 }: { name: 'wifi' | 'mail' | 'lock' | 'eye' | 'eyeOff' | 'arrow' | 'user' | 'wrench' | 'shield' | 'alert'; size?: number }) {
@@ -36,12 +45,46 @@ export function Login({ onBooking }: LoginProps) {
   const [recoveryError, setRecoveryError] = useState('');
   const [isSendingRecovery, setIsSendingRecovery] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
+  const [maintenanceNotice, setMaintenanceNotice] = useState<MaintenanceNotice | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMaintenanceNotice(null);
+        setIsRecoveryOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   async function loginAs(nextEmail: string, nextPassword: string) {
     setError('');
+    setMaintenanceNotice(null);
     setIsSigningIn(true);
     const result = await signIn('credentials', { email: nextEmail, password: nextPassword, redirect: false });
     if (result?.error) {
+      if (result.error === 'AccessDenied') {
+        try {
+          const statusResponse = await fetch('/api/maintenance/status', { cache: 'no-store' });
+          const statusResult = await statusResponse.json();
+          const maintenance = statusResult?.data;
+          if (maintenance?.enabled) {
+            setMaintenanceNotice(maintenance);
+            setIsSigningIn(false);
+            return;
+          }
+        } catch {
+          // Fall through to fallback maintenance notice
+        }
+        setMaintenanceNotice({
+          title: 'System Maintenance Active',
+          impact: 'Portal Access Temporarily Paused',
+          description: 'Portal login is currently locked while we perform system maintenance. Please try again later.',
+        });
+        setIsSigningIn(false);
+        return;
+      }
       setError('The email or password you entered is incorrect.');
       setIsSigningIn(false);
       return;
@@ -103,31 +146,230 @@ export function Login({ onBooking }: LoginProps) {
         </div>
         <footer className="pb-2 text-center text-xs font-semibold text-blue-100/45">© 2026 Sky-Tech ISP. Secure account access.</footer>
       </div>
-      {isRecoveryOpen && <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4" role="dialog" aria-modal="true" aria-labelledby="recovery-title">
-        <div className="w-full max-w-[460px] overflow-hidden rounded-3xl bg-white shadow-2xl">
-          {!recoverySent && <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5 sm:px-7">
-            <div className="flex items-start gap-4">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-blue-50 text-sky-600"><Icon name="mail" size={21} /></span>
-              <div><h2 id="recovery-title" className="text-lg font-black tracking-tight text-[#172238]">Reset your password</h2><p className="mt-1 text-sm text-slate-500">We&apos;ll send you a secure recovery link.</p></div>
+      {isRecoveryOpen && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-[2px]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="recovery-title"
+          onMouseDown={() => setIsRecoveryOpen(false)}
+        >
+          <div
+            onMouseDown={(event) => event.stopPropagation()}
+            className="w-full max-w-[440px] overflow-hidden rounded-3xl bg-white shadow-2xl"
+          >
+            <div className="flex items-center justify-between bg-[#0b1630] px-6 py-4 text-white">
+              <div className="flex items-center gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-500/20 text-sky-300">
+                  <Icon name={recoverySent ? 'shield' : 'mail'} size={20} />
+                </span>
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-sky-300">Account Recovery</p>
+                  <h2 id="recovery-title" className="text-base font-black tracking-tight">
+                    {recoverySent ? 'Check your inbox' : 'Reset your password'}
+                  </h2>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsRecoveryOpen(false)}
+                aria-label="Close password reset dialog"
+                className="rounded-lg p-1 text-2xl font-light leading-none text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                &times;
+              </button>
             </div>
-            <button type="button" onClick={() => setIsRecoveryOpen(false)} aria-label="Close password reset dialog" className="text-3xl font-light leading-none text-slate-400 hover:text-slate-600">&times;</button>
-          </div>}
-          {recoverySent ? <div className="px-6 py-7 text-center sm:px-7">
-            <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-600"><Icon name="mail" size={26} /></span>
-            <h2 id="recovery-title" className="mt-5 text-xl font-black tracking-tight text-[#172238]">Check your inbox</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-500">If an account exists for <strong className="font-bold text-slate-700">{recoveryEmail}</strong>, you&apos;ll receive a password reset link shortly.</p>
-            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-left text-sm leading-6 text-sky-600">Didn&apos;t receive it? Check your spam folder or wait a minute before trying again.</div>
-            <button type="button" onClick={() => setIsRecoveryOpen(false)} className="mt-5 h-14 w-full rounded-2xl bg-sky-600 text-sm font-bold text-white shadow-xl shadow-blue-200 transition hover:bg-sky-500">Back to sign in</button>
-            <button type="button" onClick={() => setRecoverySent(false)} className="mt-4 block w-full text-center text-sm font-bold text-slate-500 hover:text-slate-700">Use a different email</button>
-          </div> : <form onSubmit={submitRecovery} className="px-6 py-6 sm:px-7">
-            <p className="text-sm leading-6 text-slate-500">Enter the email connected to your Sky-Tech account. For your security, the reset link will expire after 30 minutes.</p>
-            <label htmlFor="recovery-email" className="mt-6 block text-sm font-bold text-slate-600">Account email<div className="mt-2 flex h-14 items-center rounded-2xl border-2 border-[#3b70ef] bg-white px-3 shadow-[0_0_0_4px_rgba(59,112,239,0.12)]"><span className="shrink-0 text-slate-400"><Icon name="mail" size={19} /></span><input id="recovery-email" type="email" value={recoveryEmail} onChange={(event) => setRecoveryEmail(event.target.value)} required autoFocus placeholder="you@skytech.net" className="min-w-0 flex-1 !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !shadow-none placeholder:text-slate-300 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none" /></div></label>
-            {recoveryError && <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{recoveryError}</p>}
-            <button type="submit" disabled={isSendingRecovery} className="mt-6 h-14 w-full rounded-2xl bg-sky-600 text-sm font-bold text-white shadow-xl shadow-blue-200 transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-60">{isSendingRecovery ? 'Sending...' : 'Send reset link'}</button>
-            <button type="button" onClick={() => setIsRecoveryOpen(false)} className="mt-4 block w-full text-center text-sm font-bold text-slate-500 hover:text-slate-700">Cancel</button>
-          </form>}
+
+            {recoverySent ? (
+              <div className="px-6 py-7 text-center">
+                <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 ring-8 ring-emerald-50/60">
+                  <Icon name="mail" size={26} />
+                </span>
+                <p className="mt-5 text-sm leading-6 text-slate-500">
+                  If an account exists for{' '}
+                  <span className="inline-block rounded-md bg-slate-100 px-2 py-0.5 font-bold text-slate-800">
+                    {recoveryEmail}
+                  </span>
+                  , we&apos;ve sent a password reset link.
+                </p>
+                <div className="mt-5 space-y-1.5 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-left text-xs leading-5 text-slate-600">
+                  <p className="font-bold text-slate-700">Didn&apos;t receive the email?</p>
+                  <p>• Check your spam or promotions folder.</p>
+                  <p>• Wait a minute before trying another email address.</p>
+                </div>
+                <div className="mt-6 flex flex-col gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsRecoveryOpen(false)}
+                    className="h-12 w-full rounded-xl bg-sky-600 text-sm font-bold text-white shadow-sm transition hover:bg-sky-500"
+                  >
+                    Back to sign in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRecoveryError('');
+                      setRecoverySent(false);
+                    }}
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                  >
+                    Use a different email
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={submitRecovery} className="px-6 py-6">
+                <p className="text-sm leading-6 text-slate-500">
+                  Enter the email address connected to your Sky-Tech account and we&apos;ll send you a secure recovery
+                  link.
+                </p>
+                <label htmlFor="recovery-email" className="mt-5 block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Account email
+                  <div className="mt-2 flex h-12 items-center rounded-xl border border-slate-200 bg-white px-3 transition focus-within:border-[#2452c7] focus-within:ring-2 focus-within:ring-blue-100">
+                    <span className="shrink-0 text-slate-400">
+                      <Icon name="mail" size={18} />
+                    </span>
+                    <input
+                      id="recovery-email"
+                      type="email"
+                      value={recoveryEmail}
+                      onChange={(event) => setRecoveryEmail(event.target.value)}
+                      required
+                      autoFocus
+                      placeholder="you@skytech.net"
+                      className="min-w-0 flex-1 !border-0 bg-transparent px-3 text-sm font-normal text-slate-900 !outline-none !ring-0 !shadow-none placeholder:text-slate-400 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none"
+                    />
+                  </div>
+                </label>
+                <div className="mt-4 flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/70 px-3.5 py-2.5 text-xs font-medium text-sky-700">
+                  <Icon name="lock" size={14} />
+                  <span>For your security, reset links expire after 30 minutes.</span>
+                </div>
+                {recoveryError && (
+                  <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
+                    {recoveryError}
+                  </p>
+                )}
+                <div className="mt-6 flex gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsRecoveryOpen(false)}
+                    className="h-12 flex-1 rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-600 transition hover:bg-slate-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSendingRecovery}
+                    className="flex h-12 flex-[1.5] items-center justify-center gap-2 rounded-xl bg-sky-600 text-sm font-bold text-white shadow-sm transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSendingRecovery ? (
+                      <>
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Send reset link'
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
-      </div>}
+      )}
+      {maintenanceNotice && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-[2px]"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="maintenance-notice-title"
+          onMouseDown={() => setMaintenanceNotice(null)}
+        >
+          <div
+            onMouseDown={(event) => event.stopPropagation()}
+            className="w-full max-w-[460px] overflow-hidden rounded-3xl bg-white shadow-2xl"
+          >
+            <div className="flex items-start justify-between bg-[#172554] px-6 py-5 text-white">
+              <div className="flex items-center gap-3.5">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-400/20 text-amber-300">
+                  <Icon name="alert" size={22} />
+                </span>
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-blue-200">Sky-Tech Fiber</p>
+                  <h2 id="maintenance-notice-title" className="text-lg font-black tracking-tight">
+                    System Maintenance Notice
+                  </h2>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMaintenanceNotice(null)}
+                aria-label="Exit maintenance notice"
+                className="rounded-lg p-1 text-2xl font-light leading-none text-blue-200 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="space-y-4 px-6 py-6">
+              {maintenanceNotice.impact && (
+                <div
+                  className={`rounded-xl px-4 py-2 text-center text-xs font-bold ${
+                    maintenanceNotice.impact.includes('Disabled')
+                      ? 'bg-rose-50 text-rose-700'
+                      : 'bg-amber-50 text-amber-800'
+                  }`}
+                >
+                  {maintenanceNotice.impact}
+                </div>
+              )}
+              <div>
+                <h3 className="text-base font-bold text-[#071329]">
+                  {maintenanceNotice.title || 'Scheduled Network Maintenance'}
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {maintenanceNotice.description ||
+                    'Portal login is temporarily paused while we perform scheduled network maintenance.'}
+                </p>
+              </div>
+              <div className="space-y-1.5 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-xs text-slate-600">
+                {maintenanceNotice.category && (
+                  <p>
+                    <span className="font-bold text-slate-700">Category:</span> {maintenanceNotice.category}
+                  </p>
+                )}
+                {maintenanceNotice.startsAt && (
+                  <p>
+                    <span className="font-bold text-slate-700">Started:</span>{' '}
+                    {new Date(maintenanceNotice.startsAt).toLocaleString('en-PH', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })}
+                  </p>
+                )}
+                <p>
+                  <span className="font-bold text-slate-700">Estimated restoration:</span>{' '}
+                  {maintenanceNotice.restoresAt
+                    ? new Date(maintenanceNotice.restoresAt).toLocaleString('en-PH', {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })
+                    : 'To be announced'}
+                </p>
+              </div>
+            </div>
+            <div className="border-t border-slate-100 bg-slate-50/70 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setMaintenanceNotice(null)}
+                className="h-12 w-full rounded-xl bg-sky-600 text-sm font-bold text-white shadow-sm transition hover:bg-sky-500"
+              >
+                Exit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -46,6 +46,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email?: string | null;
         role?: 'admin' | 'technician' | 'subscriber';
       };
+      if (identity.role === 'subscriber' || identity.role === 'technician') {
+        try {
+          const maintenance = await prisma.maintenanceSettings.findUnique({
+            where: { id: 'singleton' },
+            select: { enabled: true },
+          });
+          if (maintenance?.enabled) {
+            return false;
+          }
+        } catch (error) {
+          console.error('Unable to check maintenance status during login:', error);
+        }
+      }
       if (identity.role) {
         try {
           await prisma.systemAuditLog.create({

@@ -16,10 +16,6 @@ body {
   overscroll-behavior-y: none;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
@@ -159,8 +155,8 @@ body {
   --tw-shadow-color: rgb(0 0 0 / 0.35) !important;
 }
 
-.admin-dark-mode .portal-shell .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
-.admin-dark-mode .portal-shell .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+.admin-dark-mode .portal-shell .divide-slate-100> :not([hidden])~ :not([hidden]),
+.admin-dark-mode .portal-shell .divide-slate-200> :not([hidden])~ :not([hidden]) {
   border-color: #2d3b56 !important;
 }
 
@@ -211,6 +207,7 @@ button:disabled {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .notification-popover,
   .notification-item {
     animation: none;
@@ -221,7 +218,7 @@ button:disabled {
   display: none;
 }
 
-[class*="tracking-[0.18em]"] + h1 {
+[class*="tracking-[0.18em]"]+h1 {
   margin-top: 0;
 }
 
@@ -229,7 +226,7 @@ main h1.mt-2 {
   margin-top: 0;
 }
 
-main form section:nth-of-type(3) > div:last-child > div {
+main form section:nth-of-type(3)>div:last-child>div {
   align-items: center;
   border: 1px solid #e2e8f0;
   border-radius: 0.875rem;
@@ -237,55 +234,55 @@ main form section:nth-of-type(3) > div:last-child > div {
   padding: 0.75rem;
 }
 
-main form section:nth-of-type(3) > div:last-child input {
+main form section:nth-of-type(3)>div:last-child input {
   background: #ffffff;
   font-weight: 600;
 }
 
-main form section:nth-of-type(3) > div:last-child input::placeholder {
+main form section:nth-of-type(3)>div:last-child input::placeholder {
   color: #94a3b8;
   font-weight: 400;
 }
 
-main form section:nth-of-type(3) > div:last-child input[type="number"] {
+main form section:nth-of-type(3)>div:last-child input[type="number"] {
   text-align: right;
 }
 
-main form section:nth-of-type(3) > div:last-child button[aria-label="Remove plan"] {
+main form section:nth-of-type(3)>div:last-child button[aria-label="Remove plan"] {
   border: 1px solid #fecaca;
   background: #ffffff;
 }
 
-main form section:nth-of-type(3) > div:last-child button[aria-label="Remove plan"]:hover {
+main form section:nth-of-type(3)>div:last-child button[aria-label="Remove plan"]:hover {
   background: #fef2f2;
 }
 
-main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child > div {
+main>div.max-w-4xl:has(form) form>section:nth-of-type(3)>div:last-child>div {
   border: 0;
   border-radius: 0;
   background: transparent;
   padding: 0;
 }
 
-main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child {
+main>div.max-w-4xl:has(form) form>section:nth-of-type(3)>div:last-child {
   background: #ffffff !important;
 }
 
-main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child > div {
+main>div.max-w-4xl:has(form) form>section:nth-of-type(3)>div:last-child>div {
   background: #ffffff !important;
   border: 0 !important;
   border-radius: 0 !important;
   padding: 0 !important;
 }
 
-main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child > div > div {
+main>div.max-w-4xl:has(form) form>section:nth-of-type(3)>div:last-child>div>div {
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
   padding: 0 !important;
 }
 
-main > div.max-w-4xl:has(form) form > section:nth-of-type(3) button[aria-label="Remove plan"] {
+main>div.max-w-4xl:has(form) form>section:nth-of-type(3) button[aria-label="Remove plan"] {
   display: none !important;
 }
 
@@ -293,28 +290,28 @@ button[aria-label="Remove plan"] {
   display: none !important;
 }
 
-main form > section:last-of-type td:last-child svg {
+main form>section:last-of-type td:last-child svg {
   display: none;
 }
 
-main form > section:last-of-type,
-main form > section:last-of-type *:not(.admin-add-plan-button):not(.admin-add-plan-button *) {
+main form>section:last-of-type,
+main form>section:last-of-type *:not(.admin-add-plan-button):not(.admin-add-plan-button *) {
   background-color: #ffffff !important;
 }
 
-main form > section:last-of-type input {
+main form>section:last-of-type input {
   text-align: left;
 }
 
-main form > section:last-of-type input[type="number"] {
+main form>section:last-of-type input[type="number"] {
   text-align: right;
 }
 
-main form > section:last-of-type > div:last-child {
+main form>section:last-of-type>div:last-child {
   padding: 1.5rem;
 }
 
-main form > section:last-of-type > div:last-child > div:first-child {
+main form>section:last-of-type>div:last-child>div:first-child {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
@@ -322,19 +319,19 @@ main form > section:last-of-type > div:last-child > div:first-child {
   padding: 0;
 }
 
-main form > section:last-of-type > div:last-child > div:first-child + div {
+main form>section:last-of-type>div:last-child>div:first-child+div {
   display: grid;
   gap: 0.75rem;
 }
 
-main form > section:last-of-type > div:last-child > div:first-child + div > div {
+main form>section:last-of-type>div:last-child>div:first-child+div>div {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
   align-items: center;
 }
 
-main form > section:last-of-type > div:last-child > div:first-child + div > div > input {
+main form>section:last-of-type>div:last-child>div:first-child+div>div>input {
   grid-column: span 1;
 }
 
@@ -344,7 +341,7 @@ main form > section:last-of-type > div:last-child > div:first-child + div > div 
   gap: 0.75rem;
 }
 
-.internet-plan-grid:first-child > span:last-child {
+.internet-plan-grid:first-child>span:last-child {
   display: none;
 }
 
@@ -352,7 +349,7 @@ main form > section:last-of-type > div:last-child > div:first-child + div > div 
   position: relative;
 }
 
-.internet-plan-grid:not(:first-child) > div:last-child {
+.internet-plan-grid:not(:first-child)>div:last-child {
   position: absolute;
   right: 0.5rem;
   opacity: 0;
@@ -363,18 +360,18 @@ main form > section:last-of-type > div:last-child > div:first-child + div > div 
   padding-left: 0.5rem;
 }
 
-.internet-plan-grid:not(:first-child):hover > div:last-child,
-.internet-plan-grid:not(:first-child):focus-within > div:last-child {
+.internet-plan-grid:not(:first-child):hover>div:last-child,
+.internet-plan-grid:not(:first-child):focus-within>div:last-child {
   opacity: 1;
   pointer-events: auto;
 }
 
-.internet-plan-grid:not(:first-child) > button:last-child {
+.internet-plan-grid:not(:first-child)>button:last-child {
   position: absolute;
   right: 0.5rem;
 }
 
-.internet-plan-grid > .plan-actions {
+.internet-plan-grid>.plan-actions {
   position: absolute;
   right: 0.5rem;
   display: flex;
@@ -385,13 +382,13 @@ main form > section:last-of-type > div:last-child > div:first-child + div > div 
   padding-left: 0.5rem;
 }
 
-.internet-plan-grid:hover > .plan-actions,
-.internet-plan-grid:focus-within > .plan-actions {
+.internet-plan-grid:hover>.plan-actions,
+.internet-plan-grid:focus-within>.plan-actions {
   opacity: 1;
   pointer-events: auto;
 }
 
-.internet-plan-grid > .plan-actions button {
+.internet-plan-grid>.plan-actions button {
   height: 2.25rem;
   width: 2.25rem;
   display: grid;
@@ -402,7 +399,7 @@ main form > section:last-of-type > div:last-child > div:first-child + div > div 
   color: #94a3b8;
 }
 
-.internet-plan-grid > .plan-actions button:hover {
+.internet-plan-grid>.plan-actions button:hover {
   background: #eff6ff;
   color: #2563eb;
 }
@@ -428,7 +425,7 @@ main form > section:last-of-type > div:last-child > div:first-child + div > div 
     display: none;
   }
 
-  .internet-plan-grid > .plan-actions {
+  .internet-plan-grid>.plan-actions {
     position: static;
     opacity: 1;
     pointer-events: auto;
@@ -437,27 +434,27 @@ main form > section:last-of-type > div:last-child > div:first-child + div > div 
 }
 
 @media (min-width: 1024px) {
-  main > div.max-w-4xl:has(form) {
+  main>div.max-w-4xl:has(form) {
     max-width: 72rem;
   }
 
-  main > div.max-w-4xl:has(form) form {
+  main>div.max-w-4xl:has(form) form {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem;
   }
 
-  main > div.max-w-4xl:has(form) form > section:nth-of-type(3),
-  main > div.max-w-4xl:has(form) form > p,
-  main > div.max-w-4xl:has(form) form > div:last-child {
+  main>div.max-w-4xl:has(form) form>section:nth-of-type(3),
+  main>div.max-w-4xl:has(form) form>p,
+  main>div.max-w-4xl:has(form) form>div:last-child {
     grid-column: 1 / -1;
   }
 
-  main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child > div {
+  main>div.max-w-4xl:has(form) form>section:nth-of-type(3)>div:last-child>div {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 
-  main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child > div > input {
+  main>div.max-w-4xl:has(form) form>section:nth-of-type(3)>div:last-child>div>input {
     grid-column: span 1;
   }
 }
@@ -477,7 +474,7 @@ input[type="password"]::-ms-clear {
   display: none;
 }
 
-html.admin-dark-mode .portal-shell .admin-date-picker > button {
+html.admin-dark-mode .portal-shell .admin-date-picker>button {
   background-color: #111c31 !important;
   border-color: #3a4a68 !important;
   color: #f1f5f9 !important;
@@ -558,7 +555,7 @@ tbody tr {
 }
 
 table tbody tr:hover,
-table tbody tr:hover > td {
+table tbody tr:hover>td {
   background-color: #f8fafc !important;
 }
 
@@ -583,7 +580,7 @@ table tbody tr:hover > td {
   line-height: 1.25rem;
 }
 
-main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child > div:nth-child(2) button,
+main:has(table[class*="1050px"]) .mt-7.overflow-hidden>div:first-child>div:nth-child(2) button,
 main:has(table[class*="1100px"]) .mt-7.flex button,
 main:has(table[class*="1250px"]) .mt-7.flex button {
   height: auto;
@@ -602,7 +599,7 @@ main:has(table[class*="1250px"]) .mt-7.flex button {
   color: white;
 }
 
-main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child,
+main:has(table[class*="1050px"]) .mt-7.overflow-hidden>div:first-child,
 main:has(table[class*="900px"]) .mt-7.flex,
 main:has(table[class*="1100px"]) .mt-7.flex,
 main:has(table[class*="1200px"]) .mt-7.flex {
@@ -620,13 +617,13 @@ main:has(table[class*="1200px"]) .mt-7.flex input {
   padding-bottom: 0.625rem;
 }
 
-main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child > div:nth-child(2) {
+main:has(table[class*="1050px"]) .mt-7.overflow-hidden>div:first-child>div:nth-child(2) {
   display: flex;
   gap: 0.5rem;
   overflow-x: auto;
 }
 
-main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child > div:nth-child(2) button {
+main:has(table[class*="1050px"]) .mt-7.overflow-hidden>div:first-child>div:nth-child(2) button {
   flex-shrink: 0;
   border: 1px solid #e2e8f0;
   border-radius: 9999px;
@@ -637,7 +634,7 @@ main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child > div:n
   font-weight: 600;
 }
 
-main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child > div:nth-child(2) button.active {
+main:has(table[class*="1050px"]) .mt-7.overflow-hidden>div:first-child>div:nth-child(2) button.active {
   border-color: #2447b6;
   background: #2447b6;
   color: white;
@@ -670,12 +667,12 @@ main:has(table[class*="1050px"]) .mt-7.overflow-hidden {
   background: transparent !important;
 }
 
-main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child {
+main:has(table[class*="1050px"]) .mt-7.overflow-hidden>div:first-child {
   border: 0 !important;
   padding: 0 !important;
 }
 
-main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:last-child {
+main:has(table[class*="1050px"]) .mt-7.overflow-hidden>div:last-child {
   margin-top: 1rem;
   overflow: hidden;
   border: 1px solid #e2e8f0;
@@ -689,12 +686,12 @@ div.mt-7.overflow-hidden:has(table[class*="1050px"]) {
   background: transparent !important;
 }
 
-div.mt-7.overflow-hidden:has(table[class*="1050px"]) > div:first-child {
+div.mt-7.overflow-hidden:has(table[class*="1050px"])>div:first-child {
   border: 0 !important;
   padding: 0 !important;
 }
 
-div.mt-7.overflow-hidden:has(table[class*="1050px"]) > div:last-child {
+div.mt-7.overflow-hidden:has(table[class*="1050px"])>div:last-child {
   margin-top: 1rem;
   overflow: hidden;
   border: 1px solid #e2e8f0;
@@ -728,25 +725,48 @@ main:has(table[class*="1250"]) .overflow-x-auto table td {
 }
 
 main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(1),
-main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(1) { width: 9%; }
-main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(2),
-main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(2) { width: 14%; }
-main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(3),
-main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(3) { width: 14%; }
-main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(4),
-main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(4) { width: 19%; }
-main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(5),
-main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(5) { width: 10%; }
-main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(6),
-main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(6) { width: 8%; }
-main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(8),
-main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(8) { width: 13%; }
-main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(9),
-main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(9) { width: 13%; }
+main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(1) {
+  width: 9%;
+}
 
-main:has(table[class*="900px"]) > div > div.mt-7.grid.gap-3,
-main:has(table[class*="1100px"]) > div > div.mt-7.grid.gap-3,
-main:has(table[class*="1200px"]) > div > div.mt-7.grid.gap-3 {
+main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(2),
+main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(2) {
+  width: 14%;
+}
+
+main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(3),
+main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(3) {
+  width: 14%;
+}
+
+main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(4),
+main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(4) {
+  width: 19%;
+}
+
+main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(5),
+main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(5) {
+  width: 10%;
+}
+
+main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(6),
+main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(6) {
+  width: 8%;
+}
+
+main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(8),
+main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(8) {
+  width: 13%;
+}
+
+main:has(table[class*="1250"]) .overflow-x-auto table th:nth-of-type(9),
+main:has(table[class*="1250"]) .overflow-x-auto table td:nth-of-type(9) {
+  width: 13%;
+}
+
+main:has(table[class*="900px"])>div>div.mt-7.grid.gap-3,
+main:has(table[class*="1100px"])>div>div.mt-7.grid.gap-3,
+main:has(table[class*="1200px"])>div>div.mt-7.grid.gap-3 {
   display: none;
 }
 
@@ -760,13 +780,25 @@ aside nav a[class*="bg-blue-50"] {
 }
 
 @keyframes modal-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes modal-slide-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-overlay {
@@ -795,37 +827,37 @@ aside nav a[class*="bg-blue-50"] {
   display: none;
 }
 
-html.admin-dark-mode .portal-shell main form > section:last-of-type,
-html.admin-dark-mode .portal-shell main form > section:last-of-type *:not(.admin-add-plan-button):not(.admin-add-plan-button *),
-html.admin-dark-mode .portal-shell main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child,
-html.admin-dark-mode .portal-shell main > div.max-w-4xl:has(form) form > section:nth-of-type(3) > div:last-child > div,
-html.admin-dark-mode .portal-shell div.mt-7.overflow-hidden:has(table[class*="1050px"]) > div:last-child {
+html.admin-dark-mode .portal-shell main form>section:last-of-type,
+html.admin-dark-mode .portal-shell main form>section:last-of-type *:not(.admin-add-plan-button):not(.admin-add-plan-button *),
+html.admin-dark-mode .portal-shell main>div.max-w-4xl:has(form) form>section:nth-of-type(3)>div:last-child,
+html.admin-dark-mode .portal-shell main>div.max-w-4xl:has(form) form>section:nth-of-type(3)>div:last-child>div,
+html.admin-dark-mode .portal-shell div.mt-7.overflow-hidden:has(table[class*="1050px"])>div:last-child {
   background-color: #17233b !important;
 }
 
-html.admin-dark-mode .portal-shell .internet-plan-grid:not(:first-child) > div:last-child,
-html.admin-dark-mode .portal-shell .internet-plan-grid > .plan-actions {
+html.admin-dark-mode .portal-shell .internet-plan-grid:not(:first-child)>div:last-child,
+html.admin-dark-mode .portal-shell .internet-plan-grid>.plan-actions {
   background-color: #17233b !important;
 }
 
-html.admin-dark-mode .portal-shell .internet-plan-grid > .plan-actions button,
+html.admin-dark-mode .portal-shell .internet-plan-grid>.plan-actions button,
 html.admin-dark-mode .portal-shell .internet-plan-grid .plan-value {
   background-color: #111c31 !important;
   border-color: #3a4a68 !important;
   color: #f1f5f9 !important;
 }
 
-html.admin-dark-mode .portal-shell .internet-plan-grid > .plan-actions button:hover {
+html.admin-dark-mode .portal-shell .internet-plan-grid>.plan-actions button:hover {
   background-color: #1d2b45 !important;
 }
 
 html.admin-dark-mode .portal-shell table tbody tr:hover,
-html.admin-dark-mode .portal-shell table tbody tr:hover > td {
+html.admin-dark-mode .portal-shell table tbody tr:hover>td {
   background-color: #1d2b45 !important;
 }
 
 html.admin-dark-mode .portal-shell .admin-filter-tabs button,
-html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child > div:nth-child(2) button,
+html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .mt-7.overflow-hidden>div:first-child>div:nth-child(2) button,
 html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .subscriber-filter-tab {
   background-color: #111c31 !important;
   border-color: #3a4a68 !important;
@@ -833,13 +865,13 @@ html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .subscriber-
 }
 
 html.admin-dark-mode .portal-shell .admin-filter-tabs button:hover,
-html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child > div:nth-child(2) button:hover,
+html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .mt-7.overflow-hidden>div:first-child>div:nth-child(2) button:hover,
 html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .subscriber-filter-tab:hover {
   background-color: #1d2b45 !important;
 }
 
 html.admin-dark-mode .portal-shell .admin-filter-tabs button.active,
-html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .mt-7.overflow-hidden > div:first-child > div:nth-child(2) button.active,
+html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .mt-7.overflow-hidden>div:first-child>div:nth-child(2) button.active,
 html.admin-dark-mode .portal-shell main:has(table[class*="1050px"]) .subscriber-filter-tab.active {
   background-color: #2447b6 !important;
   border-color: #3b82f6 !important;
@@ -1077,6 +1109,7 @@ html.admin-dark-mode .portal-shell .border-red-200.bg-red-50.text-red-600 {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -1157,8 +1190,8 @@ html .portal-shell button.admin-add-plan-button svg {
   stroke: #ffffff !important;
 }
 
-html.admin-dark-mode .portal-shell main form > section:last-of-type button.admin-add-plan-button,
-html.admin-dark-mode .portal-shell main form > section:last-of-type button.admin-add-plan-button:hover {
+html.admin-dark-mode .portal-shell main form>section:last-of-type button.admin-add-plan-button,
+html.admin-dark-mode .portal-shell main form>section:last-of-type button.admin-add-plan-button:hover {
   background: #3b4fd8 !important;
   background-color: #3b4fd8 !important;
   color: #ffffff !important;
@@ -1175,14 +1208,14 @@ html.admin-dark-mode .portal-shell main form > section:last-of-type button.admin
 }
 
 body .portal-shell.admin-dark-mode .subscriber-table-shell,
-body .portal-shell.admin-dark-mode .subscriber-table-shell > div:last-child,
+body .portal-shell.admin-dark-mode .subscriber-table-shell>div:last-child,
 body .portal-shell.admin-dark-mode .subscriber-table-shell table,
 body .portal-shell.admin-dark-mode .subscriber-table-shell thead {
   background-color: #17233b !important;
   border-color: #2d3b56 !important;
 }
 
-body .portal-shell.admin-dark-mode .subscriber-table-shell > div:first-child {
+body .portal-shell.admin-dark-mode .subscriber-table-shell>div:first-child {
   background-color: #0f172a !important;
   border-color: transparent !important;
 }
@@ -1222,7 +1255,7 @@ body .portal-shell.admin-dark-mode .subscriber-table-shell .text-slate-400 {
 }
 
 html.admin-dark-mode body .portal-shell .subscriber-table-shell tbody tr:hover,
-html.admin-dark-mode body .portal-shell .subscriber-table-shell tbody tr:hover > td {
+html.admin-dark-mode body .portal-shell .subscriber-table-shell tbody tr:hover>td {
   background-color: #1d2b45 !important;
 }
 
@@ -1352,4 +1385,196 @@ html.admin-dark-mode .portal-shell .admin-status-pill.bg-blue-50 {
 html.admin-dark-mode .portal-shell .admin-status-pill.bg-slate-50 {
   background-color: #26344d !important;
   color: #cbd5e1 !important;
+}
+
+
+/* ==========================================================================
+   Admin shell refresh
+   ========================================================================== */
+
+.admin-sidebar {
+  background-image:
+    radial-gradient(120% 50% at 0% 0%, rgba(56, 189, 248, 0.14), transparent 60%),
+    linear-gradient(180deg, #0d1a38 0%, #0a1428 100%);
+}
+
+html.admin-dark-mode .portal-shell .admin-sidebar {
+  background-color: #0a1428 !important;
+  border-right: 1px solid #22304b !important;
+}
+
+.admin-sidebar nav a {
+  border-left: 0;
+}
+
+.admin-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.admin-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+
+/* Page entrance */
+.admin-page-enter {
+  animation: admin-page-in 200ms ease-out;
+}
+
+@keyframes admin-page-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Cards: soft depth in light mode */
+.admin-shell:not(.admin-dark-mode) main section.rounded-xl.border,
+.admin-shell:not(.admin-dark-mode) main article.rounded-xl.border,
+.admin-shell:not(.admin-dark-mode) main section.rounded-2xl.border {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 2px 8px -2px rgba(15, 23, 42, 0.04);
+}
+
+.admin-shell:not(.admin-dark-mode) main .admin-stat-card:hover {
+  box-shadow: 0 12px 28px -12px rgba(15, 23, 42, 0.18);
+}
+
+/* Tables */
+.admin-shell main tbody tr {
+  transition: background-color 150ms ease;
+}
+
+.admin-shell:not(.admin-dark-mode) main tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* Dark mode details for new pieces */
+html.admin-dark-mode .portal-shell .admin-stat-icon,
+html.admin-dark-mode .portal-shell .admin-palette .bg-slate-100 {
+  background-color: #22304b !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-palette .admin-palette-active {
+  color: #93c5fd !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-topbar .bg-slate-200 {
+  background-color: #2d3b56 !important;
+}
+
+html.admin-dark-mode .portal-shell .admin-stat-card:hover {
+  border-color: #3a4a68 !important;
+  box-shadow: 0 12px 28px -12px rgba(0, 0, 0, 0.6);
+}
+
+/* Dark mode support for Tailwind opacity variants & tinted surfaces across admin pages */
+.admin-dark-mode .portal-shell .bg-slate-100,
+.admin-dark-mode .portal-shell [class*="bg-slate-100/"] {
+  background-color: #22304b !important;
+}
+
+.admin-dark-mode .portal-shell [class*="bg-slate-50/"],
+.admin-dark-mode .portal-shell [class*="hover:bg-slate-50"]:hover,
+.admin-dark-mode .portal-shell [class*="hover:bg-slate-100"]:hover {
+  background-color: #111c31 !important;
+}
+
+.admin-dark-mode .portal-shell [class*="bg-[#f5f8ff]"] {
+  background-color: #1c2b47 !important;
+}
+
+.admin-dark-mode .portal-shell [class*="bg-blue-50"],
+.admin-dark-mode .portal-shell [class*="hover:bg-blue-50"]:hover,
+.admin-dark-mode .portal-shell [class*="hover:bg-blue-100"]:hover {
+  background-color: #1d3150 !important;
+}
+
+.admin-dark-mode .portal-shell .bg-violet-50,
+.admin-dark-mode .portal-shell [class*="bg-violet-50/"] {
+  background-color: #22294a !important;
+}
+
+.admin-dark-mode .portal-shell .bg-sky-50,
+.admin-dark-mode .portal-shell [class*="bg-sky-50/"] {
+  background-color: #1a2f4b !important;
+}
+
+.admin-dark-mode .portal-shell .border-blue-100,
+.admin-dark-mode .portal-shell .border-violet-200 {
+  border-color: #38547b !important;
+}
+
+.admin-dark-mode .portal-shell .text-blue-700,
+.admin-dark-mode .portal-shell .text-sky-700 {
+  color: #93c5fd !important;
+}
+
+.admin-dark-mode .portal-shell .text-violet-600,
+.admin-dark-mode .portal-shell .text-violet-700 {
+  color: #c4b5fd !important;
+}
+
+.admin-dark-mode .portal-shell [class*="bg-emerald-50"] {
+  background-color: #14332a !important;
+}
+
+.admin-dark-mode .portal-shell .border-emerald-100 {
+  border-color: #265949 !important;
+}
+
+.admin-dark-mode .portal-shell .text-emerald-700 {
+  color: #6ee7b7 !important;
+}
+
+.admin-dark-mode .portal-shell [class*="bg-amber-50"],
+.admin-dark-mode .portal-shell .bg-amber-100 {
+  background-color: #3a2a14 !important;
+}
+
+.admin-dark-mode .portal-shell .text-amber-700,
+.admin-dark-mode .portal-shell .text-amber-800 {
+  color: #fcd34d !important;
+}
+
+.admin-dark-mode .portal-shell [class*="bg-rose-50"],
+.admin-dark-mode .portal-shell .bg-rose-100,
+.admin-dark-mode .portal-shell .bg-rose-200,
+.admin-dark-mode .portal-shell [class*="hover:bg-rose-100"]:hover {
+  background-color: #3a1e2a !important;
+}
+
+.admin-dark-mode .portal-shell .border-rose-100,
+.admin-dark-mode .portal-shell .border-rose-200,
+.admin-dark-mode .portal-shell .border-rose-300 {
+  border-color: #7f303d !important;
+}
+
+.admin-dark-mode .portal-shell .text-rose-600,
+.admin-dark-mode .portal-shell .text-rose-700,
+.admin-dark-mode .portal-shell .text-rose-800 {
+  color: #fda4af !important;
+}
+
+.admin-dark-mode .portal-shell input,
+.admin-dark-mode .portal-shell select,
+.admin-dark-mode .portal-shell textarea {
+  color-scheme: dark;
+}
+
+.admin-dark-mode .portal-shell input::-webkit-calendar-picker-indicator {
+  filter: invert(0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-page-enter {
+    animation: none;
+  }
 }
