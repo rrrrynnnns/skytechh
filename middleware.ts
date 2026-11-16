@@ -1,4 +1,8 @@
-import { auth } from '@/auth';
+import NextAuth from 'next-auth';
+import { authConfig } from '@/auth.config';
+
+const { auth } = NextAuth(authConfig);
+
 export default auth((request) => {
   const pathname = request.nextUrl.pathname;
   if (pathname.startsWith('/admin') || pathname === '/dashboard') if (request.auth?.user?.role !== 'admin') return Response.redirect(new URL('/login', request.nextUrl));

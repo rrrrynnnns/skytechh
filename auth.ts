@@ -3,9 +3,10 @@ import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/app/lib/prisma';
 import { DEMO_ACCOUNTS } from '@/app/lib/demo-accounts';
+import { authConfig } from '@/auth.config';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  trustHost: true,
+  ...authConfig,
   providers: [Credentials({
     credentials: { email: {}, password: {} },
     async authorize(credentials) {
@@ -77,8 +78,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return true;
     },
-    async jwt({ token, user }) { if (user) { const identity = user as { role?: string; subscriberId?: string; technicianId?: string }; token.role = identity.role; token.subscriberId = identity.subscriberId; token.technicianId = identity.technicianId; } return token; },
-    async session({ session, token }) { if (session.user) { session.user.role = token.role as string; session.user.subscriberId = token.subscriberId; session.user.technicianId = token.technicianId; } return session; },
+    ...authConfig.callbacks,
   },
-  pages: { signIn: '/login' },
 });
