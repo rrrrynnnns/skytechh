@@ -49,7 +49,10 @@ export default function SubscriberProfilePage() {
   function updateField(field: keyof ProfileForm, value: string) { setForm((current) => ({ ...current, [field]: value, ...(field === 'province' ? { city: '', barangay: '' } : {}), ...(field === 'city' ? { barangay: '' } : {}) })); }
   async function saveProfile(event: FormEvent<HTMLFormElement>) { event.preventDefault(); if (!account) return; const name = [form.firstName, form.middleName, form.lastName].filter(Boolean).join(' '); const address = [form.addressLine1, form.addressLine2, form.street, form.barangay, form.city, form.province, form.zipCode].filter(Boolean).join(', '); const response = await fetch(`/api/subscribers/${account.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email: form.email, contact: form.contact, address, province: form.province, city: form.city, barangay: form.barangay, street: form.street, zipCode: form.zipCode }) }); const result = await response.json(); if (!response.ok || !result.data) { setError(result.error || 'Unable to save profile details.'); return; } setAccount(result.data); setForm(getForm(result.data)); setIsEditing(false); }
   async function changePassword(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setError(''); const values = Object.fromEntries(new FormData(event.currentTarget)); if (values.newPassword !== values.confirmPassword) { setError('New passwords do not match.'); return; } const response = await fetch('/api/account/password', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: values.currentPassword, newPassword: values.newPassword }) }); const result = await response.json(); if (!response.ok) { setError(result.error || 'Unable to change password.'); return; } setIsChangingPassword(false); }
-  async function handleSignOut() { await signOut({ callbackUrl: '/login' }); }
+  async function handleSignOut() {
+    await signOut({ redirect: false });
+    window.location.assign('/login');
+  }
 
   const displayName = formatPersonName(account?.name || 'Loading...');
   const initials = displayName.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase();

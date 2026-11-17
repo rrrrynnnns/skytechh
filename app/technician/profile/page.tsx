@@ -73,7 +73,8 @@ export default function TechnicianProfilePage() {
   }
 
   async function handleSignOut() {
-    await signOut({ callbackUrl: '/login' });
+    await signOut({ redirect: false });
+    window.location.assign('/login');
   }
 
   if (!technician || !form) {

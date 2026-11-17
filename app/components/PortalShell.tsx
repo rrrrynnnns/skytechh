@@ -124,7 +124,8 @@ export function PortalShell({ role, children }: { role: Role; children: React.Re
     : [['/subscriber/my-account', 'Home', LayoutDashboard], ['/subscriber/my-tickets', 'My Requests', Ticket], ['/subscriber/help', 'Help', MessageSquare], ['/subscriber/profile', 'Profile', Users]];
 
   async function handleSignOut() {
-    await signOut({ callbackUrl: '/login' });
+    await signOut({ redirect: false });
+    window.location.assign('/login');
   }
 
   async function loadNotifications() {
