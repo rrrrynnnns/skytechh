@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   List,
   LogOut,
+  Menu,
   MessageSquare,
   Moon,
   ScrollText,
@@ -332,6 +333,7 @@ export function PortalShell({ role, children }: { role: Role; children: React.Re
       <Link
         key={href}
         href={href}
+        onClick={() => setIsOpen(false)}
         aria-current={active ? 'page' : undefined}
         className={`admin-nav-link group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150 ${active ? 'admin-nav-link-active bg-white/10 text-white' : 'text-[#9aa8c4] hover:bg-white/5 hover:text-white'
           }`}
@@ -346,15 +348,43 @@ export function PortalShell({ role, children }: { role: Role; children: React.Re
   };
 
   return <div className={`portal-shell admin-shell ${isDarkMode ? 'admin-dark-mode' : ''} min-h-screen overflow-x-hidden bg-[#f4f7fb] text-slate-950`}>
+    {isOpen && (
+      <button
+        type="button"
+        aria-label="Close navigation"
+        onClick={() => setIsOpen(false)}
+        className="fixed inset-0 z-30 bg-slate-950/45 backdrop-blur-[1px] lg:hidden"
+      />
+    )}
+
     {/* Sidebar */}
-    <aside className="admin-sidebar fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-[#0b1630] px-3 py-5">
-      <Link href="/landing-page" className="mx-2 flex items-center gap-3 rounded-xl px-1 pb-5" aria-label="Sky-Tech home">
-        <img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="h-10 w-10 rounded-full object-cover object-center ring-2 ring-white/10" />
-        <span>
-          <span className="block text-lg font-black leading-tight tracking-tight text-white">Sky-Tech</span>
-          <span className="block text-[9px] font-bold uppercase tracking-[.16em] text-sky-400">Admin Console</span>
-        </span>
-      </Link>
+    <aside
+      className={`admin-sidebar fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-[#0b1630] px-3 py-5 transition-transform duration-200 ease-out ${
+        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}
+    >
+      <div className="mx-2 flex items-center justify-between gap-2 pb-5">
+        <Link
+          href="/landing-page"
+          onClick={() => setIsOpen(false)}
+          className="flex items-center gap-3 rounded-xl px-1"
+          aria-label="Sky-Tech home"
+        >
+          <img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="h-10 w-10 rounded-full object-cover object-center ring-2 ring-white/10" />
+          <span>
+            <span className="block text-lg font-black leading-tight tracking-tight text-white">Sky-Tech</span>
+            <span className="block text-[9px] font-bold uppercase tracking-[.16em] text-sky-400">Admin Console</span>
+          </span>
+        </Link>
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setIsOpen(false)}
+          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white lg:hidden"
+        >
+          <X size={18} />
+        </button>
+      </div>
 
       <nav className="admin-sidebar-scroll -mx-1 flex-1 space-y-5 overflow-y-auto px-1 pl-4">
         {adminNavGroups.map((group) => (
@@ -367,14 +397,22 @@ export function PortalShell({ role, children }: { role: Role; children: React.Re
     </aside>
 
     {/* Top bar */}
-    <header className="admin-topbar fixed left-64 right-0 top-0 z-20 flex h-16 min-w-5xl items-center border-b border-slate-200 bg-white/80 px-10 backdrop-blur-md">
-      <div className="flex w-full items-center gap-3">
-        <nav aria-label="Breadcrumb" className="mr-auto flex items-center gap-1.5 text-sm">
-          <Link href="/admin/dashboard" className="font-medium text-slate-400 hover:text-slate-600">Admin</Link>
-          <ChevronRight size={14} className="text-slate-300" />
-          <span className="font-medium text-slate-400">{location.group}</span>
-          <ChevronRight size={14} className="text-slate-300" />
-          <span className="font-semibold text-slate-800">{location.label}</span>
+    <header className="admin-topbar fixed left-0 right-0 top-0 z-20 flex h-16 items-center border-b border-slate-200 bg-white/80 px-4 backdrop-blur-md sm:px-6 lg:left-64 lg:px-10">
+      <div className="flex w-full items-center gap-2 sm:gap-3">
+        <button
+          type="button"
+          aria-label="Open navigation"
+          onClick={() => setIsOpen(true)}
+          className="rounded-xl p-2 text-slate-600 transition-colors hover:bg-slate-100 lg:hidden"
+        >
+          <Menu size={20} />
+        </button>
+        <nav aria-label="Breadcrumb" className="mr-auto flex min-w-0 items-center gap-1.5 text-sm">
+          <Link href="/admin/dashboard" className="hidden font-medium text-slate-400 hover:text-slate-600 sm:inline">Admin</Link>
+          <ChevronRight size={14} className="hidden text-slate-300 sm:inline" />
+          <span className="hidden font-medium text-slate-400 sm:inline">{location.group}</span>
+          <ChevronRight size={14} className="hidden text-slate-300 sm:inline" />
+          <span className="truncate font-semibold text-slate-800">{location.label}</span>
         </nav>
 
         <div ref={notificationContainerRef} className="relative">
@@ -533,8 +571,8 @@ export function PortalShell({ role, children }: { role: Role; children: React.Re
       </div>
     </header>
 
-    <main className="ml-64 min-h-screen min-w-5xl pt-16">
-      <div className="admin-page-enter mx-auto max-w-7xl px-10 py-8">{children}</div>
+    <main className="min-h-screen pt-16 lg:ml-64">
+      <div className="admin-page-enter mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-6 lg:px-10 lg:py-8">{children}</div>
     </main>
 
     <AdminCommandPalette open={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} items={paletteItems} />
