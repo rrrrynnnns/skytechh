@@ -157,21 +157,542 @@ export function LandingPage({ onLogin, onBook }: Props) {
           <div className="hidden items-center gap-7 text-sm font-semibold text-blue-100/75 md:flex">
             <a href="#features" className="transition hover:text-white">Why Sky-Tech</a><a href="#plans" className="transition hover:text-white">Fiber Plans</a><a href="#coverage" className="transition hover:text-white">Coverage &amp; Map</a>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3"><button onClick={onLogin} className="rounded-full px-3 py-2 text-sm font-bold text-blue-100 transition hover:bg-white/10 hover:text-white sm:px-4">Sign in</button><button onClick={onBook} className="rounded-full bg-sky-600 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-sky-950/40 transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-[#071329]">Book now</button></div>
+          <div className="flex items-center gap-2 sm:gap-3"><button onClick={onLogin} className="rounded-full px-3 py-2 text-sm font-bold text-blue-100 transition hover:bg-white/10 hover:text-white sm:px-4">Sign in</button><button onClick={onBook} className="rounded-full bg-[#2166f3] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition hover:bg-[#1d57d6] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-[#071329]">Book now</button></div>
           </nav>
         </header>
-        <div className="relative z-10 mx-auto grid max-w-7xl gap-12 px-5 pb-20 pt-28 lg:grid-cols-[.92fr_1.08fr] lg:items-center lg:px-10 lg:pb-28 lg:pt-36">
-          <div><div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm"><span className="h-2 w-2 rounded-full bg-emerald-400" /> 100% Fiber Optic Network &middot; Sibagat, Agusan del Sur</div><h1 className="mt-6 max-w-xl text-3xl font-black leading-[1.08] tracking-tight sm:text-5xl">The internet your home has been <span className="text-sky-500">waiting for.</span></h1><p className="mt-5 max-w-lg text-sm leading-6 text-blue-100/70 sm:text-base">Say goodbye to lag, hidden price spikes, and overseas customer bots. Sky-Tech delivers ultra-reliable fiber backed by our friendly local team right here in Sibagat.</p><div className="mt-8 flex flex-wrap gap-3"><button onClick={onBook} className="inline-flex items-center gap-2 rounded-full bg-sky-600 px-6 py-3.5 text-sm font-bold text-white transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-blue-300">Book now <Icon name="arrow" size={17} /></button><a href="#plans" onClick={(event) => { event.preventDefault(); scrollToPlans(); }} className="rounded-full border border-blue-200/20 bg-white/5 px-6 py-3.5 text-sm font-bold text-blue-100 transition hover:bg-white/10">Explore plans</a></div><div className="mt-9 flex flex-wrap gap-x-7 gap-y-3 text-sm font-semibold text-blue-100/90">{['Plans starting at ₱999/mo', 'No lock-in contract options', 'Free Wi-Fi 6 Router Installation'].map((item) => <span key={item} className="flex items-center gap-2"><span className="text-sky-400"><Icon name="check" size={17} /></span>{item}</span>)}</div></div>
-          <div className="relative min-h-[22rem] overflow-visible sm:min-h-[31rem]"><div className="absolute -inset-5 rounded-[2rem] bg-blue-500/20 blur-2xl" /><div className="relative h-full min-h-[22rem] overflow-hidden rounded-[2rem] border border-white/10 bg-[#0b1d3a] shadow-2xl sm:min-h-[31rem]"><img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=85" alt="Family using a laptop together at home" className="h-full min-h-[22rem] w-full object-cover opacity-85 sm:min-h-[31rem]" /><div className="absolute inset-0 bg-gradient-to-t from-[#071329] via-[#071329]/10 to-transparent" /><div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8"><p className="max-w-sm text-xl font-bold leading-snug">Every call, class, stream, and game—connected.</p><p className="mt-2 text-sm text-blue-100/65">Fiber built for the way your home lives.</p></div></div></div>
+        <div className="relative z-10 mx-auto grid max-w-7xl gap-12 px-5 pb-20 pt-28 lg:grid-cols-[.95fr_1.05fr] lg:items-center lg:px-10 lg:pb-28 lg:pt-36">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3.5 py-1.5 text-xs font-semibold text-emerald-300 backdrop-blur-xs">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              100% Fiber Optic Network &middot; Sibagat, Agusan del Sur
+            </div>
+            <h1 className="mt-6 max-w-xl text-4xl font-black leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]">
+              The internet your home has been{' '}
+              <span className="bg-gradient-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent">
+                waiting for.
+              </span>
+            </h1>
+            <p className="mt-5 max-w-lg text-sm leading-7 text-blue-100/75 sm:text-base">
+              Say goodbye to lag, hidden price spikes, and automated support bots. Sky-Tech delivers ultra-reliable
+              fiber backed by our friendly local team right here in Sibagat.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button
+                onClick={onBook}
+                className="inline-flex items-center gap-2 rounded-full bg-[#2166f3] px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition hover:bg-[#1d57d6] focus:outline-none focus:ring-2 focus:ring-blue-300"
+              >
+                Book now <Icon name="arrow" size={17} />
+              </button>
+              <a
+                href="#plans"
+                onClick={(event) => {
+                  event.preventDefault();
+                  scrollToPlans();
+                }}
+                className="rounded-full border border-white/15 bg-white/[0.06] px-7 py-3.5 text-sm font-bold text-blue-100 backdrop-blur-xs transition hover:border-white/25 hover:bg-white/10 hover:text-white"
+              >
+                Explore plans
+              </a>
+            </div>
+            <div className="mt-9 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-blue-100/90">
+              {['Plans starting at ₱999/mo', 'No lock-in contract options', 'Free Wi-Fi 6 Router Installation'].map(
+                (item) => (
+                  <span key={item} className="flex items-center gap-2">
+                    <span className="grid h-5 w-5 place-items-center rounded-full bg-sky-500/20 text-sky-400">
+                      <Icon name="check" size={13} />
+                    </span>
+                    {item}
+                  </span>
+                ),
+              )}
+            </div>
+          </div>
+
+          <div className="relative min-h-[22rem] overflow-visible sm:min-h-[31rem]">
+            <div className="absolute -inset-5 rounded-[2rem] bg-blue-500/20 blur-2xl" />
+            <div className="relative h-full min-h-[22rem] overflow-hidden rounded-[2rem] border border-white/15 bg-[#0b1d3a] shadow-2xl sm:min-h-[31rem]">
+              <img
+                src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=85"
+                alt="Family using a laptop together at home"
+                className="h-full min-h-[22rem] w-full object-cover opacity-80 sm:min-h-[31rem]"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#071329] via-[#071329]/25 to-transparent" />
+              <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-[#071329]/80 px-3.5 py-1.5 text-xs font-bold text-white backdrop-blur-md">
+                <span className="h-2 w-2 rounded-full bg-sky-400" />
+                Wi-Fi 6 &middot; Pure Fiber to the Home
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
+                <p className="max-w-sm text-xl font-bold leading-snug text-white">
+                  Every call, class, stream, and game&mdash;connected.
+                </p>
+                <p className="mt-1.5 text-sm text-blue-100/75">Fiber built for the way your home lives.</p>
+                <div className="mt-5 grid grid-cols-3 gap-2.5">
+                  <div className="rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2.5 backdrop-blur-md">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-sky-300">Speeds up to</p>
+                    <p className="mt-0.5 text-sm font-black text-white">300 Mbps</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2.5 backdrop-blur-md">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Reliability</p>
+                    <p className="mt-0.5 text-sm font-black text-white">99.9% Uptime</p>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2.5 backdrop-blur-md">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-blue-200">Support</p>
+                    <p className="mt-0.5 text-sm font-black text-white">Local Team</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
 
-      <section id="features" className="bg-[#f7faff] px-5 py-20 lg:px-10"><div className="mx-auto max-w-7xl"><div className="mx-auto max-w-3xl text-center"><p className="text-xs font-black uppercase tracking-[.2em] text-sky-600">WHY SKY-TECH FIBER</p><h2 className="mt-4 text-3xl font-black tracking-tight text-[#071329] sm:text-4xl">Built for real homes. Backed by real neighbors.</h2><p className="mt-4 text-base leading-7 text-slate-500">We built the internet provider we always wished we had - no fine-print tricks, constant dropouts, or impersonal phone menus.</p></div><div className="mt-12 grid gap-7 md:grid-cols-2 lg:grid-cols-3">{benefits.map(([icon, title, text]) => <article key={title} className="rounded-2xl border border-slate-200 bg-white p-10 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"><div className="grid h-14 w-14 place-items-center rounded-2xl bg-sky-50 text-sky-600"><Icon name={icon} size={28} /></div><h3 className="mt-8 text-xl font-bold text-[#071329]">{title}</h3><p className="mt-4 text-base leading-7 text-slate-500">{text}</p></article>)}</div></div></section>
+      <section id="features" className="bg-[#f7faff] px-5 py-20 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <span className="inline-flex items-center rounded-full bg-blue-50 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[.18em] text-[#2166f3]">
+              Why Sky-Tech Fiber
+            </span>
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-[#071329] sm:text-4xl">
+              Built for real homes. Backed by real neighbors.
+            </h2>
+            <p className="mt-4 text-base leading-7 text-slate-500">
+              We built the internet provider we always wished we had &mdash; no fine-print tricks, constant dropouts, or
+              impersonal phone menus.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {benefits.map(([icon, title, text], index) => {
+              const accents = [
+                { tile: 'bg-blue-50 text-[#2166f3]', bar: 'bg-[#2166f3]' },
+                { tile: 'bg-emerald-50 text-emerald-600', bar: 'bg-emerald-500' },
+                { tile: 'bg-violet-50 text-violet-600', bar: 'bg-violet-500' },
+                { tile: 'bg-amber-50 text-amber-600', bar: 'bg-amber-500' },
+                { tile: 'bg-sky-50 text-sky-600', bar: 'bg-sky-500' },
+                { tile: 'bg-indigo-50 text-indigo-600', bar: 'bg-indigo-500' },
+              ];
+              const accent = accents[index % accents.length];
+              return (
+                <article
+                  key={title}
+                  className="group relative overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-7 shadow-xs transition duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-200/60"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className={`grid h-12 w-12 place-items-center rounded-xl ${accent.tile}`}>
+                      <Icon name={icon} size={24} />
+                    </div>
+                    <span className="text-xs font-bold tabular-nums text-slate-300 transition-colors group-hover:text-[#2166f3]">
+                      0{index + 1}
+                    </span>
+                  </div>
+                  <h3 className="mt-5 text-lg font-bold tracking-tight text-[#071329]">{title}</h3>
+                  <p className="mt-2.5 text-sm leading-6 text-slate-500">{text}</p>
+                  <span
+                    className={`absolute inset-x-0 bottom-0 h-0.5 ${accent.bar} opacity-0 transition-opacity group-hover:opacity-100`}
+                  />
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
-            <section id="plans" className="bg-white px-5 py-20 lg:px-10"><div className="mx-auto max-w-7xl"><div className="mx-auto max-w-3xl text-center"><p className="text-xs font-black uppercase tracking-[.2em] text-sky-600">STRAIGHTFORWARD PRICING</p><h2 className="mt-4 text-3xl font-black tracking-tight text-[#071329] sm:text-4xl">A fiber plan for every household size.</h2><p className="mt-4 text-base leading-7 text-slate-500">All plans include unlimited data, free installation, and high-speed Wi-Fi 6 router.</p></div><div className="mt-12 grid gap-7 md:grid-cols-2 lg:grid-cols-3">{plans.map((plan) => { const isPopular = plan.speedMbps === 200; const details = getPlanDetails(plan.speedMbps); return <article key={plan.name} className={`relative flex flex-col rounded-3xl border p-8 ${isPopular ? 'border-sky-500 shadow-[0_18px_40px_rgba(14,165,233,0.18)]' : 'border-slate-200 shadow-sm'}`}>{isPopular && <span className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-sky-600 px-4 py-1.5 text-xs font-black uppercase text-white shadow-md">Most popular for families</span>}<span className={`w-fit rounded-full px-4 py-2 text-xs font-black tracking-wide ${isPopular ? 'text-sky-600' : 'bg-slate-100 text-slate-500'}`}>{details.label}</span><h3 className="mt-6 text-3xl font-black text-[#071329]">{plan.speedMbps} Mbps</h3><p className="mt-2 min-h-12 text-sm font-semibold leading-6 text-slate-500">{details.description}</p><p className={`mt-6 text-3xl font-black ${isPopular ? 'text-sky-600' : 'text-[#071329]'}`}>&#8369;{plan.price.toLocaleString()}<span className="text-base font-semibold text-slate-500"> / month</span></p><p className="mt-1 text-sm text-slate-400">{details.billing}</p><div className="my-5 border-t border-slate-100" /><div className="space-y-3">{details.features.map((feature, index) => <p key={feature} className="flex items-start gap-3 text-sm font-semibold leading-5 text-slate-600"><span className="text-lg leading-4 text-emerald-500">&#10003;</span>{index === 0 ? `${plan.speedMbps} Mbps ${feature}` : feature}</p>)}</div><button onClick={onBook} className={`mt-8 w-full rounded-xl px-4 py-3 text-sm font-bold transition ${isPopular ? 'bg-sky-600 text-white shadow-lg shadow-sky-200 hover:bg-sky-500' : 'bg-slate-100 text-[#071329] hover:bg-slate-200'}`}>{isPopular ? `Get ${plan.speedMbps} Mbps Now` : `Choose ${plan.speedMbps} Mbps`}</button></article>; })}</div></div></section>
+      <section id="plans" className="bg-white px-5 py-20 lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-3xl text-center">
+            <span className="inline-flex items-center rounded-full bg-blue-50 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[.18em] text-[#2166f3]">
+              Straightforward Pricing
+            </span>
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-[#071329] sm:text-4xl">
+              A fiber plan for every household size.
+            </h2>
+            <p className="mt-4 text-base leading-7 text-slate-500">
+              All plans include unlimited data, free installation, and a high-speed Wi-Fi 6 router.
+            </p>
+          </div>
 
-            <section id="coverage" className="bg-white px-5 py-16 text-[#071329] lg:px-10"><div className="mx-auto max-w-7xl"><div className="mx-auto max-w-4xl text-center"><p className="text-xs font-black uppercase tracking-[.2em] text-sky-600">FIBER NETWORK MAP - SIBAGAT, AGUSAN DEL SUR</p><h2 className="mt-5 text-3xl font-black leading-tight tracking-tight text-[#071329] sm:text-4xl">Check if Sky-Tech Fiber has reached your street.</h2><p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-500">Sky-Tech is locally headquartered in Sibagat. Type your barangay or street below, or explore the live coverage map to see real-time fiber availability.</p><form onSubmit={(event) => { event.preventDefault(); const query = coverageQuery.trim(); const match = coverageAreas.find(([area]) => area.toLowerCase() === query.toLowerCase()); const result = match?.[0] || query || 'Poblacion'; setSelectedCoverage(result); setCoverageSearchResult(result); }} className="mx-auto mt-8 flex max-w-3xl flex-col gap-2 rounded-2xl border-0 bg-white p-2 shadow-lg shadow-slate-200/60 sm:flex-row"><div className="relative min-w-0 flex-1"><svg aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg><input aria-label="Search coverage area" value={coverageQuery} onChange={(event) => setCoverageQuery(event.target.value)} placeholder="e.g. Poblacion, Mahayahay, San Vicente, El Rio..." className="h-12 w-full rounded-xl border-0 bg-transparent pl-11 pr-4 text-sm text-slate-700 outline-none focus:!border-0 focus:!shadow-none placeholder:text-slate-400" /></div><button type="submit" className="h-12 w-full rounded-xl bg-sky-600 px-7 text-sm font-bold text-white transition hover:bg-sky-500 sm:w-auto">Check Coverage</button></form>{coverageSearchResult && <div className={`mx-auto mt-6 flex max-w-3xl gap-4 rounded-2xl border p-5 text-left shadow-lg ${coverageSearchIsExpanding ? 'border-amber-300 bg-amber-50 shadow-amber-100' : 'border-sky-300 bg-sky-50 shadow-sky-100'}`}><svg aria-hidden="true" className={`mt-0.5 h-8 w-8 shrink-0 ${coverageSearchIsExpanding ? 'text-amber-400' : 'text-emerald-500'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d={coverageSearchIsExpanding ? 'M12 8v4M12 16h.01' : 'm8 12 2.5 2.5L16 9'} /></svg><div className="min-w-0 flex-1"><h3 className="text-base font-black text-[#071329]">{coverageSearchIsExpanding ? 'Upcoming Expansion Area' : '\u2713 Fiber Available!'}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{coverageSearchIsExpanding ? `Barangay ${coverageSearchResult}, Sibagat is in our current expansion phase. You can pre-book now to be connected first!` : `Pure Fiber is ACTIVE in Barangay ${coverageSearchResult}, Sibagat! Speeds Up to 300 Mbps are ready for same-day dispatch.`}</p><div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={onBook} className={`rounded-lg px-4 py-2 text-sm font-bold ${coverageSearchIsExpanding ? 'bg-white text-sky-600 hover:bg-sky-50' : 'bg-sky-600 text-white hover:bg-sky-500'}`}>Apply for this Address -&gt;</button><button type="button" onClick={() => setCoverageSearchResult(null)} className={`rounded-lg px-4 py-2 text-sm font-bold ${coverageSearchIsExpanding ? 'bg-sky-100 text-sky-700 hover:bg-sky-200' : 'bg-sky-100 text-sky-700 hover:bg-sky-200'}`}>Dismiss</button></div></div></div>}</div><div className="mt-8 rounded-[1.5rem] bg-[#0f4d73] p-4 text-white shadow-xl sm:p-6"><div className="grid gap-5 lg:grid-cols-[1.2fr_1fr]"><div><div className="mb-4 flex items-center justify-between gap-3 text-xs font-bold"><span className="flex items-center gap-2 text-emerald-300"><span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />LIVE FIBER GRID: SIBAGAT, AGUSAN DEL NORTE</span><span className="text-blue-200/80">Coords: 8.8211&deg; N, 125.6980&deg; E</span></div><div className="relative overflow-hidden rounded-xl border border-white/10 bg-slate-200"><iframe title="Sky-Tech fiber coverage map" src="https://www.openstreetmap.org/export/embed.html?bbox=125.62%2C8.75%2C125.78%2C8.9&amp;layer=mapnik&amp;marker=8.8211%2C125.6980" className="h-[27rem] w-full border-0" loading="lazy" /><div className="absolute left-3 top-3 flex items-center gap-2 rounded-lg bg-[#071329]/95 px-2 py-2 shadow-xl"><img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="h-7 w-7 shrink-0 rounded-full object-cover object-center" /><div><p className="text-[11px] font-black">Sky-Tech Central Hub</p><p className="text-[9px] text-sky-300">Poblacion, Sibagat, Agusan</p></div></div><div className="absolute bottom-3 right-3 w-[16rem] max-w-[calc(100%-1.5rem)] rounded-xl bg-[#071329]/95 p-2.5 shadow-xl"><div className="flex flex-col gap-2"><div className="flex items-center justify-between gap-3"><p className="text-xs font-bold">{selectedCoverage}</p><span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${selectedCoverageDetails?.[2] === 'active' ? 'bg-emerald-400/20 text-emerald-300' : 'bg-amber-400/20 text-amber-300'}`}>{selectedCoverageDetails?.[2] === 'active' ? 'Active' : 'Expanding'}</span></div><p className="text-[11px] text-blue-100/80">{selectedCoverageDetails?.[1] || 'Coverage area selected'}{selectedCoverageDetails?.[2] === 'active' ? ' · Up to 300 Mbps' : ''}</p><button onClick={onBook} className="w-full rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-sky-500">Apply for {selectedCoverage} -&gt;</button></div></div></div><a href="https://www.openstreetmap.org/?mlat=8.8211&amp;mlon=125.6980#map=12/8.8211/125.6980" target="_blank" rel="noreferrer" className="mt-3 flex items-center justify-center gap-1 text-center text-xs text-blue-200/70 hover:text-white">View larger map on OpenStreetMap <svg aria-hidden="true" className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 5h5v5" /><path d="M13 11 19 5" /><path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></svg></a></div><div><h3 className="text-xl font-black">Covered Barangays in Sibagat</h3><p className="mt-1 text-xs leading-5 text-blue-100/75">Click any barangay to inspect network status or apply for instant installation:</p><div className="mt-4 grid grid-cols-2 gap-2">{coverageAreas.map(([area, status, state]) => <button key={area} type="button" onClick={() => setSelectedCoverage(area)} className={`rounded-xl border p-2.5 text-left transition ${selectedCoverage === area ? 'border-white bg-sky-600' : state === 'active' ? 'border-white/10 bg-white/10 hover:border-sky-300' : 'border-amber-300/20 bg-amber-400/10 hover:border-amber-300'}`}><span className="flex items-center justify-between gap-2 text-sm font-bold"><span>{area}</span><span className={`h-2.5 w-2.5 rounded-full ${state === 'active' ? 'bg-emerald-400' : 'bg-amber-400'}`} /></span><span className={`mt-1 block text-[11px] ${selectedCoverage === area ? 'text-white' : 'text-blue-100/70'}`}>{status}</span></button>)}</div><div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-white/15 bg-white/10 p-3"><div><p className="text-sm font-bold">Selected: {selectedCoverage}</p>            <p className="mt-1 text-xs text-blue-100/75">{coverageDescriptions[selectedCoverage]}</p></div><button onClick={onBook} className="shrink-0 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-sky-700 transition hover:bg-blue-50">Apply Now</button></div></div></div></div></div></section>
+          <div className="mt-14 grid items-stretch gap-7 md:grid-cols-2 lg:grid-cols-3">
+            {plans.map((plan) => {
+              const isPopular = plan.speedMbps === 200;
+              const details = getPlanDetails(plan.speedMbps);
+              return (
+                <article
+                  key={plan.name}
+                  className={`relative flex flex-col rounded-3xl border bg-white p-8 transition duration-200 hover:-translate-y-1 ${
+                    isPopular
+                      ? 'border-[#2166f3] ring-4 ring-blue-50 shadow-[0_24px_50px_rgba(33,102,243,0.16)]'
+                      : 'border-slate-200 shadow-xs hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/60'
+                  }`}
+                >
+                  {isPopular && (
+                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#2166f3] px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-md shadow-blue-500/30">
+                      Most popular for families
+                    </span>
+                  )}
+
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`w-fit rounded-full px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-wider ${
+                        isPopular ? 'bg-blue-50 text-[#2166f3]' : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {details.label}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-400">Unlimited Fiber</span>
+                  </div>
+
+                  <div className="mt-5">
+                    <h3 className="text-3xl font-black tracking-tight text-[#071329]">{plan.speedMbps} Mbps</h3>
+                    <p className="mt-2 min-h-11 text-sm leading-6 text-slate-500">{details.description}</p>
+                  </div>
+
+                  <div className="mt-6 rounded-2xl bg-slate-50/80 px-4 py-4">
+                    <p className={`text-3xl font-black tracking-tight tabular-nums ${isPopular ? 'text-[#2166f3]' : 'text-[#071329]'}`}>
+                      &#8369;{plan.price.toLocaleString()}
+                      <span className="text-sm font-semibold text-slate-500"> / month</span>
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-slate-400">{details.billing}</p>
+                  </div>
+
+                  <div className="mt-6 space-y-3">
+                    {details.features.map((feature, index) => (
+                      <p key={feature} className="flex items-start gap-2.5 text-sm font-medium leading-5 text-slate-600">
+                        <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600">
+                          <Icon name="check" size={12} />
+                        </span>
+                        <span>{index === 0 ? `${plan.speedMbps} Mbps ${feature}` : feature}</span>
+                      </p>
+                    ))}
+                  </div>
+
+                  <div className="mt-auto pt-8">
+                    <button
+                      type="button"
+                      onClick={onBook}
+                      className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold transition ${
+                        isPopular
+                          ? 'bg-[#2166f3] text-white shadow-md shadow-blue-500/25 hover:bg-[#1d57d6]'
+                          : 'border border-slate-200 bg-slate-50 text-[#071329] hover:border-[#2166f3] hover:bg-blue-50/50 hover:text-[#2166f3]'
+                      }`}
+                    >
+                      {isPopular ? `Get ${plan.speedMbps} Mbps Now` : `Choose ${plan.speedMbps} Mbps`}
+                      <Icon name="arrow" size={15} />
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section id="coverage" className="bg-white px-5 py-16 text-[#071329] lg:px-10">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto max-w-4xl text-center">
+            <span className="inline-flex items-center rounded-full bg-blue-50 px-3.5 py-1 text-[11px] font-bold uppercase tracking-[.18em] text-[#2166f3]">
+              Fiber Network Map &middot; Sibagat, Agusan del Sur
+            </span>
+            <h2 className="mt-4 text-3xl font-black leading-tight tracking-tight text-[#071329] sm:text-4xl">
+              Check if Sky-Tech Fiber has reached your street.
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-500">
+              Sky-Tech is locally headquartered in Sibagat. Type your barangay or street below, or explore the live
+              coverage map to check real-time fiber availability.
+            </p>
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const query = coverageQuery.trim();
+                const match = coverageAreas.find(([area]) => area.toLowerCase() === query.toLowerCase());
+                const result = match?.[0] || query || 'Poblacion';
+                setSelectedCoverage(result);
+                setCoverageSearchResult(result);
+              }}
+              className="mx-auto mt-8 flex max-w-3xl flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-200/70 transition focus-within:border-[#2166f3] focus-within:ring-4 focus-within:ring-blue-50 sm:flex-row"
+            >
+              <div className="relative min-w-0 flex-1">
+                <svg
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-4-4" />
+                </svg>
+                <input
+                  aria-label="Search coverage area"
+                  value={coverageQuery}
+                  onChange={(event) => setCoverageQuery(event.target.value)}
+                  placeholder="e.g. Poblacion, Mahayahay, San Vicente, El Rio..."
+                  className="h-12 w-full rounded-xl border-0 bg-transparent pl-11 pr-10 text-sm text-slate-700 outline-none placeholder:text-slate-400 focus:!border-0 focus:!shadow-none"
+                />
+                {coverageQuery && (
+                  <button
+                    type="button"
+                    aria-label="Clear search"
+                    onClick={() => {
+                      setCoverageQuery('');
+                      setCoverageSearchResult(null);
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                  >
+                    &times;
+                  </button>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="h-12 w-full rounded-xl bg-[#2166f3] px-7 text-sm font-bold text-white shadow-sm transition hover:bg-[#1d57d6] sm:w-auto"
+              >
+                Check Coverage
+              </button>
+            </form>
+            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 text-xs">
+              <span className="font-semibold text-slate-400">Popular areas:</span>
+              {['Poblacion', 'Mahayahay', 'San Vicente', 'El Rio', 'Afga'].map((area) => (
+                <button
+                  key={area}
+                  type="button"
+                  onClick={() => {
+                    setCoverageQuery(area);
+                    setSelectedCoverage(area);
+                    setCoverageSearchResult(area);
+                  }}
+                  className={`rounded-full border px-3 py-1 font-semibold transition ${
+                    selectedCoverage === area
+                      ? 'border-blue-200 bg-blue-50 text-[#2166f3]'
+                      : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-blue-200 hover:bg-blue-50/60 hover:text-[#2166f3]'
+                  }`}
+                >
+                  {area}
+                </button>
+              ))}
+            </div>
+
+            {coverageSearchResult && (
+              <div
+                className={`mx-auto mt-6 flex max-w-3xl gap-4 rounded-2xl border p-5 text-left shadow-lg ${
+                  coverageSearchIsExpanding
+                    ? 'border-amber-200 bg-amber-50 shadow-amber-100/70'
+                    : 'border-sky-200 bg-sky-50 shadow-sky-100/70'
+                }`}
+              >
+                <svg
+                  aria-hidden="true"
+                  className={`mt-0.5 h-8 w-8 shrink-0 ${
+                    coverageSearchIsExpanding ? 'text-amber-500' : 'text-emerald-500'
+                  }`}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d={coverageSearchIsExpanding ? 'M12 8v4M12 16h.01' : 'm8 12 2.5 2.5L16 9'} />
+                </svg>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base font-black text-[#071329]">
+                    {coverageSearchIsExpanding ? 'Upcoming Expansion Area' : '\u2713 Fiber Available!'}
+                  </h3>
+                  <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                    {coverageSearchIsExpanding
+                      ? `Barangay ${coverageSearchResult}, Sibagat is in our current expansion phase. You can pre-book now to be connected first!`
+                      : `Pure Fiber is ACTIVE in Barangay ${coverageSearchResult}, Sibagat! Speeds up to 300 Mbps are ready for same-day dispatch.`}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={onBook}
+                      className="rounded-xl bg-[#2166f3] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#1d57d6]"
+                    >
+                      Apply for this Address &rarr;
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCoverageSearchResult(null)}
+                      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 transition hover:bg-slate-50"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-10 overflow-hidden rounded-3xl border border-slate-800/40 bg-gradient-to-br from-[#071329] via-[#0b1d3a] to-[#0f2952] p-5 text-white shadow-[0_24px_60px_rgba(7,19,41,0.28)] sm:p-7">
+            <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
+              <div>
+                <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-3 py-1 text-emerald-300">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    LIVE FIBER GRID &middot; SIBAGAT, AGUSAN DEL SUR
+                  </span>
+                  <span className="font-mono text-[11px] text-blue-200/75">8.8211&deg; N, 125.6980&deg; E</span>
+                </div>
+                <div className="relative overflow-hidden rounded-2xl border border-white/15 bg-slate-900 shadow-inner">
+                  <iframe
+                    title="Sky-Tech fiber coverage map"
+                    src="https://www.openstreetmap.org/export/embed.html?bbox=125.62%2C8.75%2C125.78%2C8.9&amp;layer=mapnik&amp;marker=8.8211%2C125.6980"
+                    className="h-[27rem] w-full border-0"
+                    loading="lazy"
+                  />
+                  <div className="absolute left-3 top-3 flex items-center gap-2.5 rounded-xl border border-white/15 bg-[#071329]/90 px-3 py-2 shadow-xl backdrop-blur-md">
+                    <img
+                      src="/sky-tech-logo.png"
+                      alt="Sky-Tech logo"
+                      className="h-7 w-7 shrink-0 rounded-full object-cover object-center ring-1 ring-white/20"
+                    />
+                    <div>
+                      <p className="text-[11px] font-black text-white">Sky-Tech Central Hub</p>
+                      <p className="text-[10px] text-sky-300">Poblacion, Sibagat, Agusan</p>
+                    </div>
+                  </div>
+                  <div className="absolute bottom-3 right-3 w-[16.5rem] max-w-[calc(100%-1.5rem)] rounded-2xl border border-white/15 bg-[#071329]/90 p-3 shadow-2xl backdrop-blur-md">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-black text-white">{selectedCoverage}</p>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                          selectedCoverageDetails?.[2] === 'active'
+                            ? 'bg-emerald-400/20 text-emerald-300'
+                            : 'bg-amber-400/20 text-amber-300'
+                        }`}
+                      >
+                        {selectedCoverageDetails?.[2] === 'active' ? 'Active' : 'Expanding'}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[11px] text-blue-100/80">
+                      {selectedCoverageDetails?.[1] || 'Coverage area selected'}
+                      {selectedCoverageDetails?.[2] === 'active' ? ' \u00b7 Up to 300 Mbps' : ''}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={onBook}
+                      className="mt-2.5 w-full rounded-xl bg-[#2166f3] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#1d57d6]"
+                    >
+                      Apply for {selectedCoverage} &rarr;
+                    </button>
+                  </div>
+                </div>
+                <a
+                  href="https://www.openstreetmap.org/?mlat=8.8211&amp;mlon=125.6980#map=12/8.8211/125.6980"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs font-medium text-blue-200/70 transition hover:text-white"
+                >
+                  View larger map on OpenStreetMap
+                  <svg
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M14 5h5v5" />
+                    <path d="M13 11 19 5" />
+                    <path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
+                  </svg>
+                </a>
+              </div>
+
+              <div className="flex flex-col">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <h3 className="text-xl font-black tracking-tight text-white">Covered Barangays in Sibagat</h3>
+                    <p className="mt-1 text-xs leading-5 text-blue-100/70">
+                      Select a barangay to inspect fiber availability or apply for installation:
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] font-semibold text-blue-100/80">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    Active Fiber
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-amber-400" />
+                    Expanding Soon
+                  </span>
+                </div>
+
+                <div className="mt-3.5 grid grid-cols-2 gap-2.5">
+                  {coverageAreas.map(([area, status, state]) => {
+                    const isSelected = selectedCoverage === area;
+                    return (
+                      <button
+                        key={area}
+                        type="button"
+                        onClick={() => setSelectedCoverage(area)}
+                        className={`rounded-xl border p-3 text-left transition ${
+                          isSelected
+                            ? 'border-sky-300 bg-[#2166f3] shadow-lg shadow-blue-950/50'
+                            : state === 'active'
+                              ? 'border-white/10 bg-white/[0.06] hover:border-sky-400/50 hover:bg-white/[0.11]'
+                              : 'border-amber-400/20 bg-amber-400/[0.08] hover:border-amber-300/60 hover:bg-amber-400/[0.14]'
+                        }`}
+                      >
+                        <span className="flex items-center justify-between gap-2 text-sm font-bold text-white">
+                          <span className="truncate">{area}</span>
+                          <span
+                            className={`h-2 w-2 shrink-0 rounded-full ${
+                              state === 'active' ? 'bg-emerald-400' : 'bg-amber-400'
+                            }`}
+                          />
+                        </span>
+                        <span className={`mt-1 block text-[11px] ${isSelected ? 'text-blue-50' : 'text-blue-100/70'}`}>
+                          {status}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-auto pt-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/15 bg-white/[0.07] p-4 backdrop-blur-xs">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-white">Selected: {selectedCoverage}</p>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            selectedCoverageDetails?.[2] === 'active'
+                              ? 'bg-emerald-400/20 text-emerald-300'
+                              : 'bg-amber-400/20 text-amber-300'
+                          }`}
+                        >
+                          {selectedCoverageDetails?.[2] === 'active' ? 'Active' : 'Expanding'}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-blue-100/75">
+                        {coverageDescriptions[selectedCoverage] ||
+                          (selectedCoverageDetails?.[2] === 'active'
+                            ? '100% Pure Fiber ready for installation'
+                            : 'Scheduled for upcoming fiber expansion')}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={onBook}
+                      className="shrink-0 rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-[#071329] shadow-sm transition hover:bg-blue-50"
+                    >
+                      Apply Now &rarr;
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <footer className="bg-[#080f20] px-5 py-14 text-slate-400 lg:px-10"><div className="mx-auto max-w-7xl"><div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.25fr_1fr_1fr_1.2fr]"><div><div className="flex items-center gap-3 text-white"><img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="h-11 w-11 rounded-full object-cover object-center" /><span className="text-xl font-black">Sky-Tech ISP</span></div><p className="mt-6 max-w-xs text-sm leading-7">Providing fast, transparent, and ultra-reliable fiber internet for local homes and businesses.</p></div><div><h3 className="text-sm font-black uppercase tracking-wide text-white">Fiber Internet</h3><div className="mt-6 space-y-4 text-sm"><a href="#plans" className="block transition hover:text-white">Home Fiber Plans</a><a href="#coverage" className="block transition hover:text-white">Coverage Map</a><a href="#features" className="block transition hover:text-white">Why Choose Fiber</a><a href="#plans" className="block transition hover:text-white">Speed Test Portal</a></div></div><div><h3 className="text-sm font-black uppercase tracking-wide text-white">Customer Support</h3><div className="mt-6 space-y-4 text-sm"><button onClick={onLogin} className="block transition hover:text-white">Subscriber Login</button><button onClick={onLogin} className="block transition hover:text-white">Pay Bill Online</button><button onClick={onLogin} className="block transition hover:text-white">Help Center &amp; FAQs</button><a href="#coverage" className="block transition hover:text-white">Network Status Page</a></div></div><div><h3 className="text-sm font-black uppercase tracking-wide text-white">Local Office</h3><div className="mt-6 space-y-4 text-sm leading-6"><p className="flex items-start gap-3"><Icon name="pin" size={19} /><span>Poblacion, Agusan del Sur</span></p><p className="flex items-start gap-3"><span className="text-lg text-sky-500">@</span><span>support@skytech.net</span></p><p className="flex items-start gap-3"><span className="text-lg text-sky-500">&#9742;</span><span>Hotline: (085) 800-SKYTECH / 0917-123-4567</span></p></div><p className="mt-6 text-xs leading-5">Open Mon-Sat: 8:00 AM - 6:00 PM<br />24/7 Technical Dispatch</p></div></div><div className="mt-14 flex flex-col gap-4 border-t border-slate-800 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between"><span>&copy; 2026 Sky-Tech ISP Inc. All rights reserved.</span><div className="flex flex-wrap gap-6"><a href="#" className="transition hover:text-white">Privacy Policy</a><a href="#" className="transition hover:text-white">Terms of Service</a><a href="#" className="transition hover:text-white">Fair Use Policy</a></div></div></div></footer>
     </main>

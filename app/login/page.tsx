@@ -136,12 +136,12 @@ export function Login({ onBooking }: LoginProps) {
             <div className="text-center"><img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="mx-auto h-16 w-16 rounded-full object-cover object-center shadow-lg shadow-blue-200" /><h1 id="login-title" className="mt-5 text-3xl font-black tracking-tight text-[#071329]">Welcome back</h1><p className="mt-2 text-sm text-slate-500">Sign in to manage your Sky-Tech account.</p></div>
             <form onSubmit={submit} className="mt-8 space-y-5">
               <label htmlFor="email" className="block text-sm font-bold text-slate-700">Email address<div className={`mt-2 flex h-12 items-center overflow-hidden rounded-xl border bg-white px-3 transition focus-within:ring-2 focus-within:ring-blue-100 ${error ? 'border-red-300' : 'border-slate-200 focus-within:border-[#2452c7]'}`}><span className="shrink-0 text-slate-400"><Icon name="mail" /></span><input id="email" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" placeholder="you@skytech.net" className="min-w-0 flex-1 appearance-none !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !ring-0 !shadow-none placeholder:text-slate-400 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none" /></div></label>
-              <label htmlFor="password" className="block text-sm font-bold text-slate-700">Password<div className={`mt-2 flex h-12 items-center overflow-hidden rounded-xl border bg-white px-3 transition focus-within:ring-2 focus-within:ring-blue-100 ${error ? 'border-red-300' : 'border-slate-200 focus-within:border-[#2452c7]'}`}><span className="shrink-0 text-slate-400"><Icon name="lock" /></span><input id="password" name="password" type="text" value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" placeholder="Enter your password" className={`min-w-0 flex-1 appearance-none !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !ring-0 !shadow-none placeholder:text-slate-400 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none ${showPassword ? '' : 'password-mask'}`} /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="shrink-0 !border-0 !bg-transparent !p-1 !shadow-none text-slate-400 transition hover:text-sky-600 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none"><Icon name={showPassword ? 'eyeOff' : 'eye'} /></button></div></label>
-              <div className="flex justify-end"><button type="button" onClick={() => { setRecoveryEmail(email); setRecoverySent(false); setIsRecoveryOpen(true); }} className="text-sm font-bold text-sky-600 hover:underline">Forgot password?</button></div>
+              <label htmlFor="password" className="block text-sm font-bold text-slate-700">Password<div className={`mt-2 flex h-12 items-center overflow-hidden rounded-xl border bg-white px-3 transition focus-within:ring-2 focus-within:ring-blue-100 ${error ? 'border-red-300' : 'border-slate-200 focus-within:border-[#2452c7]'}`}><span className="shrink-0 text-slate-400"><Icon name="lock" /></span><input id="password" name="password" type="text" value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" placeholder="Enter your password" className={`min-w-0 flex-1 appearance-none !border-0 bg-transparent px-3 text-sm text-slate-900 !outline-none !ring-0 !shadow-none placeholder:text-slate-400 focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none ${showPassword ? '' : 'password-mask'}`} /><button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="shrink-0 !border-0 !bg-transparent !p-1 !shadow-none text-slate-400 transition hover:text-[#2166f3] focus:!border-0 focus:!outline-none focus:!ring-0 focus:!shadow-none"><Icon name={showPassword ? 'eyeOff' : 'eye'} /></button></div></label>
+              <div className="flex justify-end"><button type="button" onClick={() => { setRecoveryEmail(email); setRecoverySent(false); setIsRecoveryOpen(true); }} className="text-sm font-bold text-[#2166f3] hover:underline">Forgot password?</button></div>
               {error && <div role="alert" className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700"><Icon name="alert" size={18} /> <span>{error}</span></div>}
-              <button type="submit" disabled={isSigningIn} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-5 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-sky-500 focus:outline-none focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:opacity-60">{isSigningIn ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />Signing in...</> : 'Sign in'}</button>
+              <button type="submit" disabled={isSigningIn} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#2166f3] px-5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition hover:bg-[#1d57d6] focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-60">{isSigningIn ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />Signing in...</> : 'Sign in'}</button>
             </form>
-            <p className="mt-7 text-center text-sm text-slate-500">New to Sky-Tech? <button type="button" onClick={onBooking} className="font-bold text-sky-600 hover:underline">Book now</button></p>
+            <p className="mt-7 text-center text-sm text-slate-500">New to Sky-Tech? <button type="button" onClick={onBooking} className="font-bold text-[#2166f3] hover:underline">Book now</button></p>
           </section>
         </div>
         <footer className="pb-2 text-center text-xs font-semibold text-blue-100/45">© 2026 Sky-Tech ISP. Secure account access.</footer>
@@ -201,7 +201,7 @@ export function Login({ onBooking }: LoginProps) {
                   <button
                     type="button"
                     onClick={() => setIsRecoveryOpen(false)}
-                    className="h-12 w-full rounded-xl bg-sky-600 text-sm font-bold text-white shadow-sm transition hover:bg-sky-500"
+                    className="h-12 w-full rounded-xl bg-[#2166f3] text-sm font-bold text-white shadow-sm transition hover:bg-[#1d57d6]"
                   >
                     Back to sign in
                   </button>
@@ -261,7 +261,7 @@ export function Login({ onBooking }: LoginProps) {
                   <button
                     type="submit"
                     disabled={isSendingRecovery}
-                    className="flex h-12 flex-[1.5] items-center justify-center gap-2 rounded-xl bg-sky-600 text-sm font-bold text-white shadow-sm transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="flex h-12 flex-[1.5] items-center justify-center gap-2 rounded-xl bg-[#2166f3] text-sm font-bold text-white shadow-sm transition hover:bg-[#1d57d6] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isSendingRecovery ? (
                       <>
@@ -314,11 +314,10 @@ export function Login({ onBooking }: LoginProps) {
             <div className="space-y-4 px-6 py-6">
               {maintenanceNotice.impact && (
                 <div
-                  className={`rounded-xl px-4 py-2 text-center text-xs font-bold ${
-                    maintenanceNotice.impact.includes('Disabled')
-                      ? 'bg-rose-50 text-rose-700'
-                      : 'bg-amber-50 text-amber-800'
-                  }`}
+                  className={`rounded-xl px-4 py-2 text-center text-xs font-bold ${maintenanceNotice.impact.includes('Disabled')
+                    ? 'bg-rose-50 text-rose-700'
+                    : 'bg-amber-50 text-amber-800'
+                    }`}
                 >
                   {maintenanceNotice.impact}
                 </div>
@@ -351,9 +350,9 @@ export function Login({ onBooking }: LoginProps) {
                   <span className="font-bold text-slate-700">Estimated restoration:</span>{' '}
                   {maintenanceNotice.restoresAt
                     ? new Date(maintenanceNotice.restoresAt).toLocaleString('en-PH', {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                      })
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                    })
                     : 'To be announced'}
                 </p>
               </div>
@@ -362,7 +361,7 @@ export function Login({ onBooking }: LoginProps) {
               <button
                 type="button"
                 onClick={() => setMaintenanceNotice(null)}
-                className="h-12 w-full rounded-xl bg-sky-600 text-sm font-bold text-white shadow-sm transition hover:bg-sky-500"
+                className="h-12 w-full rounded-xl bg-[#2166f3] text-sm font-bold text-white shadow-sm transition hover:bg-[#1d57d6]"
               >
                 Exit
               </button>
