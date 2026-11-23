@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ArrowLeft, Building2, Check, Clock3, Copy, Info, MapPin, QrCode, Trash2, Upload, Wifi } from 'lucide-react';
+import { ArrowLeft, Building2, Check, Clock3, Copy, Info, MapPin, QrCode, Trash2, Upload } from 'lucide-react';
 import { PortalShell } from '@/app/components/PortalShell';
 import { Spinner } from '@/app/components/Spinner';
 import { Badge } from '@/app/components/Badge';
@@ -12,10 +12,16 @@ type Bill = { id: string; billingPeriod: string; amount: number; dueDate: string
 type Account = { name: string; id: string; planName: string; speedMbps: number; monthlyPrice: number };
 type SubmittedPayment = { bill: Bill; method: 'GCash' | 'Walk-in'; referenceNumber: string; receiptPreview: string };
 
-const qrPattern = '111101001111101010100101101110101011101001011101110100101010111101101011101111010010111010100101101111101010111011101001011110101011101';
-
 function QrPreview() {
-  return <div className="grid h-36 w-36 grid-cols-13 gap-0.5 rounded-xl bg-white p-3 shadow-sm">{qrPattern.split('').map((bit, index) => <span className={bit === '1' ? 'bg-[#2447b6]' : 'bg-white'} key={index} />)}</div>;
+  return (
+    <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white p-2.5 shadow-sm">
+      <img
+        src="/gcash-qr.jpg"
+        alt="GCash InstaPay QR Code"
+        className="h-48 w-48 rounded-lg object-contain"
+      />
+    </div>
+  );
 }
 
 export default function PayBillsPage() {
@@ -87,7 +93,7 @@ export default function PayBillsPage() {
   }
 
   function copyNumber() {
-    navigator.clipboard.writeText('09091423431').then(() => setCopied(true)).catch(() => undefined);
+    navigator.clipboard.writeText('09108578903').then(() => setCopied(true)).catch(() => undefined);
     window.setTimeout(() => setCopied(false), 1800);
   }
 
@@ -105,7 +111,7 @@ export default function PayBillsPage() {
             <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
               <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-50 text-[#2166f3]"><Wifi size={20} /></span>
+                  <img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="h-10 w-10 shrink-0 rounded-full object-cover object-center" />
                   <div><p className="text-sm font-bold text-slate-900">{account.data?.name || 'Subscriber'}</p><p className="text-xs text-slate-400">{account.data?.id || 'Account'}</p></div>
                 </div>
                 <Badge value={isPaid ? 'Paid' : isPendingConfirmation ? 'Pending Confirmation' : 'Unpaid'} />
@@ -148,9 +154,21 @@ export default function PayBillsPage() {
 
               {method === 'GCash' ? <div className="mt-5 rounded-2xl border border-blue-200 bg-[#f4f8ff] p-4">
                 <p className="flex items-center gap-2 text-sm font-semibold text-[#2447b6]"><Info size={16} /> Pay with GCash QR or Express Send</p>
-                <div className="mt-4 flex flex-col items-center"><QrPreview /><p className="mt-2 text-[10px] font-semibold uppercase tracking-widest text-slate-400">Scan with GCash</p></div>
-                <div className="mt-4 rounded-xl border border-blue-100 bg-white p-3"><p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Official GCash mobile number</p><div className="mt-2 flex items-center justify-between gap-2"><strong className="font-mono text-xs">09091423431</strong><button type="button" onClick={copyNumber} className="flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600"><Copy size={13} />{copied ? 'Copied' : 'Copy'}</button></div></div>
-                <div className="mt-3 rounded-xl border border-blue-100 bg-white p-3"><p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Registered account name</p><strong className="mt-2 block text-xs text-slate-800">SKY-TECH FIBER ISP / GALIT ENTERPRISES</strong></div>
+                <div className="mt-4 flex flex-col items-center">
+                  <QrPreview />
+                  <p className="mt-2.5 text-[10px] font-semibold uppercase tracking-widest text-slate-400">
+                    Scan with GCash / InstaPay
+                  </p>
+                  <a
+                    href="/gcash-qr.jpg"
+                    download="skytech-gcash-qr.jpg"
+                    className="mt-1.5 text-xs font-semibold text-[#2166f3] hover:underline"
+                  >
+                    Download QR image
+                  </a>
+                </div>
+                <div className="mt-4 rounded-xl border border-blue-100 bg-white p-3"><p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Official GCash mobile number</p><div className="mt-2 flex items-center justify-between gap-2"><strong className="font-mono text-xs">09108578903</strong><button type="button" onClick={copyNumber} className="flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600"><Copy size={13} />{copied ? 'Copied' : 'Copy'}</button></div></div>
+                <div className="mt-3 rounded-xl border border-blue-100 bg-white p-3"><p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Registered account name</p><strong className="mt-2 block text-xs text-slate-800">SKY-TECH HOME FIBER</strong></div>
               </div> : <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900"><Building2 size={17} /> Walk-in Over-The-Counter Payment</h3>
                 <p className="mt-3 text-xs leading-5 text-slate-600">Pay directly with cash at our main business office. Our customer service representative will issue an official printed receipt immediately.</p>

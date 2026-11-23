@@ -115,13 +115,50 @@ function scrollToPlans() {
   requestAnimationFrame(animateScroll);
 }
 
+const heroSlides = [
+  {
+    src: '/hero/call.jpg',
+    alt: 'Woman making a video call on her laptop at home',
+    title: 'Crystal-clear video calls & remote work.',
+    subtitle: 'Stay connected with family, clients, and teammates without frozen frames.',
+  },
+  {
+    src: '/hero/class.jpg',
+    alt: 'Student attending an online class on a laptop at home',
+    title: 'Buffer-free online classes & study.',
+    subtitle: 'Join live lectures, submit projects, and research smoothly from home.',
+  },
+  {
+    src: '/hero/stream.jpg',
+    alt: 'Family watching a movie together in the living room',
+    title: '4K movie nights for the whole family.',
+    subtitle: 'Stream your favorite shows and movies simultaneously on every screen.',
+  },
+  {
+    src: '/hero/gaming.jpg',
+    alt: 'Gamer playing with a controller at a home setup',
+    title: 'Ultra-low latency online gaming.',
+    subtitle: 'Consistent fiber speeds built for competitive matches and fast downloads.',
+  },
+];
+
 export function LandingPage({ onLogin, onBook }: Props) {
   const [plans, setPlans] = useState<Plan[]>(fallbackPlans);
   const [selectedCoverage, setSelectedCoverage] = useState('Poblacion');
   const [coverageQuery, setCoverageQuery] = useState('');
   const [coverageSearchResult, setCoverageSearchResult] = useState<string | null>(null);
+  const [heroSlide, setHeroSlide] = useState(0);
+  const [isHeroPaused, setIsHeroPaused] = useState(false);
   const selectedCoverageDetails = coverageAreas.find(([area]) => area === selectedCoverage);
   const coverageSearchIsExpanding = coverageAreas.find(([area]) => area === coverageSearchResult)?.[2] === 'expanding';
+
+  useEffect(() => {
+    if (isHeroPaused) return;
+    const timer = window.setInterval(() => {
+      setHeroSlide((current) => (current + 1) % heroSlides.length);
+    }, 4500);
+    return () => window.clearInterval(timer);
+  }, [isHeroPaused]);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -157,7 +194,7 @@ export function LandingPage({ onLogin, onBook }: Props) {
           <div className="hidden items-center gap-7 text-sm font-semibold text-blue-100/75 md:flex">
             <a href="#features" className="transition hover:text-white">Why Sky-Tech</a><a href="#plans" className="transition hover:text-white">Fiber Plans</a><a href="#coverage" className="transition hover:text-white">Coverage &amp; Map</a>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3"><button onClick={onLogin} className="rounded-full px-3 py-2 text-sm font-bold text-blue-100 transition hover:bg-white/10 hover:text-white sm:px-4">Sign in</button><button onClick={onBook} className="rounded-full bg-[#2166f3] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition hover:bg-[#1d57d6] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-[#071329]">Book now</button></div>
+          <div className="flex items-center gap-2 sm:gap-2.5"><button onClick={onLogin} className="rounded-full px-3 py-2 text-[13px] font-bold text-blue-100 transition hover:bg-white/10 hover:text-white sm:px-4 sm:text-sm">Sign in</button><button onClick={onBook} className="rounded-full bg-[#2166f3] px-4 py-2 text-[13px] font-bold text-white shadow-md shadow-blue-600/30 transition hover:bg-[#1d57d6] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-[#071329] sm:px-4.5 sm:text-sm">Book now</button></div>
           </nav>
         </header>
         <div className="relative z-10 mx-auto grid max-w-7xl gap-12 px-5 pb-20 pt-28 lg:grid-cols-[.95fr_1.05fr] lg:items-center lg:px-10 lg:pb-28 lg:pt-36">
@@ -210,35 +247,59 @@ export function LandingPage({ onLogin, onBook }: Props) {
 
           <div className="relative min-h-[22rem] overflow-visible sm:min-h-[31rem]">
             <div className="absolute -inset-5 rounded-[2rem] bg-blue-500/20 blur-2xl" />
-            <div className="relative h-full min-h-[22rem] overflow-hidden rounded-[2rem] border border-white/15 bg-[#0b1d3a] shadow-2xl sm:min-h-[31rem]">
-              <img
-                src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=85"
-                alt="Family using a laptop together at home"
-                className="h-full min-h-[22rem] w-full object-cover opacity-80 sm:min-h-[31rem]"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#071329] via-[#071329]/25 to-transparent" />
-              <div className="absolute left-5 top-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-[#071329]/80 px-3.5 py-1.5 text-xs font-bold text-white backdrop-blur-md">
-                <span className="h-2 w-2 rounded-full bg-sky-400" />
-                Wi-Fi 6 &middot; Pure Fiber to the Home
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8">
-                <p className="max-w-sm text-xl font-bold leading-snug text-white">
-                  Every call, class, stream, and game&mdash;connected.
-                </p>
-                <p className="mt-1.5 text-sm text-blue-100/75">Fiber built for the way your home lives.</p>
-                <div className="mt-5 grid grid-cols-3 gap-2.5">
-                  <div className="rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2.5 backdrop-blur-md">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-sky-300">Speeds up to</p>
-                    <p className="mt-0.5 text-sm font-black text-white">300 Mbps</p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2.5 backdrop-blur-md">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Reliability</p>
-                    <p className="mt-0.5 text-sm font-black text-white">99.9% Uptime</p>
-                  </div>
-                  <div className="rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2.5 backdrop-blur-md">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-blue-200">Support</p>
-                    <p className="mt-0.5 text-sm font-black text-white">Local Team</p>
-                  </div>
+            <div
+              onMouseEnter={() => setIsHeroPaused(true)}
+              onMouseLeave={() => setIsHeroPaused(false)}
+              className="group relative h-full min-h-[22rem] overflow-hidden rounded-[2rem] border border-white/15 bg-[#0b1d3a] shadow-2xl sm:min-h-[31rem]"
+            >
+              {heroSlides.map((slide, index) => (
+                <img
+                  key={slide.src}
+                  src={slide.src}
+                  alt={slide.alt}
+                  className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+                    index === heroSlide ? 'opacity-85' : 'pointer-events-none opacity-0'
+                  }`}
+                />
+              ))}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#071329] via-[#071329]/30 to-transparent" />
+
+              <button
+                type="button"
+                aria-label="Previous slide"
+                onClick={() => setHeroSlide((current) => (current - 1 + heroSlides.length) % heroSlides.length)}
+                className="absolute left-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[#071329]/70 text-white opacity-0 backdrop-blur-md transition hover:bg-[#071329] group-hover:opacity-100"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+              </button>
+              <button
+                type="button"
+                aria-label="Next slide"
+                onClick={() => setHeroSlide((current) => (current + 1) % heroSlides.length)}
+                className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[#071329]/70 text-white opacity-0 backdrop-blur-md transition hover:bg-[#071329] group-hover:opacity-100"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+              </button>
+
+              <div className="absolute bottom-0 left-0 right-0 flex flex-wrap items-end justify-between gap-4 p-6 sm:p-8">
+                <div className="max-w-sm">
+                  <p className="text-xl font-bold leading-snug text-white">{heroSlides[heroSlide].title}</p>
+                  <p className="mt-1.5 text-sm text-blue-100/80">{heroSlides[heroSlide].subtitle}</p>
+                </div>
+                <div className="flex items-center gap-1.5" role="tablist" aria-label="Hero showcase slides">
+                  {heroSlides.map((slide, index) => (
+                    <button
+                      key={slide.src}
+                      type="button"
+                      role="tab"
+                      aria-selected={index === heroSlide}
+                      aria-label={`Show slide ${index + 1}`}
+                      onClick={() => setHeroSlide(index)}
+                      className={`h-2 rounded-full transition-all ${
+                        index === heroSlide ? 'w-6 bg-sky-400' : 'w-2 bg-white/40 hover:bg-white/70'
+                      }`}
+                    />
+                  ))}
                 </div>
               </div>
             </div>
