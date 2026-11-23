@@ -571,8 +571,8 @@ export function PortalShell({ role, children }: { role: Role; children: React.Re
       </div>
     </header>
 
-    <main className="min-h-screen pt-16 lg:ml-64">
-      <div className="admin-page-enter mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-6 lg:px-10 lg:py-8">{children}</div>
+    <main className="min-h-screen min-w-0 pt-16 lg:ml-64">
+      <div className="admin-page-enter mx-auto min-w-0 max-w-7xl px-4 py-5 sm:px-6 sm:py-6 lg:px-10 lg:py-8">{children}</div>
     </main>
 
     <AdminCommandPalette open={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} items={paletteItems} />

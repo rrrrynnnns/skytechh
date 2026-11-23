@@ -435,8 +435,8 @@ export default function MaintenancePage() {
             </div>
           </div>
         ) : (
-          <form id="maintenance-form" onSubmit={save} className="grid gap-6 xl:grid-cols-[1.35fr_.85fr]">
-            <div className="space-y-5">
+          <form id="maintenance-form" onSubmit={save} className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,.85fr)]">
+            <div className="min-w-0 space-y-5">
               <section
                 className={`rounded-xl border p-5 transition-colors ${
                   settings.enabled ? 'border-rose-300 bg-rose-50/50' : 'border-slate-200 bg-white'

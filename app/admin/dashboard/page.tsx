@@ -364,7 +364,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,2.2fr)_minmax(280px,.85fr)]">
-          <div className="space-y-5">
+          <div className="min-w-0 space-y-5">
             <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-6 py-4">
                 <div className="flex items-center gap-2.5">
