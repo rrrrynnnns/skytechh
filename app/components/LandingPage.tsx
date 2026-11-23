@@ -86,17 +86,17 @@ const coverageDescriptions: Record<string, string> = {
   Kauswagan: 'Line Deployment Underway',
 };
 
-function scrollToPlans() {
-  const plansSection = document.getElementById('plans');
-  if (!plansSection) return;
+function scrollToSection(sectionId: string) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    plansSection.scrollIntoView();
+    section.scrollIntoView();
     return;
   }
 
   const startPosition = window.scrollY;
-  const targetPosition = plansSection.getBoundingClientRect().top + startPosition;
+  const targetPosition = section.getBoundingClientRect().top + startPosition;
   const distance = targetPosition - startPosition;
   const duration = 1200;
   let startTime: number | null = null;
@@ -113,6 +113,10 @@ function scrollToPlans() {
   };
 
   requestAnimationFrame(animateScroll);
+}
+
+function scrollToPlans() {
+  scrollToSection('plans');
 }
 
 const heroSlides = [
@@ -192,7 +196,7 @@ export function LandingPage({ onLogin, onBook }: Props) {
             <span><span className="block text-lg font-black tracking-tight">Sky-Tech</span><span className="block text-[9px] font-bold uppercase tracking-[.18em] text-sky-400">Home Fiber</span></span>
           </button>
           <div className="hidden items-center gap-7 text-sm font-semibold text-blue-100/75 md:flex">
-            <a href="#features" className="transition hover:text-white">Why Sky-Tech</a><a href="#plans" className="transition hover:text-white">Fiber Plans</a><a href="#coverage" className="transition hover:text-white">Coverage &amp; Map</a>
+            <a href="#features" onClick={(event) => { event.preventDefault(); scrollToSection('features'); }} className="transition hover:text-white">Why Sky-Tech</a><a href="#plans" onClick={(event) => { event.preventDefault(); scrollToSection('plans'); }} className="transition hover:text-white">Fiber Plans</a><a href="#coverage" onClick={(event) => { event.preventDefault(); scrollToSection('coverage'); }} className="transition hover:text-white">Coverage &amp; Map</a>
           </div>
           <div className="flex items-center gap-2 sm:gap-2.5"><button onClick={onLogin} className="rounded-full px-3 py-2 text-[13px] font-bold text-blue-100 transition hover:bg-white/10 hover:text-white sm:px-4 sm:text-sm">Sign in</button><button onClick={onBook} className="rounded-full bg-[#2166f3] px-4 py-2 text-[13px] font-bold text-white shadow-md shadow-blue-600/30 transition hover:bg-[#1d57d6] focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-[#071329] sm:px-4.5 sm:text-sm">Book now</button></div>
           </nav>
@@ -213,12 +217,12 @@ export function LandingPage({ onLogin, onBook }: Props) {
               Say goodbye to lag, hidden price spikes, and automated support bots. Sky-Tech delivers ultra-reliable
               fiber backed by our friendly local team right here in Sibagat.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-7 flex flex-wrap gap-2.5 sm:mt-8 sm:gap-3">
               <button
                 onClick={onBook}
-                className="inline-flex items-center gap-2 rounded-full bg-[#2166f3] px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/30 transition hover:bg-[#1d57d6] focus:outline-none focus:ring-2 focus:ring-blue-300"
+                className="inline-flex items-center gap-2 rounded-full bg-[#2166f3] px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-600/30 transition hover:bg-[#1d57d6] focus:outline-none focus:ring-2 focus:ring-blue-300 sm:px-7 sm:py-3.5 sm:text-sm"
               >
-                Book now <Icon name="arrow" size={17} />
+                Book now <Icon name="arrow" size={16} />
               </button>
               <a
                 href="#plans"
@@ -226,7 +230,7 @@ export function LandingPage({ onLogin, onBook }: Props) {
                   event.preventDefault();
                   scrollToPlans();
                 }}
-                className="rounded-full border border-white/15 bg-white/[0.06] px-7 py-3.5 text-sm font-bold text-blue-100 backdrop-blur-xs transition hover:border-white/25 hover:bg-white/10 hover:text-white"
+                className="inline-flex items-center rounded-full border border-white/15 bg-white/[0.06] px-5 py-2.5 text-xs font-bold text-blue-100 backdrop-blur-xs transition hover:border-white/25 hover:bg-white/10 hover:text-white sm:px-7 sm:py-3.5 sm:text-sm"
               >
                 Explore plans
               </a>
@@ -755,7 +759,7 @@ export function LandingPage({ onLogin, onBook }: Props) {
         </div>
       </section>
 
-      <footer className="bg-[#080f20] px-5 py-14 text-slate-400 lg:px-10"><div className="mx-auto max-w-7xl"><div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.25fr_1fr_1fr_1.2fr]"><div><div className="flex items-center gap-3 text-white"><img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="h-11 w-11 rounded-full object-cover object-center" /><span className="text-xl font-black">Sky-Tech ISP</span></div><p className="mt-6 max-w-xs text-sm leading-7">Providing fast, transparent, and ultra-reliable fiber internet for local homes and businesses.</p></div><div><h3 className="text-sm font-black uppercase tracking-wide text-white">Fiber Internet</h3><div className="mt-6 space-y-4 text-sm"><a href="#plans" className="block transition hover:text-white">Home Fiber Plans</a><a href="#coverage" className="block transition hover:text-white">Coverage Map</a><a href="#features" className="block transition hover:text-white">Why Choose Fiber</a><a href="#plans" className="block transition hover:text-white">Speed Test Portal</a></div></div><div><h3 className="text-sm font-black uppercase tracking-wide text-white">Customer Support</h3><div className="mt-6 space-y-4 text-sm"><button onClick={onLogin} className="block transition hover:text-white">Subscriber Login</button><button onClick={onLogin} className="block transition hover:text-white">Pay Bill Online</button><button onClick={onLogin} className="block transition hover:text-white">Help Center &amp; FAQs</button><a href="#coverage" className="block transition hover:text-white">Network Status Page</a></div></div><div><h3 className="text-sm font-black uppercase tracking-wide text-white">Local Office</h3><div className="mt-6 space-y-4 text-sm leading-6"><p className="flex items-start gap-3"><Icon name="pin" size={19} /><span>Poblacion, Agusan del Sur</span></p><p className="flex items-start gap-3"><span className="text-lg text-sky-500">@</span><span>support@skytech.net</span></p><p className="flex items-start gap-3"><span className="text-lg text-sky-500">&#9742;</span><span>Hotline: (085) 800-SKYTECH / 0917-123-4567</span></p></div><p className="mt-6 text-xs leading-5">Open Mon-Sat: 8:00 AM - 6:00 PM<br />24/7 Technical Dispatch</p></div></div><div className="mt-14 flex flex-col gap-4 border-t border-slate-800 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between"><span>&copy; 2026 Sky-Tech ISP Inc. All rights reserved.</span><div className="flex flex-wrap gap-6"><a href="#" className="transition hover:text-white">Privacy Policy</a><a href="#" className="transition hover:text-white">Terms of Service</a><a href="#" className="transition hover:text-white">Fair Use Policy</a></div></div></div></footer>
+      <footer className="bg-[#080f20] px-5 py-14 text-slate-400 lg:px-10"><div className="mx-auto max-w-7xl"><div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.25fr_1fr_1fr_1.2fr]"><div><div className="flex items-center gap-3 text-white"><img src="/sky-tech-logo.png" alt="Sky-Tech logo" className="h-11 w-11 rounded-full object-cover object-center" /><span className="text-xl font-black">Sky-Tech ISP</span></div><p className="mt-6 max-w-xs text-sm leading-7">Providing fast, transparent, and ultra-reliable fiber internet for local homes and businesses.</p></div><div><h3 className="text-sm font-black uppercase tracking-wide text-white">Fiber Internet</h3><div className="mt-6 space-y-4 text-sm"><a href="#plans" className="block transition hover:text-white">Home Fiber Plans</a><a href="#coverage" className="block transition hover:text-white">Coverage Map</a><a href="#features" className="block transition hover:text-white">Why Choose Fiber</a><a href="#plans" className="block transition hover:text-white">Speed Test Portal</a></div></div><div><h3 className="text-sm font-black uppercase tracking-wide text-white">Customer Support</h3><div className="mt-6 space-y-4 text-sm"><button onClick={onLogin} className="block transition hover:text-white">Subscriber Login</button><button onClick={onLogin} className="block transition hover:text-white">Pay Bill Online</button><button onClick={onLogin} className="block transition hover:text-white">Help Center &amp; FAQs</button><a href="#coverage" className="block transition hover:text-white">Network Status Page</a></div></div><div><h3 className="text-sm font-black uppercase tracking-wide text-white">Local Office</h3><div className="mt-6 space-y-4 text-sm leading-6"><p className="flex items-start gap-3"><Icon name="pin" size={19} /><span>Poblacion, Agusan del Sur</span></p><p className="flex items-start gap-3"><span className="text-lg text-sky-500">@</span><span>skytechispproject@gmail.com</span></p><p className="flex items-start gap-3"><span className="text-lg text-sky-500">&#9742;</span><span>Hotline: (085) 800-SKYTECH / 0917-123-4567</span></p></div><p className="mt-6 text-xs leading-5">Open Mon-Sat: 8:00 AM - 6:00 PM</p></div></div><div className="mt-14 flex flex-col gap-4 border-t border-slate-800 pt-6 text-xs sm:flex-row sm:items-center sm:justify-between"><span>&copy; 2026 Sky-Tech ISP Inc. All rights reserved.</span><div className="flex flex-wrap gap-6"><a href="#" className="transition hover:text-white">Privacy Policy</a><a href="#" className="transition hover:text-white">Terms of Service</a><a href="#" className="transition hover:text-white">Fair Use Policy</a></div></div></div></footer>
     </main>
   );
 }
